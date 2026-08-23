@@ -1,0 +1,144 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  owner
+  admin
+  member
+  guest
+}
+
+enum SenderRole {
+  owner
+  member
+}
+
+model User {
+  id           String    @id @default(uuid()) @db.Uuid
+  email        String    @unique @db.VarChar(255)
+  fullName     String    @map("full_name") @db.VarChar(150)
+  passwordHash String    @map("password_hash") @db.VarChar(255)
+  role         Role      @default(member)
+  avatarUrl    String?   @map("avatar_url") @db.Text
+  phoneNumber  String?   @map("phone_number") @db.VarChar(20)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  posts             Post[]             @relation("UserPosts")
+  comments          Comment[]          @relation("UserComments")
+  gifts             Gift[]             @relation("UserGifts")
+  postViews         PostView[]         @relation("UserPostViews")
+  chatConversations ChatConversation[] @relation("MemberConversations")
+  chatMessages      ChatMessage[]      @relation("UserMessages")
+
+  @@map("users")
+}
+
+model Post {
+  id             String    @id @default(uuid()) @db.Uuid
+  ownerId        String    @map("owner_id") @db.Uuid
+  category       String    @db.VarChar(50) // 'store', 'event', 'diary', 'job', 'work', 'dating', 'training', 'sop'
+  caption        String?   @db.Text
+  customMetadata Json?     @default("{}") @map("custom_metadata")
+  isPublished    Boolean   @default(true) @map("is_published")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  owner     User        @relation("UserPosts", fields: [ownerId], references: [id], onDelete: Cascade)
+  cards     PostCard[]  @relation("PostCards")
+  comments  Comment[]   @relation("PostComments")
+  gifts     Gift[]      @relation("PostGifts")
+  views     PostView[]  @relation("PostViews")
+
+  @@map("posts")
+}
+
+model PostCard {
+  id           String    @id @default(uuid()) @db.Uuid
+  postId       String    @map("post_id") @db.Uuid
+  orderIndex   Int       @map("order_index")
+  cardType     String    @map("card_type") @db.VarChar(30) // 'image', 'video', 'doc', 'store', 'event', 'job', 'work', 'dating', 'training', 'sop'
+  mediaUrl     String?   @map("media_url") @db.Text
+  docContent   String?   @map("doc_content") @db.Text
+  cardMetadata Json?     @default("{}") @map("card_metadata")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  post         Post      @relation("PostCards", fields: [postId], references: [id], onDelete: Cascade)
+
+  @@map("post_cards")
+}
+
+model Comment {
+  id         String     @id @default(uuid()) @db.Uuid
+  postId     String     @map("post_id") @db.Uuid
+  memberId   String     @map("member_id") @db.Uuid
+  senderRole SenderRole @map("sender_role")
+  content    String     @db.Text
+  createdAt  DateTime   @default(now()) @map("created_at") @db.Timestamptz
+
+  post       Post       @relation("PostComments", fields: [postId], references: [id], onDelete: Cascade)
+  member     User       @relation("UserComments", fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@map("comments")
+}
+
+model Gift {
+  id        String    @id @default(uuid()) @db.Uuid
+  postId    String    @map("post_id") @db.Uuid
+  senderId  String    @map("sender_id") @db.Uuid
+  giftType  String    @map("gift_type") @db.VarChar(50)
+  giftValue Decimal   @default(0) @map("gift_value") @db.Decimal(12, 2)
+  message   String?   @db.Text
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  post      Post      @relation("PostGifts", fields: [postId], references: [id], onDelete: Cascade)
+  sender    User      @relation("UserGifts", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@map("gifts")
+}
+
+model PostView {
+  id                   String    @id @default(uuid()) @db.Uuid
+  postId               String    @map("post_id") @db.Uuid
+  userId               String?   @map("user_id") @db.Uuid
+  ipAddress            String?   @map("ip_address") @db.VarChar(45)
+  userAgent            String?   @map("user_agent") @db.Text
+  watchDurationSeconds Int       @default(0) @map("watch_duration_seconds")
+  cardsViewed          Json?     @default("[]") @map("cards_viewed")
+  viewedAt             DateTime  @default(now()) @map("viewed_at") @db.Timestamptz
+
+  post                 Post      @relation("PostViews", fields: [postId], references: [id], onDelete: Cascade)
+  user                 User?     @relation("UserPostViews", fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("post_views")
+}
+
+model ChatConversation {
+  id            String        @id @default(uuid()) @db.Uuid
+  memberId      String        @unique @map("member_id") @db.Uuid
+  lastMessageAt DateTime      @default(now()) @map("last_message_at") @db.Timestamptz
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz
+
+  member        User          @relation("MemberConversations", fields: [memberId], references: [id], onDelete: Cascade)
+  messages      ChatMessage[] @relation("ConversationMessages")
+
+  @@map("chat_conversations")
+}
+
+model ChatMessage {
+  id             String           @id @default(uuid()) @db.Uuid
+  conversationId String           @map("conversation_id") @db.Uuid
+  senderId       String           @map("sender_id") @db.Uuid
+  content        String           @db.Text
+  isSystemEvent  Boolean          @default(false) @map("is_system_event")
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz
+
+  conversation   ChatConversation @relation("ConversationMessages", fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User             @relation("UserMessages", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@map("chat_messages")
+}

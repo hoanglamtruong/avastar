@@ -1,0 +1,19 @@
+services:
+  avastar:
+    build: .
+    image: avastar-app:latest
+    container_name: avastar
+    environment:
+      DATABASE_URL: postgresql://zavastar:zavastar_dev_pw@zavastar_postgres:5432/zavastar
+      JWT_SECRET: ${JWT_SECRET:-avastar_jwt_secret_key_super_secure_2026_personalhub}
+      NODE_ENV: production
+      PORT: 3000
+    ports:
+      - "8107:3000"
+    networks:
+      - homelab-net
+    restart: unless-stopped
+
+networks:
+  homelab-net:
+    external: true
