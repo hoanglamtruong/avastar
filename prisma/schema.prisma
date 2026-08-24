@@ -54,6 +54,7 @@ model Post {
   gifts     Gift[]      @relation("PostGifts")
   views     PostView[]  @relation("PostViews")
 
+  @@index([ownerId])
   @@map("posts")
 }
 
@@ -69,6 +70,7 @@ model PostCard {
 
   post         Post      @relation("PostCards", fields: [postId], references: [id], onDelete: Cascade)
 
+  @@index([postId])
   @@map("post_cards")
 }
 
@@ -83,6 +85,8 @@ model Comment {
   post       Post       @relation("PostComments", fields: [postId], references: [id], onDelete: Cascade)
   member     User       @relation("UserComments", fields: [memberId], references: [id], onDelete: Cascade)
 
+  @@index([postId])
+  @@index([memberId])
   @@map("comments")
 }
 
@@ -98,6 +102,8 @@ model Gift {
   post      Post      @relation("PostGifts", fields: [postId], references: [id], onDelete: Cascade)
   sender    User      @relation("UserGifts", fields: [senderId], references: [id], onDelete: Cascade)
 
+  @@index([postId])
+  @@index([senderId])
   @@map("gifts")
 }
 
@@ -114,6 +120,8 @@ model PostView {
   post                 Post      @relation("PostViews", fields: [postId], references: [id], onDelete: Cascade)
   user                 User?     @relation("UserPostViews", fields: [userId], references: [id], onDelete: SetNull)
 
+  @@index([postId])
+  @@index([userId])
   @@map("post_views")
 }
 
@@ -140,5 +148,7 @@ model ChatMessage {
   conversation   ChatConversation @relation("ConversationMessages", fields: [conversationId], references: [id], onDelete: Cascade)
   sender         User             @relation("UserMessages", fields: [senderId], references: [id], onDelete: Cascade)
 
+  @@index([conversationId])
+  @@index([senderId])
   @@map("chat_messages")
 }

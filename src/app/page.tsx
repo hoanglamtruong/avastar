@@ -58,6 +58,7 @@ export default function FeedPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const postViewStartTime = useRef<number>(Date.now());
   const cardViewStartTime = useRef<number>(Date.now());
+  const scrollRafRef = useRef<number | null>(null);
 
   // Touch gesture refs for horizontal card swipe (Fix 2)
   const touchStartX = useRef<number>(0);
@@ -102,28 +103,38 @@ export default function FeedPage() {
     }).catch(() => {});
   }, []);
 
-  // Handle scroll detection for snap Y-axis
+  // Handle scroll detection for snap Y-axis (rAF-throttled to keep scroll buttery smooth)
   const handleScroll = () => {
-    if (!containerRef.current) return;
-    const scrollTop = containerRef.current.scrollTop;
-    const viewportHeight = window.innerHeight;
-    const newIndex = Math.round(scrollTop / viewportHeight);
+    if (scrollRafRef.current !== null) return;
+    scrollRafRef.current = requestAnimationFrame(() => {
+      scrollRafRef.current = null;
+      if (!containerRef.current) return;
+      const scrollTop = containerRef.current.scrollTop;
+      const viewportHeight = window.innerHeight;
+      const newIndex = Math.round(scrollTop / viewportHeight);
 
-    if (newIndex !== activePostIndex && newIndex >= 0 && newIndex < posts.length) {
-      // Log previous post duration
-      const prevPost = posts[activePostIndex];
-      if (prevPost) {
-        const duration = Math.round((Date.now() - postViewStartTime.current) / 1000);
-        const cardIdx = activeCardIndices[prevPost.id] || 0;
-        const cardType = prevPost.cards[cardIdx]?.cardType || "image";
-        logViewMetrics(prevPost.id, duration, cardIdx, cardType);
+      if (newIndex !== activePostIndex && newIndex >= 0 && newIndex < posts.length) {
+        // Log previous post duration
+        const prevPost = posts[activePostIndex];
+        if (prevPost) {
+          const duration = Math.round((Date.now() - postViewStartTime.current) / 1000);
+          const cardIdx = activeCardIndices[prevPost.id] || 0;
+          const cardType = prevPost.cards[cardIdx]?.cardType || "image";
+          logViewMetrics(prevPost.id, duration, cardIdx, cardType);
+        }
+
+        setActivePostIndex(newIndex);
+        postViewStartTime.current = Date.now();
+        cardViewStartTime.current = Date.now();
       }
-
-      setActivePostIndex(newIndex);
-      postViewStartTime.current = Date.now();
-      cardViewStartTime.current = Date.now();
-    }
+    });
   };
+
+  useEffect(() => {
+    return () => {
+      if (scrollRafRef.current !== null) cancelAnimationFrame(scrollRafRef.current);
+    };
+  }, []);
 
   // Switch card within current post
   const handleSwitchCard = (postId: string, newIdx: number, totalCards: number) => {
@@ -190,6 +201,20 @@ export default function FeedPage() {
       showToast("Đã sao chép liên kết bài viết vào clipboard!", "success");
     }
   };
+
+  const handleGiftSent = useCallback((giftValue: number) => {
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === activePost?.id
+          ? {
+              ...p,
+              totalGiftValue: (p.totalGiftValue || 0) + giftValue,
+              _count: p._count ? { ...p._count, gifts: p._count.gifts + 1 } : p._count,
+            }
+          : p
+      )
+    );
+  }, [activePost?.id]);
 
   const isOwner = user?.role === "owner" || user?.role === "admin";
 
@@ -493,7 +518,7 @@ export default function FeedPage() {
             isOpen={isGiftModalOpen}
             onClose={() => setIsGiftModalOpen(false)}
             postId={activePost.id}
-            onGiftSent={fetchPosts}
+            onGiftSent={handleGiftSent}
           />
           <CommentDrawer
             isOpen={isCommentDrawerOpen}
