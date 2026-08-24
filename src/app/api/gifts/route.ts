@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { emitOwnerEvent } from "@/lib/socket";
 
 export async function POST(request: NextRequest) {
   try {
@@ -48,6 +49,8 @@ export async function POST(request: NextRequest) {
         isSystemEvent: true,
       },
     });
+
+    emitOwnerEvent("new_gift", { gift, postId });
 
     return NextResponse.json({ gift, success: true });
   } catch (error: any) {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { emitOwnerEvent } from "@/lib/socket";
 
 export async function GET(request: NextRequest) {
   try {
@@ -28,7 +29,6 @@ export async function GET(request: NextRequest) {
       // Member can ONLY view their own 1-1 exchange with Owner
       whereClause.memberId = currentUser.id;
     }
-
     const comments = await prisma.comment.findMany({
       where: whereClause,
       include: {
@@ -133,6 +133,8 @@ export async function POST(request: NextRequest) {
         },
       });
     }
+
+    emitOwnerEvent("new_comment", { comment, postId });
 
     return NextResponse.json({ comment });
   } catch (error: any) {

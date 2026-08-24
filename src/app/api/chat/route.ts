@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { emitOwnerEvent } from "@/lib/socket";
 
 export async function GET(request: NextRequest) {
   try {
@@ -154,6 +155,8 @@ export async function POST(request: NextRequest) {
       where: { id: conversation.id },
       data: { lastMessageAt: new Date() },
     });
+
+    emitOwnerEvent("new_chat_message", { message, memberId });
 
     return NextResponse.json({ message });
   } catch (error: any) {

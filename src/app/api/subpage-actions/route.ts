@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { emitOwnerEvent } from "@/lib/socket";
 
 export async function POST(request: NextRequest) {
   try {
@@ -40,6 +41,8 @@ export async function POST(request: NextRequest) {
         },
       });
     }
+
+    emitOwnerEvent("new_subpage_action", { actionType, postId, notificationText });
 
     return NextResponse.json({ success: true, message: "Hành động đã được ghi nhận thành công!" });
   } catch (error: any) {
