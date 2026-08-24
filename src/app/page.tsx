@@ -23,11 +23,8 @@ import {
   ChevronUp,
   ChevronLeft,
   ChevronRight,
-  Sparkles,
   Layers,
   Info,
-  ExternalLink,
-  ShieldCheck,
   User,
 } from "lucide-react";
 import Link from "next/link";
@@ -53,13 +50,11 @@ export default function FeedPage() {
     payload: null,
   });
 
-  const [expandedCaptions, setExpandedCaptions] = useState<{ [postId: string]: boolean }>({});
-
   const containerRef = useRef<HTMLDivElement>(null);
   const postViewStartTime = useRef<number>(Date.now());
   const cardViewStartTime = useRef<number>(Date.now());
 
-  // Touch gesture refs for horizontal card swipe (Fix 2)
+  // Touch gesture refs for horizontal card swipe
   const touchStartX = useRef<number>(0);
   const touchStartY = useRef<number>(0);
   const touchEndX = useRef<number>(0);
@@ -139,7 +134,7 @@ export default function FeedPage() {
     cardViewStartTime.current = Date.now();
   };
 
-  // Touch event handlers for Horizontal Card Swipe (Fix 2)
+  // Touch event handlers for Horizontal Card Swipe
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
@@ -296,7 +291,7 @@ export default function FeedPage() {
           return (
             <section
               key={post.id}
-              className="h-[100dvh] w-full snap-start snap-always relative flex items-center justify-start sm:justify-center overflow-hidden"
+              className="h-[100dvh] w-full snap-start snap-always relative flex flex-col items-center justify-center pt-12 pb-20 sm:pt-0 sm:pb-0 overflow-hidden"
             >
               {/* DYNAMIC BLURRED BACKGROUND */}
               <div
@@ -307,12 +302,12 @@ export default function FeedPage() {
               />
               <div className="absolute inset-0 bg-gradient-to-b from-[#0B1A2C]/60 via-transparent to-[#0B1A2C]/90 pointer-events-none" />
 
-              {/* MAIN FLOATING CARD CAROUSEL CONTAINER (Fix 1: Width 82-85%, reserved 68-72px for Action Bar) */}
+              {/* MAIN FLOATING CARD CAROUSEL CONTAINER (Fix B: Centered layout on mobile with balanced height) */}
               <div
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={() => handleTouchEnd(post.id, cardIdx, totalCards)}
-                className="relative z-10 w-[calc(100vw-68px)] max-w-[calc(100vw-68px)] sm:w-full sm:max-w-[420px] h-[78dvh] max-h-[640px] pl-2.5 pr-1 sm:px-3 flex flex-col items-center justify-center mr-auto ml-1.5 sm:mx-auto select-none"
+                className="relative z-10 w-full max-w-[390px] sm:max-w-[420px] h-[65dvh] sm:h-[78dvh] max-h-[520px] sm:max-h-[640px] px-3.5 sm:px-3 flex flex-col items-center justify-center mx-auto select-none"
               >
                 {/* CARD CONTAINER WITH X-AXIS CAROUSEL */}
                 <div className="relative w-full h-full rounded-[24px] shadow-2xl transition-all duration-300">
@@ -336,7 +331,7 @@ export default function FeedPage() {
                     </>
                   )}
 
-                  {/* Horizontal Swipe / Navigation Arrows (Desktop/Fallback) */}
+                  {/* Fix A: Horizontal Swipe / Navigation Arrows (HIDDEN ON MOBILE, VISIBLE ON DESKTOP) */}
                   {totalCards > 1 && (
                     <>
                       {cardIdx > 0 && (
@@ -345,7 +340,7 @@ export default function FeedPage() {
                             e.stopPropagation();
                             handleSwitchCard(post.id, cardIdx - 1, totalCards);
                           }}
-                          className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-[#183A60]/80 text-white backdrop-blur-md border border-[#D4DBF5]/20 hover:bg-[#0095CF] transition z-30 shadow-lg"
+                          className="hidden sm:flex absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-[#183A60]/80 text-white backdrop-blur-md border border-[#D4DBF5]/20 hover:bg-[#0095CF] transition z-30 shadow-lg items-center justify-center"
                         >
                           <ChevronLeft className="w-4 h-4" />
                         </button>
@@ -356,7 +351,7 @@ export default function FeedPage() {
                             e.stopPropagation();
                             handleSwitchCard(post.id, cardIdx + 1, totalCards);
                           }}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-[#183A60]/80 text-white backdrop-blur-md border border-[#D4DBF5]/20 hover:bg-[#0095CF] transition z-30 shadow-lg"
+                          className="hidden sm:flex absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-[#183A60]/80 text-white backdrop-blur-md border border-[#D4DBF5]/20 hover:bg-[#0095CF] transition z-30 shadow-lg items-center justify-center"
                         >
                           <ChevronRight className="w-4 h-4" />
                         </button>
@@ -382,7 +377,7 @@ export default function FeedPage() {
                         className="w-6 h-6 sm:w-7 sm:h-7 rounded-full object-cover border border-[#FEC401]/50 shadow-md"
                         alt=""
                       />
-                      <span className="text-[11px] sm:text-xs font-black text-white drop-shadow truncate max-w-[100px] sm:max-w-none">
+                      <span className="text-[11px] sm:text-xs font-black text-white drop-shadow truncate max-w-[110px] sm:max-w-none">
                         {post.owner?.fullName || "Zangx"}
                       </span>
                       <span className="px-1.5 py-0.2 rounded-full text-[8px] sm:text-[9px] font-extrabold uppercase bg-[#0095CF]/20 text-[#0095CF] border border-[#0095CF]/30">
@@ -416,53 +411,53 @@ export default function FeedPage() {
                 </div>
               </div>
 
-              {/* VERTICAL ACTION BAR (Right Side - Fix 1: 40px on mobile, 48px on sm:, label hidden <400px) */}
-              <div className="absolute right-1.5 sm:right-6 bottom-20 z-40 flex flex-col items-center gap-3 sm:gap-4 select-none w-12 sm:w-auto">
+              {/* DESKTOP VERTICAL ACTION BAR (Right Side - Visible ONLY >= sm:) */}
+              <div className="hidden sm:flex sm:absolute sm:right-6 sm:bottom-20 z-40 flex-col items-center gap-4 select-none">
                 
                 {/* 1. Tặng Quà VIP Button (#FEC401 GOLD) */}
-                <div className="flex flex-col items-center gap-0.5 sm:gap-1">
+                <div className="flex flex-col items-center gap-1">
                   <button
                     onClick={() => setIsGiftModalOpen(true)}
-                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-tr from-[#FEC401] to-[#FF7F00] text-darkBg flex items-center justify-center shadow-2xl glass-gold-glow animate-pulse-gold transform active:scale-90 transition"
+                    className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#FEC401] to-[#FF7F00] text-darkBg flex items-center justify-center shadow-2xl glass-gold-glow animate-pulse-gold transform active:scale-90 transition"
                     title="Tặng Quà VIP"
                   >
-                    <Gift className="w-5 h-5 sm:w-6 sm:h-6 text-[#0B1A2C]" />
+                    <Gift className="w-6 h-6 text-[#0B1A2C]" />
                   </button>
-                  <span className="hidden min-[400px]:inline text-[9px] sm:text-[10px] font-black text-[#FEC401] drop-shadow text-center">
+                  <span className="text-[10px] font-black text-[#FEC401] drop-shadow text-center">
                     {post.totalGiftValue ? `${Math.round(post.totalGiftValue / 1000)}k` : "Tặng Quà"}
                   </span>
                 </div>
 
                 {/* 2. Bình luận 1-1 Button */}
-                <div className="flex flex-col items-center gap-0.5 sm:gap-1">
+                <div className="flex flex-col items-center gap-1">
                   <button
                     onClick={() => setIsCommentDrawerOpen(true)}
-                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-full glass-panel text-white flex items-center justify-center hover:text-[#0095CF] hover:border-[#0095CF] shadow-xl transform active:scale-90 transition border border-[#D4DBF5]/20"
+                    className="w-12 h-12 rounded-full glass-panel text-white flex items-center justify-center hover:text-[#0095CF] hover:border-[#0095CF] shadow-xl transform active:scale-90 transition border border-[#D4DBF5]/20"
                     title="Bình Luận 1-1 Riêng Tư"
                   >
-                    <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 text-[#0095CF]" />
+                    <MessageSquare className="w-5 h-5 text-[#0095CF]" />
                   </button>
-                  <span className="hidden min-[400px]:inline text-[9px] sm:text-[10px] font-bold text-white drop-shadow text-center">
+                  <span className="text-[10px] font-bold text-white drop-shadow text-center">
                     {post._count?.comments || 0}
                   </span>
                 </div>
 
                 {/* 3. Chia sẻ Button */}
-                <div className="flex flex-col items-center gap-0.5 sm:gap-1">
+                <div className="flex flex-col items-center gap-1">
                   <button
                     onClick={handleShare}
-                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-full glass-panel text-white flex items-center justify-center hover:text-[#0095CF] hover:border-[#0095CF] shadow-xl transform active:scale-90 transition border border-[#D4DBF5]/20"
+                    className="w-12 h-12 rounded-full glass-panel text-white flex items-center justify-center hover:text-[#0095CF] hover:border-[#0095CF] shadow-xl transform active:scale-90 transition border border-[#D4DBF5]/20"
                     title="Chia sẻ"
                   >
-                    <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <Share2 className="w-5 h-5" />
                   </button>
-                  <span className="hidden min-[400px]:inline text-[9px] sm:text-[10px] font-bold text-[#D4DBF5]/80 drop-shadow text-center">
+                  <span className="text-[10px] font-bold text-[#D4DBF5]/80 drop-shadow text-center">
                     Chia sẻ
                   </span>
                 </div>
               </div>
 
-              {/* VERTICAL POST NAVIGATION HINTS */}
+              {/* VERTICAL POST NAVIGATION HINTS (Desktop) */}
               <div className="hidden lg:flex fixed right-8 top-1/2 -translate-y-1/2 flex-col gap-3 z-30 pointer-events-auto">
                 <button
                   disabled={activePostIndex === 0}
@@ -485,6 +480,52 @@ export default function FeedPage() {
           );
         })}
       </div>
+
+      {/* MOBILE HORIZONTAL BOTTOMNAV (Fix B: Fixed bottom bar on mobile with safe-area support) */}
+      <nav className="sm:hidden fixed bottom-0 inset-x-0 z-40 pb-[max(env(safe-area-inset-bottom,0px),0.65rem)] pt-2 px-6 bg-[#0B1A2C]/92 backdrop-blur-xl border-t border-[#D4DBF5]/15 shadow-2xl flex items-center justify-around select-none">
+        
+        {/* 1. Tặng Quà VIP Button */}
+        <button
+          onClick={() => setIsGiftModalOpen(true)}
+          className="flex flex-col items-center gap-1 group active:scale-90 transition"
+          title="Tặng Quà VIP"
+        >
+          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#FEC401] to-[#FF7F00] flex items-center justify-center shadow-lg glass-gold-glow animate-pulse-gold">
+            <Gift className="w-5 h-5 text-[#0B1A2C]" />
+          </div>
+          <span className="text-[10px] font-black text-[#FEC401] tracking-tight">
+            {activePost?.totalGiftValue ? `${Math.round(activePost.totalGiftValue / 1000)}k` : "Tặng Quà"}
+          </span>
+        </button>
+
+        {/* 2. Bình luận 1-1 Button */}
+        <button
+          onClick={() => setIsCommentDrawerOpen(true)}
+          className="flex flex-col items-center gap-1 group active:scale-90 transition"
+          title="Bình Luận 1-1"
+        >
+          <div className="w-10 h-10 rounded-full glass-panel flex items-center justify-center text-white border border-[#D4DBF5]/25 shadow-md">
+            <MessageSquare className="w-5 h-5 text-[#0095CF]" />
+          </div>
+          <span className="text-[10px] font-bold text-[#D4DBF5]">
+            {activePost?._count?.comments ? `${activePost._count.comments} Bình luận` : "Bình luận"}
+          </span>
+        </button>
+
+        {/* 3. Chia sẻ Button */}
+        <button
+          onClick={handleShare}
+          className="flex flex-col items-center gap-1 group active:scale-90 transition"
+          title="Chia sẻ"
+        >
+          <div className="w-10 h-10 rounded-full glass-panel flex items-center justify-center text-white border border-[#D4DBF5]/25 shadow-md">
+            <Share2 className="w-5 h-5 text-white/90" />
+          </div>
+          <span className="text-[10px] font-bold text-[#D4DBF5]/80">
+            Chia sẻ
+          </span>
+        </button>
+      </nav>
 
       {/* MODALS & DRAWERS */}
       {activePost && (
