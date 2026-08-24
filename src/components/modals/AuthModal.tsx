@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { X, UserPlus, LogIn, Crown, User, ShieldCheck } from "lucide-react";
+import React, { useState, useRef } from "react";
+import { X, UserPlus, LogIn } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/components/ui/Toast";
 
@@ -11,7 +11,7 @@ interface AuthModalProps {
 }
 
 export function AuthModal({ isOpen, onClose }: AuthModalProps) {
-  const { login, register, switchUser, user } = useAuth();
+  const { login, register, switchUser } = useAuth();
   const { showToast } = useToast();
   const [isRegister, setIsRegister] = useState(false);
   const [fullName, setFullName] = useState("");
@@ -19,6 +19,32 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  // Swipe-down to close gesture
+  const touchStartY = useRef<number>(0);
+  const touchStartX = useRef<number>(0);
+  const touchEndY = useRef<number>(0);
+  const touchEndX = useRef<number>(0);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+    touchStartX.current = e.touches[0].clientX;
+    touchEndY.current = e.touches[0].clientY;
+    touchEndX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndY.current = e.touches[0].clientY;
+    touchEndX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    const deltaY = touchEndY.current - touchStartY.current;
+    const deltaX = touchEndX.current - touchStartX.current;
+    if (deltaY > 50 && deltaY > Math.abs(deltaX)) {
+      onClose();
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -63,109 +89,119 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-[1000] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-float-up">
-      <div className="w-full max-w-md rounded-[28px] glass-panel border border-[#0095CF]/30 p-6 shadow-2xl relative bg-[#0B1A2C]/98 space-y-5">
+    <div
+      className="fixed inset-0 z-[1000] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-float-up"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md max-h-[55vh] rounded-t-[28px] sm:rounded-[28px] glass-panel border border-[#0095CF]/30 p-4 sm:p-5 shadow-2xl relative bg-[#0B1A2C]/98 overflow-y-auto custom-slim-scroll space-y-3"
+        onClick={(e) => e.stopPropagation()}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {/* Drag handle */}
+        <div className="w-10 h-1 rounded-full bg-white/30 mx-auto -mt-1 mb-1 shrink-0 sm:hidden cursor-pointer" onClick={onClose} />
+
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 p-2 rounded-full hover:bg-white/10 text-white/70 hover:text-white transition"
+          className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-white/10 text-white/70 hover:text-white transition"
         >
-          <X className="w-5 h-5" />
+          <X className="w-4 h-4" />
         </button>
 
-        <div className="text-center space-y-1 pt-2">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#0095CF] to-[#183A60] flex items-center justify-center text-white mx-auto shadow-lg shadow-[#0095CF]/30 border border-[#D4DBF5]/30">
-            {isRegister ? <UserPlus className="w-6 h-6" /> : <LogIn className="w-6 h-6" />}
-          </div>
-          <h3 className="text-lg font-extrabold text-white">
+        <div className="text-center space-y-0.5 pt-1">
+          <h3 className="text-sm font-extrabold text-white flex items-center justify-center gap-1.5">
+            {isRegister ? <UserPlus className="w-4 h-4 text-[#0095CF]" /> : <LogIn className="w-4 h-4 text-[#0095CF]" />}
             {isRegister ? "Đăng Ký Thành Viên VIP" : "Đăng Nhập Tài Khoản"}
           </h3>
-          <p className="text-xs text-[#D4DBF5]/70">
-            Trải nghiệm tương tác 1-1, gửi quà tặng VIP và mở khóa Box Doc độc quyền.
+          <p className="text-[10px] text-[#D4DBF5]/70">
+            Tương tác 1-1, gửi quà tặng VIP và mở khóa Box Doc độc quyền.
           </p>
         </div>
 
         {/* Quick Demo Switcher */}
-        <div className="p-3 rounded-2xl bg-[#183A60]/60 border border-[#D4DBF5]/10 space-y-2">
-          <p className="text-[10px] uppercase font-bold tracking-wider text-[#D4DBF5]/60 text-center">
-            🚀 Chuyển đổi nhanh vai trò thử nghiệm:
+        <div className="p-2 rounded-xl bg-[#183A60]/60 border border-[#D4DBF5]/10 space-y-1.5">
+          <p className="text-[9px] uppercase font-bold tracking-wider text-[#D4DBF5]/60 text-center">
+            🚀 Chuyển đổi nhanh vai trò:
           </p>
-          <div className="grid grid-cols-3 gap-1.5">
+          <div className="grid grid-cols-3 gap-1">
             <button
               onClick={() => handleQuickSwitch("owner")}
-              className="py-2 px-1 rounded-xl text-[11px] font-bold bg-[#FEC401]/20 text-[#FEC401] border border-[#FEC401]/40 hover:bg-[#FEC401]/30 transition"
+              className="py-1.5 px-1 rounded-lg text-[10px] font-bold bg-[#FEC401]/20 text-[#FEC401] border border-[#FEC401]/40 hover:bg-[#FEC401]/30 transition"
             >
-              👑 Owner Admin
+              👑 Owner
             </button>
             <button
               onClick={() => handleQuickSwitch("member")}
-              className="py-2 px-1 rounded-xl text-[11px] font-bold bg-[#0095CF]/20 text-[#0095CF] border border-[#0095CF]/40 hover:bg-[#0095CF]/30 transition"
+              className="py-1.5 px-1 rounded-lg text-[10px] font-bold bg-[#0095CF]/20 text-[#0095CF] border border-[#0095CF]/40 hover:bg-[#0095CF]/30 transition"
             >
-              🌟 Member VIP
+              🌟 Member
             </button>
             <button
               onClick={() => handleQuickSwitch("guest")}
-              className="py-2 px-1 rounded-xl text-[11px] font-bold bg-white/10 text-white/80 border border-white/20 hover:bg-white/20 transition"
+              className="py-1.5 px-1 rounded-lg text-[10px] font-bold bg-white/10 text-white/80 border border-white/20 hover:bg-white/20 transition"
             >
-              👤 Khách Guest
+              👤 Guest
             </button>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3 text-xs">
+        <form onSubmit={handleSubmit} className="space-y-2 text-xs">
           {isRegister && (
             <div>
-              <label className="block text-[#D4DBF5]/80 font-semibold mb-1">Họ và tên *</label>
+              <label className="block text-[#D4DBF5]/80 font-semibold mb-0.5 text-[11px]">Họ và tên *</label>
               <input
                 type="text"
                 required
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="Hoàng Lâm"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-[#0B1A2C] border border-[#D4DBF5]/20 text-white focus:outline-none focus:border-[#0095CF]"
+                className="w-full px-3 py-1.5 rounded-xl bg-[#0B1A2C] border border-[#D4DBF5]/20 text-xs text-white focus:outline-none focus:border-[#0095CF]"
               />
             </div>
           )}
 
           <div>
-            <label className="block text-[#D4DBF5]/80 font-semibold mb-1">Email *</label>
+            <label className="block text-[#D4DBF5]/80 font-semibold mb-0.5 text-[11px]">Email *</label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="user@zeebee.vn"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-[#0B1A2C] border border-[#D4DBF5]/20 text-white focus:outline-none focus:border-[#0095CF]"
+              className="w-full px-3 py-1.5 rounded-xl bg-[#0B1A2C] border border-[#D4DBF5]/20 text-xs text-white focus:outline-none focus:border-[#0095CF]"
             />
           </div>
 
           {isRegister && (
             <div>
-              <label className="block text-[#D4DBF5]/80 font-semibold mb-1">Số điện thoại</label>
+              <label className="block text-[#D4DBF5]/80 font-semibold mb-0.5 text-[11px]">Số điện thoại</label>
               <input
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="0901234567"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-[#0B1A2C] border border-[#D4DBF5]/20 text-white focus:outline-none focus:border-[#0095CF]"
+                className="w-full px-3 py-1.5 rounded-xl bg-[#0B1A2C] border border-[#D4DBF5]/20 text-xs text-white focus:outline-none focus:border-[#0095CF]"
               />
             </div>
           )}
 
           <div>
-            <label className="block text-[#D4DBF5]/80 font-semibold mb-1">Mật khẩu (mặc định: 123456)</label>
+            <label className="block text-[#D4DBF5]/80 font-semibold mb-0.5 text-[11px]">Mật khẩu (mặc định: 123456)</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-[#0B1A2C] border border-[#D4DBF5]/20 text-white focus:outline-none focus:border-[#0095CF]"
+              className="w-full px-3 py-1.5 rounded-xl bg-[#0B1A2C] border border-[#D4DBF5]/20 text-xs text-white focus:outline-none focus:border-[#0095CF]"
             />
           </div>
 
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-[#0095CF] to-[#183A60] hover:opacity-95 shadow-lg shadow-[#0095CF]/30 transition transform active:scale-95 flex items-center justify-center gap-2 mt-4 border border-[#D4DBF5]/20"
+            className="w-full py-2.5 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-[#0095CF] to-[#183A60] hover:opacity-95 shadow-lg shadow-[#0095CF]/30 transition transform active:scale-95 flex items-center justify-center gap-2 mt-2 border border-[#D4DBF5]/20"
           >
             <span>{isLoading ? "Đang xử lý..." : isRegister ? "Tạo Tài Khoản VIP" : "Đăng Nhập"}</span>
           </button>
@@ -175,7 +211,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           <button
             type="button"
             onClick={() => setIsRegister(!isRegister)}
-            className="text-xs text-[#0095CF] hover:underline font-semibold"
+            className="text-[11px] text-[#0095CF] hover:underline font-semibold"
           >
             {isRegister ? "Đã có tài khoản? Đăng nhập ngay" : "Chưa có tài khoản? Đăng ký Thành viên VIP"}
           </button>
