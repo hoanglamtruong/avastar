@@ -35,6 +35,7 @@ model User {
   postViews         PostView[]         @relation("UserPostViews")
   chatConversations ChatConversation[] @relation("MemberConversations")
   chatMessages      ChatMessage[]      @relation("UserMessages")
+  pushSubscriptions PushSubscription[] @relation("UserPushSubscriptions")
 
   @@map("users")
 }
@@ -142,3 +143,18 @@ model ChatMessage {
 
   @@map("chat_messages")
 }
+
+model PushSubscription {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  endpoint  String   @unique @db.Text
+  p256dh    String   @db.Text
+  auth      String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  user      User     @relation("UserPushSubscriptions", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("push_subscriptions")
+}
+

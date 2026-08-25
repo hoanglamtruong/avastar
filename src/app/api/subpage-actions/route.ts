@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { emitOwnerEvent } from "@/lib/socket";
+import { sendPushNotificationToOwners } from "@/lib/push";
 
 export async function POST(request: NextRequest) {
   try {
@@ -43,6 +44,11 @@ export async function POST(request: NextRequest) {
     }
 
     emitOwnerEvent("new_subpage_action", { actionType, postId, notificationText });
+    sendPushNotificationToOwners({
+      title: "Tương tác Subpage mới 🔔",
+      body: notificationText,
+      url: `/?postId=${postId}`,
+    }).catch((err) => console.error("Push failed:", err));
 
     return NextResponse.json({ success: true, message: "Hành động đã được ghi nhận thành công!" });
   } catch (error: any) {

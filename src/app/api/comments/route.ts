@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { emitOwnerEvent } from "@/lib/socket";
+import { sendPushNotificationToOwners } from "@/lib/push";
 
 export async function GET(request: NextRequest) {
   try {
@@ -135,6 +136,11 @@ export async function POST(request: NextRequest) {
     }
 
     emitOwnerEvent("new_comment", { comment, postId });
+    sendPushNotificationToOwners({
+      title: "Bình luận 1-1 mới 💬",
+      body: `${comment.member?.fullName || "Thành viên"}: "${comment.content.substring(0, 80)}"`,
+      url: `/?postId=${postId}`,
+    }).catch((err) => console.error("Push failed:", err));
 
     return NextResponse.json({ comment });
   } catch (error: any) {

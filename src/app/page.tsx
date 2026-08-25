@@ -28,6 +28,8 @@ import {
   User,
 } from "lucide-react";
 import Link from "next/link";
+import { io, Socket } from "socket.io-client";
+import { PushNotificationPrompt } from "@/components/PushNotificationPrompt";
 
 export default function FeedPage() {
   const { user } = useAuth();
@@ -44,6 +46,7 @@ export default function FeedPage() {
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isChatDrawerOpen, setIsChatDrawerOpen] = useState(false);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
   const [actionModal, setActionModal] = useState<{ isOpen: boolean; actionType: string; payload: any }>({
     isOpen: false,
     actionType: "",
@@ -61,7 +64,7 @@ export default function FeedPage() {
   const touchEndY = useRef<number>(0);
 
   // Fetch Posts
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     try {
       const res = await fetch("/api/posts");
       if (res.ok) {
@@ -73,11 +76,54 @@ export default function FeedPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [showToast]);
 
   useEffect(() => {
     fetchPosts();
-  }, []);
+  }, [fetchPosts]);
+
+  // WebSocket Client Listener - strictly for Owner/Admin
+  useEffect(() => {
+    if (!user || (user.role !== "owner" && user.role !== "admin")) {
+      return;
+    }
+
+    const socket: Socket = io({
+      path: "/socket.io",
+      transports: ["websocket", "polling"],
+    });
+
+    socket.on("new_comment", (data: any) => {
+      const senderName = data?.comment?.member?.fullName || "Thành viên";
+      const snippet = data?.comment?.content ? `"${data.comment.content.substring(0, 35)}..."` : "";
+      showToast(`💬 Bình luận mới từ ${senderName} ${snippet}`, "info");
+      fetchPosts();
+    });
+
+    socket.on("new_gift", (data: any) => {
+      const senderName = data?.gift?.sender?.fullName || "Thành viên";
+      const giftName = data?.gift?.giftType || "quà tặng";
+      showToast(`👑 ${senderName} đã gửi tặng "${giftName}" VIP!`, "gold");
+      fetchPosts();
+    });
+
+    socket.on("new_subpage_action", (data: any) => {
+      showToast(data?.notificationText || "🔔 Tương tác mới trên trang phụ!", "info");
+    });
+
+    socket.on("new_chat_message", (data: any) => {
+      if (data?.message?.senderId !== user.id) {
+        setUnreadChatCount((prev) => prev + 1);
+        const senderName = data?.message?.sender?.fullName || "Thành viên";
+        const snippet = data?.message?.content ? `"${data.message.content.substring(0, 30)}..."` : "";
+        showToast(`💬 Tin nhắn từ ${senderName}: ${snippet}`, "info");
+      }
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [user, showToast, fetchPosts]);
 
   const activePost = posts[activePostIndex];
   const currentCardIndex = activePost ? (activeCardIndices[activePost.id] || 0) : 0;
@@ -201,6 +247,7 @@ export default function FeedPage() {
 
   return (
     <main className="relative h-[100dvh] w-screen overflow-hidden bg-[#0B1A2C]">
+      <PushNotificationPrompt />
       
       {/* TOP FLOATING NAVIGATION BAR */}
       <header className="fixed top-0 left-0 right-0 z-50 px-4 py-3 flex items-center justify-between pointer-events-none">
@@ -228,12 +275,19 @@ export default function FeedPage() {
           </Link>
 
           <button
-            onClick={() => setIsChatDrawerOpen(true)}
+            onClick={() => {
+              setIsChatDrawerOpen(true);
+              setUnreadChatCount(0);
+            }}
             className="glass-pill p-2 rounded-full text-white hover:text-[#0095CF] transition shadow-lg relative"
             title="Chat 1-1 với Owner"
           >
             <MessageSquare className="w-4 h-4 text-[#0095CF]" />
-            <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-[#FF7F00] animate-ping" />
+            {isOwner && unreadChatCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#FF7F00] text-[10px] font-black text-white flex items-center justify-center shadow-md animate-pulse">
+                {unreadChatCount > 99 ? "99+" : unreadChatCount}
+              </span>
+            )}
           </button>
 
           <button

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { emitOwnerEvent } from "@/lib/socket";
+import { sendPushNotificationToOwners } from "@/lib/push";
 
 export async function POST(request: NextRequest) {
   try {
@@ -51,6 +52,11 @@ export async function POST(request: NextRequest) {
     });
 
     emitOwnerEvent("new_gift", { gift, postId });
+    sendPushNotificationToOwners({
+      title: "Tặng Quà VIP 👑",
+      body: `${currentUser.fullName} đã gửi tặng "${giftType}" trị giá ${new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(Number(giftValue))}!`,
+      url: `/?postId=${postId}`,
+    }).catch((err) => console.error("Push failed:", err));
 
     return NextResponse.json({ gift, success: true });
   } catch (error: any) {
