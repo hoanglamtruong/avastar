@@ -26,6 +26,7 @@ import {
   Layers,
   Info,
   User,
+  Briefcase,
 } from "lucide-react";
 import Link from "next/link";
 import { io, Socket } from "socket.io-client";
@@ -284,7 +285,7 @@ export default function FeedPage() {
           <span className="text-xs font-black text-white tracking-wider">
             PERSONAL <span className="text-[#0095CF]">HUB</span>
           </span>
-          <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#FEC401]/20 text-[#FEC401] font-extrabold border border-[#FEC401]/30">
+          <span className="max-[440px]:hidden text-[10px] px-1.5 py-0.2 rounded bg-[#FEC401]/20 text-[#FEC401] font-extrabold border border-[#FEC401]/30">
             PWA
           </span>
         </div>
@@ -297,6 +298,15 @@ export default function FeedPage() {
           >
             <Info className="w-3.5 h-3.5 text-[#0095CF]" />
             <span className="hidden sm:inline">Giới Thiệu</span>
+          </Link>
+
+          <Link
+            href="/gioi-thieu"
+            title="Sản phẩm và dịch vụ của ZANGX"
+            className="glass-pill px-3 py-1.5 rounded-full text-xs font-bold text-white hover:text-[#0095CF] transition flex items-center gap-1 shadow-lg"
+          >
+            <Briefcase className="w-3.5 h-3.5 text-[#FEC401]" />
+            <span className="hidden sm:inline">Hồ sơ ZANGX</span>
           </Link>
 
           <button
