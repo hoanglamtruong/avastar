@@ -118,7 +118,7 @@ export function SubpageActionModal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md max-h-[55vh] rounded-t-[24px] sm:rounded-[24px] glass-panel border border-[#D4DBF5]/20 p-4 sm:p-5 shadow-2xl relative bg-[#0B1A2C]/98 overflow-y-auto custom-slim-scroll"
+        className="w-full max-w-md max-h-[55vh] rounded-t-[24px] sm:rounded-[24px] glass-panel border border-[#F4F0E8]/20 p-4 sm:p-5 shadow-2xl relative bg-[#07111F]/98 overflow-y-auto custom-slim-scroll"
         onClick={(e) => e.stopPropagation()}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -140,7 +140,7 @@ export function SubpageActionModal({
               <CheckCircle2 className="w-6 h-6" />
             </div>
             <h3 className="text-base font-bold text-white">Đã Gửi Thành Công!</h3>
-            <p className="text-xs text-[#D4DBF5]/80">
+            <p className="text-xs text-[#F4F0E8]/80">
               Owner đã nhận được thông báo tức thì và sẽ phản hồi qua Chatbox 1-1.
             </p>
           </div>
@@ -151,7 +151,7 @@ export function SubpageActionModal({
             </h3>
 
             {payload?.productName && (
-              <div className="p-2.5 rounded-xl bg-[#183A60]/60 border border-[#D4DBF5]/10 text-xs text-[#D4DBF5]">
+              <div className="p-2.5 rounded-xl bg-[#102A43]/60 border border-[#F4F0E8]/10 text-xs text-[#F4F0E8]">
                 <span className="text-white/60">Sản phẩm:</span>{" "}
                 <strong className="text-white">{payload.productName}</strong>
               </div>
@@ -159,7 +159,7 @@ export function SubpageActionModal({
 
             <div className="space-y-2 text-xs">
               <div>
-                <label className="block text-[#D4DBF5]/70 font-semibold mb-0.5 text-[11px]">
+                <label className="block text-[#F4F0E8]/70 font-semibold mb-0.5 text-[11px]">
                   Họ và tên *
                 </label>
                 <input
@@ -168,12 +168,12 @@ export function SubpageActionModal({
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Nguyễn Văn A"
-                  className="w-full px-3 py-2 rounded-xl bg-[#0B1A2C] border border-[#D4DBF5]/20 text-xs text-white focus:outline-none focus:border-[#0095CF]"
+                  className="w-full px-3 py-2 rounded-xl bg-[#07111F] border border-[#F4F0E8]/20 text-xs text-white focus:outline-none focus:border-[#C9AA72]"
                 />
               </div>
 
               <div>
-                <label className="block text-[#D4DBF5]/70 font-semibold mb-0.5 text-[11px]">
+                <label className="block text-[#F4F0E8]/70 font-semibold mb-0.5 text-[11px]">
                   Số điện thoại / Zalo *
                 </label>
                 <input
@@ -182,12 +182,12 @@ export function SubpageActionModal({
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="0901234567"
-                  className="w-full px-3 py-2 rounded-xl bg-[#0B1A2C] border border-[#D4DBF5]/20 text-xs text-white focus:outline-none focus:border-[#0095CF]"
+                  className="w-full px-3 py-2 rounded-xl bg-[#07111F] border border-[#F4F0E8]/20 text-xs text-white focus:outline-none focus:border-[#C9AA72]"
                 />
               </div>
 
               <div>
-                <label className="block text-[#D4DBF5]/70 font-semibold mb-0.5 text-[11px]">
+                <label className="block text-[#F4F0E8]/70 font-semibold mb-0.5 text-[11px]">
                   Ghi chú thêm / Portfolio
                 </label>
                 <textarea
@@ -195,7 +195,7 @@ export function SubpageActionModal({
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   placeholder="Thông điệp thêm..."
-                  className="w-full px-3 py-2 rounded-xl bg-[#0B1A2C] border border-[#D4DBF5]/20 text-xs text-white focus:outline-none focus:border-[#0095CF] resize-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#07111F] border border-[#F4F0E8]/20 text-xs text-white focus:outline-none focus:border-[#C9AA72] resize-none"
                 />
               </div>
             </div>
@@ -203,7 +203,7 @@ export function SubpageActionModal({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-2.5 rounded-xl font-bold text-xs text-darkBg bg-gradient-to-r from-[#FF7F00] to-[#FEC401] hover:opacity-95 transition shadow-lg flex items-center justify-center gap-2"
+              className="w-full py-2.5 rounded-xl font-bold text-xs text-darkBg bg-gradient-to-r from-[#8B6F3F] to-[#C9AA72] hover:opacity-95 transition shadow-lg flex items-center justify-center gap-2"
             >
               <Send className="w-3.5 h-3.5 text-darkBg" />
               <span>{isSubmitting ? "Đang xử lý..." : "Xác Nhận Gửi"}</span>

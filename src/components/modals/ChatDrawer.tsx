@@ -124,7 +124,7 @@ export function ChatDrawer({ isOpen, onClose, onOpenAuth }: ChatDrawerProps) {
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg h-[55vh] max-h-[55vh] rounded-t-[28px] sm:rounded-[28px] glass-panel border border-[#0095CF]/30 p-4 sm:p-5 flex flex-col justify-between shadow-2xl relative bg-[#0B1A2C]/98"
+        className="w-full max-w-lg h-[55vh] max-h-[55vh] rounded-t-[28px] sm:rounded-[28px] glass-panel border border-[#C9AA72]/30 p-4 sm:p-5 flex flex-col justify-between shadow-2xl relative bg-[#07111F]/98"
         onClick={(e) => e.stopPropagation()}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -134,9 +134,9 @@ export function ChatDrawer({ isOpen, onClose, onOpenAuth }: ChatDrawerProps) {
         <div className="w-10 h-1 rounded-full bg-white/30 mx-auto -mt-1 mb-2 shrink-0 sm:hidden cursor-pointer" onClick={onClose} />
 
         {/* Header */}
-        <div className="pb-2 border-b border-[#D4DBF5]/15 flex items-center justify-between shrink-0">
+        <div className="pb-2 border-b border-[#F4F0E8]/15 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-[#0095CF]/20 text-[#0095CF] flex items-center justify-center border border-[#0095CF]/40">
+            <div className="w-7 h-7 rounded-lg bg-[#C9AA72]/20 text-[#C9AA72] flex items-center justify-center border border-[#C9AA72]/40">
               <MessageSquare className="w-4 h-4" />
             </div>
             <div>
@@ -144,7 +144,7 @@ export function ChatDrawer({ isOpen, onClose, onOpenAuth }: ChatDrawerProps) {
                 Phòng Chat Nội Bộ 1-1
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
               </h3>
-              <p className="text-[10px] text-[#0095CF] font-semibold">
+              <p className="text-[10px] text-[#C9AA72] font-semibold">
                 {isOwner ? "Bảng điều khiển Owner" : "Trò chuyện trực tiếp với Zangx"}
               </p>
             </div>
@@ -159,16 +159,16 @@ export function ChatDrawer({ isOpen, onClose, onOpenAuth }: ChatDrawerProps) {
 
         {/* Owner Conversations List Tab */}
         {isOwner && allConversations.length > 0 && (
-          <div className="py-1.5 flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0 border-b border-[#D4DBF5]/10">
-            <span className="text-[9px] text-[#D4DBF5]/60 uppercase font-bold shrink-0">Hội thoại:</span>
+          <div className="py-1.5 flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0 border-b border-[#F4F0E8]/10">
+            <span className="text-[9px] text-[#F4F0E8]/60 uppercase font-bold shrink-0">Hội thoại:</span>
             {allConversations.map((conv) => (
               <button
                 key={conv.id}
                 onClick={() => setSelectedMemberId(conv.memberId)}
                 className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold shrink-0 transition flex items-center gap-1 ${
                   selectedMemberId === conv.memberId
-                    ? "bg-[#0095CF] text-white"
-                    : "bg-[#183A60] text-[#D4DBF5]/80 hover:bg-[#183A60]/80"
+                    ? "bg-[#C9AA72] text-white"
+                    : "bg-[#102A43] text-[#F4F0E8]/80 hover:bg-[#102A43]/80"
                 }`}
               >
                 <img
@@ -186,23 +186,23 @@ export function ChatDrawer({ isOpen, onClose, onOpenAuth }: ChatDrawerProps) {
         <div className="flex-1 overflow-y-auto custom-slim-scroll py-2 space-y-2 pr-1">
           {!user ? (
             <div className="flex flex-col items-center justify-center h-full text-center p-3 space-y-1.5">
-              <p className="text-xs text-[#D4DBF5]/70">Vui lòng đăng nhập để sử dụng chatbox 1-1.</p>
+              <p className="text-xs text-[#F4F0E8]/70">Vui lòng đăng nhập để sử dụng chatbox 1-1.</p>
               <button
                 onClick={onOpenAuth}
-                className="px-4 py-1.5 rounded-xl text-xs font-bold text-darkBg bg-[#0095CF]"
+                className="px-4 py-1.5 rounded-xl text-xs font-bold text-darkBg bg-[#C9AA72]"
               >
                 Đăng Nhập
               </button>
             </div>
           ) : conversation?.messages?.length === 0 ? (
-            <div className="text-center py-8 text-xs text-[#D4DBF5]/60">
+            <div className="text-center py-8 text-xs text-[#F4F0E8]/60">
               Bắt đầu trò chuyện trực tiếp với Owner ngay tại đây!
             </div>
           ) : (
             conversation?.messages?.map((msg: any) => {
               if (msg.isSystemEvent) {
                 return (
-                  <div key={msg.id} className="p-2 rounded-xl bg-[#183A60]/80 border border-[#FEC401]/30 text-center text-[11px] text-[#FEC401]">
+                  <div key={msg.id} className="p-2 rounded-xl bg-[#102A43]/80 border border-[#C9AA72]/30 text-center text-[11px] text-[#C9AA72]">
                     <span className="font-semibold">{msg.content}</span>
                   </div>
                 );
@@ -213,18 +213,18 @@ export function ChatDrawer({ isOpen, onClose, onOpenAuth }: ChatDrawerProps) {
               return (
                 <div key={msg.id} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
                   <div className="flex items-center gap-1 mb-0.5 px-1">
-                    <span className="text-[9px] font-bold text-[#D4DBF5]/80">
+                    <span className="text-[9px] font-bold text-[#F4F0E8]/80">
                       {isMe ? "Bạn" : msg.sender?.fullName}
                     </span>
-                    <span className="text-[8px] text-[#D4DBF5]/50">
+                    <span className="text-[8px] text-[#F4F0E8]/50">
                       {formatRelativeTime(msg.createdAt)}
                     </span>
                   </div>
                   <div
                     className={`max-w-[80%] p-2.5 rounded-2xl text-xs leading-relaxed ${
                       isMe
-                        ? "bg-[#0095CF] text-white rounded-tr-sm"
-                        : "bg-[#183A60] border border-[#D4DBF5]/20 text-white rounded-tl-sm"
+                        ? "bg-[#C9AA72] text-white rounded-tr-sm"
+                        : "bg-[#102A43] border border-[#F4F0E8]/20 text-white rounded-tl-sm"
                     }`}
                   >
                     {msg.content}
@@ -238,18 +238,18 @@ export function ChatDrawer({ isOpen, onClose, onOpenAuth }: ChatDrawerProps) {
 
         {/* Input Bar */}
         {user && (
-          <form onSubmit={handleSendMessage} className="flex items-center gap-2 pt-2 border-t border-[#D4DBF5]/15 shrink-0">
+          <form onSubmit={handleSendMessage} className="flex items-center gap-2 pt-2 border-t border-[#F4F0E8]/15 shrink-0">
             <input
               type="text"
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="Nhập tin nhắn trực tiếp..."
-              className="flex-1 px-3 py-2 rounded-xl bg-[#0B1A2C] border border-[#D4DBF5]/20 text-xs text-white focus:outline-none focus:border-[#0095CF]"
+              className="flex-1 px-3 py-2 rounded-xl bg-[#07111F] border border-[#F4F0E8]/20 text-xs text-white focus:outline-none focus:border-[#C9AA72]"
             />
             <button
               type="submit"
               disabled={isSending || !content.trim()}
-              className="p-2.5 rounded-xl bg-[#0095CF] hover:bg-[#0095CF]/90 text-white disabled:opacity-50 transition"
+              className="p-2.5 rounded-xl bg-[#C9AA72] hover:bg-[#C9AA72]/90 text-white disabled:opacity-50 transition"
             >
               <Send className="w-3.5 h-3.5" />
             </button>

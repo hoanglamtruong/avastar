@@ -4,7 +4,7 @@ services:
     image: avastar-app:latest
     container_name: avastar
     environment:
-      DATABASE_URL: postgresql://zavastar:zavastar_dev_pw@zavastar_postgres:5432/zavastar
+      DATABASE_URL: postgresql://zavastar:zavastar_dev_pw@zos-postgres:5432/zavastar
       JWT_SECRET: ${JWT_SECRET:-avastar_jwt_secret_key_super_secure_2026_personalhub}
       NODE_ENV: production
       PORT: 3000

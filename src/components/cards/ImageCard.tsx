@@ -16,7 +16,7 @@ export function ImageCard({ card }: ImageCardProps) {
   return (
     <>
       <div
-        className="relative w-full h-full rounded-[22px] overflow-hidden group cursor-pointer select-none bg-[#0B1A2C]/60 flex items-center justify-center"
+        className="relative w-full h-full rounded-[22px] overflow-hidden group cursor-pointer select-none bg-[#07111F]/60 flex items-center justify-center"
         onClick={() => setIsFullscreen(true)}
       >
         <img
@@ -27,12 +27,12 @@ export function ImageCard({ card }: ImageCardProps) {
         />
 
         {/* Gradient shadow for text */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0B1A2C]/90 via-transparent to-black/30 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#07111F]/90 via-transparent to-black/30 pointer-events-none" />
 
         {/* Badge & Title */}
         <div className="absolute top-4 left-4 z-10 flex flex-wrap gap-2">
           {badge && (
-            <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#0095CF]/80 text-white backdrop-blur-md border border-[#D4DBF5]/20 shadow-lg">
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#C9AA72]/80 text-white backdrop-blur-md border border-[#F4F0E8]/20 shadow-lg">
               {badge}
             </span>
           )}
@@ -42,8 +42,8 @@ export function ImageCard({ card }: ImageCardProps) {
           <h3 className="text-lg font-bold text-white drop-shadow-md line-clamp-2">
             {title}
           </h3>
-          <p className="text-xs text-[#D4DBF5]/80 mt-1 flex items-center gap-1.5 font-medium">
-            <Maximize2 className="w-3.5 h-3.5 text-[#0095CF]" /> Chạm để phóng to ảnh
+          <p className="text-xs text-[#F4F0E8]/80 mt-1 flex items-center gap-1.5 font-medium">
+            <Maximize2 className="w-3.5 h-3.5 text-[#C9AA72]" /> Chạm để phóng to ảnh
           </p>
         </div>
       </div>

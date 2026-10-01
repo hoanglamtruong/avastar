@@ -83,8 +83,8 @@ export function CreatePostModal({ isOpen, onClose, onCreated }: CreatePostModalP
 
   return (
     <div className="fixed inset-0 z-[1000] bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div className="w-full max-w-lg h-[90vh] sm:h-auto sm:max-h-[85vh] rounded-t-[28px] sm:rounded-[28px] glass-panel border border-[#0095CF]/30 p-5 flex flex-col shadow-2xl bg-[#0B1A2C]/98 overflow-hidden">
-        <div className="flex items-center justify-between pb-3 border-b border-[#D4DBF5]/15 shrink-0">
+      <div className="w-full max-w-lg h-[90vh] sm:h-auto sm:max-h-[85vh] rounded-t-[28px] sm:rounded-[28px] glass-panel border border-[#C9AA72]/30 p-5 flex flex-col shadow-2xl bg-[#07111F]/98 overflow-hidden">
+        <div className="flex items-center justify-between pb-3 border-b border-[#F4F0E8]/15 shrink-0">
           <h3 className="text-sm font-extrabold text-white">Tạo Bài Viết Mới</h3>
           <button onClick={onClose} className="p-1.5 rounded-full hover:bg-white/10 text-white/70 hover:text-white transition">
             <X className="w-5 h-5" />
@@ -92,11 +92,11 @@ export function CreatePostModal({ isOpen, onClose, onCreated }: CreatePostModalP
         </div>
         <div className="flex-1 overflow-y-auto custom-slim-scroll py-3 space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-[#D4DBF5]/80 mb-1.5">Danh mục</label>
+            <label className="block text-xs font-semibold text-[#F4F0E8]/80 mb-1.5">Danh mục</label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value as PostCategory)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-[#183A60] border border-[#D4DBF5]/20 text-sm text-white focus:outline-none focus:border-[#0095CF]"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-[#102A43] border border-[#F4F0E8]/20 text-sm text-white focus:outline-none focus:border-[#C9AA72]"
             >
               {CATEGORIES.map((c) => (
                 <option key={c} value={c}>{c}</option>
@@ -105,34 +105,34 @@ export function CreatePostModal({ isOpen, onClose, onCreated }: CreatePostModalP
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#D4DBF5]/80 mb-1.5">Caption</label>
+            <label className="block text-xs font-semibold text-[#F4F0E8]/80 mb-1.5">Caption</label>
             <textarea
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
               rows={2}
               placeholder="Nội dung mô tả bài viết..."
-              className="w-full px-3.5 py-2.5 rounded-xl bg-[#0B1A2C] border border-[#D4DBF5]/20 text-sm text-white placeholder:text-[#D4DBF5]/40 focus:outline-none focus:border-[#0095CF]"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-[#07111F] border border-[#F4F0E8]/20 text-sm text-white placeholder:text-[#F4F0E8]/40 focus:outline-none focus:border-[#C9AA72]"
             />
           </div>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-[#D4DBF5]/80">Thẻ nội dung (Cards)</label>
+              <label className="text-xs font-semibold text-[#F4F0E8]/80">Thẻ nội dung (Cards)</label>
               <button
                 type="button"
                 onClick={addCard}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#0095CF]/20 text-[#0095CF] border border-[#0095CF]/30 hover:bg-[#0095CF]/30 transition"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#C9AA72]/20 text-[#C9AA72] border border-[#C9AA72]/30 hover:bg-[#C9AA72]/30 transition"
               >
                 <Plus className="w-3.5 h-3.5" /> Thêm thẻ
               </button>
             </div>
 
             {cards.map((card, idx) => (
-              <div key={idx} className="p-3 rounded-xl bg-[#183A60]/60 border border-[#D4DBF5]/15 space-y-2">
+              <div key={idx} className="p-3 rounded-xl bg-[#102A43]/60 border border-[#F4F0E8]/15 space-y-2">
                 <div className="flex items-center justify-between gap-2">
                   <select
                     value={card.cardType}
                     onChange={(e) => updateCard(idx, { cardType: e.target.value as CardType })}
-                    className="flex-1 px-2.5 py-1.5 rounded-lg bg-[#0B1A2C] border border-[#D4DBF5]/20 text-xs text-white focus:outline-none focus:border-[#0095CF]"
+                    className="flex-1 px-2.5 py-1.5 rounded-lg bg-[#07111F] border border-[#F4F0E8]/20 text-xs text-white focus:outline-none focus:border-[#C9AA72]"
                   >
                     {CARD_TYPES.map((t) => (
                       <option key={t} value={t}>{t}</option>
@@ -154,7 +154,7 @@ export function CreatePostModal({ isOpen, onClose, onCreated }: CreatePostModalP
                     value={card.mediaUrl}
                     onChange={(e) => updateCard(idx, { mediaUrl: e.target.value })}
                     placeholder="URL ảnh/video..."
-                    className="w-full px-2.5 py-2 rounded-lg bg-[#0B1A2C] border border-[#D4DBF5]/20 text-xs text-white placeholder:text-[#D4DBF5]/40 focus:outline-none focus:border-[#0095CF]"
+                    className="w-full px-2.5 py-2 rounded-lg bg-[#07111F] border border-[#F4F0E8]/20 text-xs text-white placeholder:text-[#F4F0E8]/40 focus:outline-none focus:border-[#C9AA72]"
                   />
                 )}
 
@@ -164,7 +164,7 @@ export function CreatePostModal({ isOpen, onClose, onCreated }: CreatePostModalP
                     onChange={(e) => updateCard(idx, { docContent: e.target.value })}
                     rows={3}
                     placeholder="Nội dung HTML thô..."
-                    className="w-full px-2.5 py-2 rounded-lg bg-[#0B1A2C] border border-[#D4DBF5]/20 text-xs text-white placeholder:text-[#D4DBF5]/40 focus:outline-none focus:border-[#0095CF] font-mono"
+                    className="w-full px-2.5 py-2 rounded-lg bg-[#07111F] border border-[#F4F0E8]/20 text-xs text-white placeholder:text-[#F4F0E8]/40 focus:outline-none focus:border-[#C9AA72] font-mono"
                   />
                 )}
 
@@ -174,7 +174,7 @@ export function CreatePostModal({ isOpen, onClose, onCreated }: CreatePostModalP
                     onChange={(e) => updateCard(idx, { metadataText: e.target.value })}
                     rows={3}
                     placeholder='Metadata JSON, vd: {"title":"..."}'
-                    className="w-full px-2.5 py-2 rounded-lg bg-[#0B1A2C] border border-[#D4DBF5]/20 text-xs text-white placeholder:text-[#D4DBF5]/40 focus:outline-none focus:border-[#0095CF] font-mono"
+                    className="w-full px-2.5 py-2 rounded-lg bg-[#07111F] border border-[#F4F0E8]/20 text-xs text-white placeholder:text-[#F4F0E8]/40 focus:outline-none focus:border-[#C9AA72] font-mono"
                   />
                 )}
               </div>
@@ -185,7 +185,7 @@ export function CreatePostModal({ isOpen, onClose, onCreated }: CreatePostModalP
         <button
           onClick={handleSubmit}
           disabled={isSending}
-          className="w-full mt-3 py-3.5 rounded-xl font-extrabold text-sm text-white bg-gradient-to-r from-[#0095CF] to-[#183A60] hover:opacity-95 shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2 shrink-0 disabled:opacity-50"
+          className="w-full mt-3 py-3.5 rounded-xl font-extrabold text-sm text-white bg-gradient-to-r from-[#C9AA72] to-[#102A43] hover:opacity-95 shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2 shrink-0 disabled:opacity-50"
         >
           <Send className="w-4 h-4" />
           <span>{isSending ? "Đang đăng..." : "Đăng Bài Viết"}</span>

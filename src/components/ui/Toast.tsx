@@ -38,19 +38,19 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             key={toast.id}
             className={`pointer-events-auto flex items-center justify-between p-3.5 rounded-2xl backdrop-blur-xl border text-sm font-medium shadow-2xl transition-all animate-float-up ${
               toast.type === "success"
-                ? "bg-[#183A60]/95 border-emerald-500/40 text-emerald-300"
+                ? "bg-[#102A43]/95 border-emerald-500/40 text-emerald-300"
                 : toast.type === "error"
-                ? "bg-[#183A60]/95 border-rose-500/40 text-rose-300"
+                ? "bg-[#102A43]/95 border-rose-500/40 text-rose-300"
                 : toast.type === "gold"
-                ? "bg-[#183A60]/95 border-[#FEC401]/50 text-[#FEC401] glass-gold-glow"
-                : "bg-[#183A60]/95 border-[#0095CF]/40 text-[#D4DBF5]"
+                ? "bg-[#102A43]/95 border-[#C9AA72]/50 text-[#C9AA72] glass-gold-glow"
+                : "bg-[#102A43]/95 border-[#C9AA72]/40 text-[#F4F0E8]"
             }`}
           >
             <div className="flex items-center gap-2.5">
               {toast.type === "success" && <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />}
               {toast.type === "error" && <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />}
               {toast.type === "gold" && <span className="text-lg">👑</span>}
-              {toast.type === "info" && <Info className="w-5 h-5 text-[#0095CF] shrink-0" />}
+              {toast.type === "info" && <Info className="w-5 h-5 text-[#C9AA72] shrink-0" />}
               <span>{toast.message}</span>
             </div>
             <button

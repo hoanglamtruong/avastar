@@ -1,23 +1,29 @@
 "use client";
 
 import React, { useRef, useState } from "react";
-import { Gift, MessageSquare, Share2, ChevronLeft, ChevronRight } from "lucide-react";
+import Link from "next/link";
+import { Heart, Share2, ChevronLeft, ChevronRight, Info, Briefcase, Package, FolderKanban } from "lucide-react";
 
 interface ActionRailProps {
   giftValue?: number;
-  commentCount?: number;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onGift: () => void;
-  onComment: () => void;
   onShare: () => void;
 }
 
+const ZANGX_LINKS = [
+  { href: "/gioi-thieu", label: "Về Zangx", Icon: Info },
+  { href: "/dich-vu", label: "Dịch vụ", Icon: Briefcase },
+  { href: "/san-pham", label: "Sản phẩm", Icon: Package },
+  { href: "/du-an", label: "Dự án", Icon: FolderKanban },
+] as const;
+
 /**
- * Cột nút thao tác của khách (C2O: tặng quà, bình luận riêng; C2C: chia sẻ).
+ * Cột nút thao tác của khách (C2O: donate; C2C: chia sẻ; điều hướng sang 4 trang Zangx).
  * Nằm dọc ở mép phải màn hình, kéo sang phải để thu lại, bấm tay nắm để mở ra.
  */
-export function ActionRail({ giftValue, commentCount, open, onOpenChange, onGift, onComment, onShare }: ActionRailProps) {
+export function ActionRail({ giftValue, open, onOpenChange, onGift, onShare }: ActionRailProps) {
   const startX = useRef<number | null>(null);
   const [dragging, setDragging] = useState(false);
 
@@ -48,7 +54,7 @@ export function ActionRail({ giftValue, commentCount, open, onOpenChange, onGift
         onClick={() => onOpenChange(!open)}
         aria-label={open ? "Thu cột thao tác" : "Mở cột thao tác"}
         aria-expanded={open}
-        className="mb-8 flex h-14 w-6 shrink-0 items-center justify-center rounded-l-xl glass-pill text-white/80 hover:text-[#0095CF] transition"
+        className="mb-8 flex h-14 w-6 shrink-0 items-center justify-center rounded-l-xl glass-pill text-white/80 hover:text-[#C9AA72] transition"
       >
         {open ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
       </button>
@@ -61,7 +67,7 @@ export function ActionRail({ giftValue, commentCount, open, onOpenChange, onGift
           setDragging(false);
         }}
         style={{ touchAction: "pan-y" }}
-        className={`flex flex-col items-center gap-3.5 pl-1 pr-2.5 sm:pr-6 py-3 rounded-l-2xl bg-[#0B1A2C]/70 backdrop-blur-xl border border-r-0 border-[#D4DBF5]/15 shadow-2xl ${
+        className={`flex flex-col items-center gap-3.5 pl-1 pr-2.5 sm:pr-6 py-3 rounded-l-2xl bg-[#07111F]/70 backdrop-blur-xl border border-r-0 border-[#F4F0E8]/15 shadow-2xl ${
           dragging ? "cursor-grabbing" : ""
         }`}
       >
@@ -69,39 +75,42 @@ export function ActionRail({ giftValue, commentCount, open, onOpenChange, onGift
           <button
             type="button"
             onClick={onGift}
-            className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-gradient-to-tr from-[#FEC401] to-[#FF7F00] flex items-center justify-center shadow-2xl glass-gold-glow animate-pulse-gold transform active:scale-90 transition"
-            title="Tặng Quà VIP"
+            className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-gradient-to-tr from-[#C9AA72] to-[#8B6F3F] flex items-center justify-center shadow-2xl glass-gold-glow animate-pulse-gold transform active:scale-90 transition"
+            title="Donate cho chủ trang"
           >
-            <Gift className="w-5 h-5 sm:w-6 sm:h-6 text-[#0B1A2C]" />
+            <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-[#07111F]" />
           </button>
-          <span className="text-[10px] font-black text-[#FEC401] drop-shadow text-center">
-            {giftValue ? `${Math.round(giftValue / 1000)}k` : "Tặng Quà"}
+          <span className="text-[10px] font-black text-[#C9AA72] drop-shadow text-center">
+            {giftValue ? `${Math.round(giftValue / 1000)}k` : "Donate"}
           </span>
         </div>
 
         <div className="flex flex-col items-center gap-1">
           <button
             type="button"
-            onClick={onComment}
-            className="w-11 h-11 sm:w-12 sm:h-12 rounded-full glass-panel text-white flex items-center justify-center hover:text-[#0095CF] hover:border-[#0095CF] shadow-xl transform active:scale-90 transition border border-[#D4DBF5]/20"
-            title="Bình Luận 1-1 Riêng Tư"
-          >
-            <MessageSquare className="w-5 h-5 text-[#0095CF]" />
-          </button>
-          <span className="text-[10px] font-bold text-white drop-shadow text-center">{commentCount || "Bình luận"}</span>
-        </div>
-
-        <div className="flex flex-col items-center gap-1">
-          <button
-            type="button"
             onClick={onShare}
-            className="w-11 h-11 sm:w-12 sm:h-12 rounded-full glass-panel text-white flex items-center justify-center hover:text-[#0095CF] hover:border-[#0095CF] shadow-xl transform active:scale-90 transition border border-[#D4DBF5]/20"
+            className="w-11 h-11 sm:w-12 sm:h-12 rounded-full glass-panel text-white flex items-center justify-center hover:text-[#C9AA72] hover:border-[#C9AA72] shadow-xl transform active:scale-90 transition border border-[#F4F0E8]/20"
             title="Chia sẻ"
           >
             <Share2 className="w-5 h-5" />
           </button>
-          <span className="text-[10px] font-bold text-[#D4DBF5]/80 drop-shadow text-center">Chia sẻ</span>
+          <span className="text-[10px] font-bold text-[#F4F0E8]/80 drop-shadow text-center">Chia sẻ</span>
         </div>
+
+        <div className="w-7 border-t border-[#F4F0E8]/15 my-0.5" aria-hidden="true" />
+
+        {ZANGX_LINKS.map(({ href, label, Icon }) => (
+          <div key={href} className="flex flex-col items-center gap-1">
+            <Link
+              href={href}
+              className="w-11 h-11 sm:w-12 sm:h-12 rounded-full glass-panel text-white flex items-center justify-center hover:text-[#C9AA72] hover:border-[#C9AA72] shadow-xl transform active:scale-90 transition border border-[#F4F0E8]/20"
+              title={label}
+            >
+              <Icon className="w-5 h-5" />
+            </Link>
+            <span className="text-[9px] font-bold text-[#F4F0E8]/70 drop-shadow text-center leading-tight">{label}</span>
+          </div>
+        ))}
       </div>
     </div>
   );

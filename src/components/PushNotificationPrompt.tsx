@@ -101,14 +101,14 @@ export function PushNotificationPrompt() {
 
   return (
     <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm px-4 animate-float-up pointer-events-none">
-      <div className="pointer-events-auto bg-[#183A60]/95 backdrop-blur-xl border border-[#0095CF]/40 rounded-2xl p-3.5 shadow-2xl flex items-center justify-between gap-3 text-xs">
+      <div className="pointer-events-auto bg-[#102A43]/95 backdrop-blur-xl border border-[#C9AA72]/40 rounded-2xl p-3.5 shadow-2xl flex items-center justify-between gap-3 text-xs">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-[#0095CF]/20 text-[#0095CF] flex items-center justify-center shrink-0 border border-[#0095CF]/30">
+          <div className="w-8 h-8 rounded-xl bg-[#C9AA72]/20 text-[#C9AA72] flex items-center justify-center shrink-0 border border-[#C9AA72]/30">
             <Bell className="w-4 h-4" />
           </div>
           <div>
             <p className="font-extrabold text-white">Bật Thông Báo Web Push</p>
-            <p className="text-[11px] text-[#D4DBF5]/80">Nhận thông báo đơn hàng & tin nhắn khi tắt màn hình</p>
+            <p className="text-[11px] text-[#F4F0E8]/80">Nhận thông báo đơn hàng & tin nhắn khi tắt màn hình</p>
           </div>
         </div>
 
@@ -116,7 +116,7 @@ export function PushNotificationPrompt() {
           <button
             onClick={handleSubscribe}
             disabled={isSubscribing}
-            className="px-3 py-1.5 rounded-xl bg-[#0095CF] hover:bg-[#0095CF]/90 text-white font-bold text-[11px] transition shadow-md disabled:opacity-50"
+            className="px-3 py-1.5 rounded-xl bg-[#C9AA72] hover:bg-[#C9AA72]/90 text-white font-bold text-[11px] transition shadow-md disabled:opacity-50"
           >
             {isSubscribing ? "..." : "Bật"}
           </button>

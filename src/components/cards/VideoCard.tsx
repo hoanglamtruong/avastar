@@ -76,16 +76,16 @@ export function VideoCard({ card, isActive }: VideoCardProps) {
       />
 
       {/* Subtle Dark Gradient */}
-      <div className="absolute inset-0 bg-gradient-to-t from-[#0B1A2C]/80 via-transparent to-black/40 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#07111F]/80 via-transparent to-black/40 pointer-events-none" />
 
       {/* Controls Overlay */}
       <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
         <button
           onClick={toggleMute}
-          className="p-2.5 rounded-full bg-[#183A60]/80 backdrop-blur-md border border-[#D4DBF5]/20 text-[#D4DBF5] hover:text-white transition shadow-lg"
+          className="p-2.5 rounded-full bg-[#102A43]/80 backdrop-blur-md border border-[#F4F0E8]/20 text-[#F4F0E8] hover:text-white transition shadow-lg"
           title={isMuted ? "Bật âm thanh" : "Tắt âm thanh"}
         >
-          {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4 text-[#0095CF]" />}
+          {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4 text-[#C9AA72]" />}
         </button>
       </div>
 
@@ -99,8 +99,8 @@ export function VideoCard({ card, isActive }: VideoCardProps) {
       {/* Play/Pause Center Indicator */}
       {!isPlaying && (
         <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
-          <div className="w-14 h-14 rounded-full bg-[#183A60]/80 backdrop-blur-md border border-[#D4DBF5]/30 flex items-center justify-center text-white shadow-2xl">
-            <Play className="w-7 h-7 ml-1 text-[#0095CF]" fill="#0095CF" />
+          <div className="w-14 h-14 rounded-full bg-[#102A43]/80 backdrop-blur-md border border-[#F4F0E8]/30 flex items-center justify-center text-white shadow-2xl">
+            <Play className="w-7 h-7 ml-1 text-[#C9AA72]" fill="#C9AA72" />
           </div>
         </div>
       )}
@@ -108,7 +108,7 @@ export function VideoCard({ card, isActive }: VideoCardProps) {
       {/* Progress Timeline */}
       <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-white/20 z-20">
         <div
-          className="h-full bg-gradient-to-r from-[#0095CF] to-[#FF7F00] transition-all duration-100"
+          className="h-full bg-gradient-to-r from-[#C9AA72] to-[#8B6F3F] transition-all duration-100"
           style={{ width: `${progress}%` }}
         />
       </div>

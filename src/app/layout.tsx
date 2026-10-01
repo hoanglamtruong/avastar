@@ -21,7 +21,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: "cover",
-  themeColor: "#183A60",
+  themeColor: "#102A43",
 };
 
 export default function RootLayout({
@@ -35,14 +35,16 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Playfair+Display:wght@500;600;700&display=swap"
           rel="stylesheet"
         />
       </head>
-      <body className="bg-[#0B1A2C] text-[#D4DBF5] antialiased overflow-hidden min-h-[100dvh]">
+      <body className="bg-[#07111F] text-[#F4F0E8] antialiased overflow-hidden min-h-[100dvh]">
         <AuthProvider>
-          <ToastProvider>{children}</ToastProvider>
-          <CreatePostFab />
+          <ToastProvider>
+            {children}
+            <CreatePostFab />
+          </ToastProvider>
         </AuthProvider>
         <script
           dangerouslySetInnerHTML={{

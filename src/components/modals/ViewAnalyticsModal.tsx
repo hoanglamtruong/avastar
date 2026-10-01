@@ -61,7 +61,7 @@ export function ViewAnalyticsModal({ isOpen, onClose, postId }: ViewAnalyticsMod
       onClick={onClose}
     >
       <div
-        className="w-full max-w-xl h-[55vh] max-h-[55vh] rounded-t-[28px] sm:rounded-[28px] glass-panel border border-[#0095CF]/30 p-4 sm:p-5 flex flex-col justify-between shadow-2xl relative bg-[#0B1A2C]/98 overflow-hidden"
+        className="w-full max-w-xl h-[55vh] max-h-[55vh] rounded-t-[28px] sm:rounded-[28px] glass-panel border border-[#C9AA72]/30 p-4 sm:p-5 flex flex-col justify-between shadow-2xl relative bg-[#07111F]/98 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -71,14 +71,14 @@ export function ViewAnalyticsModal({ isOpen, onClose, postId }: ViewAnalyticsMod
         <div className="w-10 h-1 rounded-full bg-white/30 mx-auto -mt-1 mb-2 shrink-0 sm:hidden cursor-pointer" onClick={onClose} />
 
         {/* Header */}
-        <div className="pb-2 border-b border-[#D4DBF5]/15 flex items-center justify-between shrink-0">
+        <div className="pb-2 border-b border-[#F4F0E8]/15 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-[#0095CF]/20 text-[#0095CF] flex items-center justify-center border border-[#0095CF]/40">
+            <div className="w-8 h-8 rounded-xl bg-[#C9AA72]/20 text-[#C9AA72] flex items-center justify-center border border-[#C9AA72]/40">
               <Eye className="w-4 h-4" />
             </div>
             <div>
               <h3 className="text-xs sm:text-sm font-extrabold text-white">Owner View Analytics</h3>
-              <p className="text-[10px] text-[#0095CF] font-semibold">Báo cáo lượt xem & hành vi</p>
+              <p className="text-[10px] text-[#C9AA72] font-semibold">Báo cáo lượt xem & hành vi</p>
             </div>
           </div>
           <button
@@ -92,7 +92,7 @@ export function ViewAnalyticsModal({ isOpen, onClose, postId }: ViewAnalyticsMod
         {/* Content Body */}
         <div className="flex-1 overflow-y-auto custom-slim-scroll py-2 space-y-3 pr-1">
           {isLoading ? (
-            <div className="text-center py-8 text-xs text-[#D4DBF5]/60">
+            <div className="text-center py-8 text-xs text-[#F4F0E8]/60">
               Đang tổng hợp dữ liệu thời gian thực...
             </div>
           ) : data?.error ? (
@@ -104,32 +104,32 @@ export function ViewAnalyticsModal({ isOpen, onClose, postId }: ViewAnalyticsMod
             <>
               {/* Metric Summary Tiles */}
               <div className="grid grid-cols-3 gap-2">
-                <div className="p-2 rounded-xl bg-[#183A60]/80 border border-[#D4DBF5]/15 text-center">
+                <div className="p-2 rounded-xl bg-[#102A43]/80 border border-[#F4F0E8]/15 text-center">
                   <span className="block text-base font-black text-white">{data?.totalViews || 0}</span>
-                  <span className="text-[9px] uppercase font-bold text-[#D4DBF5]/70">Lượt Xem</span>
+                  <span className="text-[9px] uppercase font-bold text-[#F4F0E8]/70">Lượt Xem</span>
                 </div>
-                <div className="p-2 rounded-xl bg-[#183A60]/80 border border-[#0095CF]/30 text-center">
-                  <span className="block text-base font-black text-[#0095CF]">
+                <div className="p-2 rounded-xl bg-[#102A43]/80 border border-[#C9AA72]/30 text-center">
+                  <span className="block text-base font-black text-[#C9AA72]">
                     {data?.avgDuration || 0}s
                   </span>
-                  <span className="text-[9px] uppercase font-bold text-[#0095CF]/90">Thời Lượng TB</span>
+                  <span className="text-[9px] uppercase font-bold text-[#C9AA72]/90">Thời Lượng TB</span>
                 </div>
-                <div className="p-2 rounded-xl bg-[#183A60]/80 border border-[#FEC401]/30 text-center">
-                  <span className="block text-xs font-black text-[#FEC401] truncate mt-0.5">
+                <div className="p-2 rounded-xl bg-[#102A43]/80 border border-[#C9AA72]/30 text-center">
+                  <span className="block text-xs font-black text-[#C9AA72] truncate mt-0.5">
                     {formatCurrency(data?.totalGiftsValue || 0)}
                   </span>
-                  <span className="text-[9px] uppercase font-bold text-[#FEC401]/90">Quà VIP</span>
+                  <span className="text-[9px] uppercase font-bold text-[#C9AA72]/90">Quà VIP</span>
                 </div>
               </div>
 
               {/* Viewers Detail List */}
               <div className="space-y-1.5">
-                <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#D4DBF5]/80 flex items-center gap-1">
-                  <Clock className="w-3 h-3 text-[#0095CF]" /> Người Xem & Thời Gian Dừng Thẻ
+                <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#F4F0E8]/80 flex items-center gap-1">
+                  <Clock className="w-3 h-3 text-[#C9AA72]" /> Người Xem & Thời Gian Dừng Thẻ
                 </h4>
 
                 {data?.views?.length === 0 ? (
-                  <p className="text-xs text-[#D4DBF5]/50 py-3 text-center">Chưa có dữ liệu lượt xem chi tiết.</p>
+                  <p className="text-xs text-[#F4F0E8]/50 py-3 text-center">Chưa có dữ liệu lượt xem chi tiết.</p>
                 ) : (
                   data?.views?.map((v: any) => {
                     const isMember = !!v.user;
@@ -138,32 +138,32 @@ export function ViewAnalyticsModal({ isOpen, onClose, postId }: ViewAnalyticsMod
                     return (
                       <div
                         key={v.id}
-                        className="p-2.5 rounded-xl bg-[#183A60]/50 border border-[#D4DBF5]/10 space-y-1.5 text-xs"
+                        className="p-2.5 rounded-xl bg-[#102A43]/50 border border-[#F4F0E8]/10 space-y-1.5 text-xs"
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-1.5">
                             <img
                               src={v.user?.avatarUrl || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100"}
-                              className="w-6 h-6 rounded-full object-cover border border-[#D4DBF5]/20"
+                              className="w-6 h-6 rounded-full object-cover border border-[#F4F0E8]/20"
                               alt=""
                             />
                             <div>
                               <p className="font-bold text-white text-[11px] flex items-center gap-1">
                                 {v.user?.fullName || "Khách Ẩn Danh"}
                                 {isMember && (
-                                  <span className="px-1 py-0.1 rounded text-[8px] font-bold bg-[#0095CF]/20 text-[#0095CF] border border-[#0095CF]/30">
+                                  <span className="px-1 py-0.1 rounded text-[8px] font-bold bg-[#C9AA72]/20 text-[#C9AA72] border border-[#C9AA72]/30">
                                     VIP
                                   </span>
                                 )}
                               </p>
-                              <p className="text-[9px] text-[#D4DBF5]/60 flex items-center gap-1">
+                              <p className="text-[9px] text-[#F4F0E8]/60 flex items-center gap-1">
                                 {isMobile ? <Smartphone className="w-2.5 h-2.5" /> : <Laptop className="w-2.5 h-2.5" />}
                                 <span>{v.ipAddress}</span> · <span>{formatRelativeTime(v.viewedAt)}</span>
                               </p>
                             </div>
                           </div>
                           <div className="text-right">
-                            <span className="px-1.5 py-0.5 rounded bg-[#0B1A2C] text-[#FEC401] font-extrabold text-[10px] border border-[#FEC401]/20">
+                            <span className="px-1.5 py-0.5 rounded bg-[#07111F] text-[#C9AA72] font-extrabold text-[10px] border border-[#C9AA72]/20">
                               ⏱️ {v.watchDurationSeconds || 0}s
                             </span>
                           </div>
@@ -171,11 +171,11 @@ export function ViewAnalyticsModal({ isOpen, onClose, postId }: ViewAnalyticsMod
 
                         {/* Cards viewed breakdown */}
                         {v.cardsViewed && v.cardsViewed.length > 0 && (
-                          <div className="pt-1 border-t border-[#D4DBF5]/10 flex flex-wrap gap-1">
+                          <div className="pt-1 border-t border-[#F4F0E8]/10 flex flex-wrap gap-1">
                             {v.cardsViewed.map((c: any, idx: number) => (
                               <span
                                 key={idx}
-                                className="px-1.5 py-0.2 rounded text-[9px] bg-[#0B1A2C]/80 text-[#D4DBF5]/90 border border-[#D4DBF5]/15"
+                                className="px-1.5 py-0.2 rounded text-[9px] bg-[#07111F]/80 text-[#F4F0E8]/90 border border-[#F4F0E8]/15"
                               >
                                 #{c.cardIndex + 1} ({c.cardType}): <strong>{c.durationSeconds}s</strong>
                               </span>
@@ -192,7 +192,7 @@ export function ViewAnalyticsModal({ isOpen, onClose, postId }: ViewAnalyticsMod
         </div>
 
         {/* Footer */}
-        <div className="pt-2 border-t border-[#D4DBF5]/15 text-center text-[10px] text-[#D4DBF5]/60 shrink-0">
+        <div className="pt-2 border-t border-[#F4F0E8]/15 text-center text-[10px] text-[#F4F0E8]/60 shrink-0">
           Báo cáo thống kê dành riêng cho tài khoản Owner.
         </div>
       </div>

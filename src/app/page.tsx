@@ -7,7 +7,6 @@ import { VideoCard } from "@/components/cards/VideoCard";
 import { DocCard } from "@/components/cards/DocCard";
 import { SubpageCard } from "@/components/cards/SubpageCard";
 import { GiftModal } from "@/components/modals/GiftModal";
-import { CommentDrawer } from "@/components/modals/CommentDrawer";
 import { ViewAnalyticsModal } from "@/components/modals/ViewAnalyticsModal";
 import { AuthModal } from "@/components/modals/AuthModal";
 import { ActionRail } from "@/components/hub/ActionRail";
@@ -16,7 +15,6 @@ import { SubpageActionModal } from "@/components/modals/SubpageActionModal";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/components/ui/Toast";
 import {
-  Gift,
   MessageSquare,
   Share2,
   Eye,
@@ -44,7 +42,6 @@ export default function FeedPage() {
   
   // Modals & Drawers state
   const [isGiftModalOpen, setIsGiftModalOpen] = useState(false);
-  const [isCommentDrawerOpen, setIsCommentDrawerOpen] = useState(false);
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isChatDrawerOpen, setIsChatDrawerOpen] = useState(false);
@@ -136,6 +133,23 @@ export default function FeedPage() {
       window.history.replaceState(null, "", window.location.pathname);
     }
   }, []);
+
+  // Mở đúng bài viết được chia sẻ qua ?post=<id> (chờ posts tải xong, chỉ chạy 1 lần)
+  const didDeepLinkToPost = useRef(false);
+  useEffect(() => {
+    if (didDeepLinkToPost.current || posts.length === 0) return;
+    const params = new URLSearchParams(window.location.search);
+    const postId = params.get("post");
+    if (postId) {
+      const idx = posts.findIndex((p) => p.id === postId);
+      if (idx !== -1) {
+        setActivePostIndex(idx);
+        requestAnimationFrame(() => scrollToPost(idx));
+      }
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+    didDeepLinkToPost.current = true;
+  }, [posts]);
 
   const activePost = posts[activePostIndex];
   const currentCardIndex = activePost ? (activeCardIndices[activePost.id] || 0) : 0;
@@ -239,6 +253,32 @@ export default function FeedPage() {
     });
   };
 
+  // Sao chép liên kết vào clipboard, có phương án dự phòng khi Clipboard API
+  // không khả dụng (HTTP không bảo mật, trình duyệt chặn quyền, v.v.)
+  const copyLink = (url: string) => {
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard
+        .writeText(url)
+        .then(() => showToast("Đã sao chép liên kết bài viết vào clipboard!", "success"))
+        .catch(() => showToast("Không sao chép được, hãy chép liên kết trên thanh địa chỉ", "error"));
+      return;
+    }
+    try {
+      const textarea = document.createElement("textarea");
+      textarea.value = url;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+      showToast("Đã sao chép liên kết bài viết vào clipboard!", "success");
+    } catch {
+      showToast("Không sao chép được, hãy chép liên kết trên thanh địa chỉ", "error");
+    }
+  };
+
   const handleShare = () => {
     if (navigator.share && activePost) {
       navigator
@@ -249,8 +289,23 @@ export default function FeedPage() {
         })
         .catch(() => {});
     } else {
-      navigator.clipboard.writeText(window.location.href);
-      showToast("Đã sao chép liên kết bài viết vào clipboard!", "success");
+      copyLink(window.location.href);
+    }
+  };
+
+  // Chia sẻ đúng 1 bài viết cụ thể trong feed (không cần bài đó đang active)
+  const handleSharePost = (post: PostData) => {
+    const url = `${window.location.origin}${window.location.pathname}?post=${post.id}`;
+    if (navigator.share) {
+      navigator
+        .share({
+          title: "Personal Hub - AVASTAR",
+          text: post.caption || "Khám phá không gian số độc bản trên Personal Hub",
+          url,
+        })
+        .catch(() => {});
+    } else {
+      copyLink(url);
     }
   };
 
@@ -272,30 +327,30 @@ export default function FeedPage() {
 
   if (isLoading) {
     return (
-      <div className="h-[100dvh] w-screen bg-[#0B1A2C] flex flex-col items-center justify-center space-y-4">
-        <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#0095CF] to-[#183A60] flex items-center justify-center text-white text-2xl font-black shadow-2xl animate-pulse">
+      <div className="h-[100dvh] w-screen bg-[#07111F] flex flex-col items-center justify-center space-y-4">
+        <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#C9AA72] to-[#102A43] flex items-center justify-center text-white text-2xl font-black shadow-2xl animate-pulse">
           Z
         </div>
-        <p className="text-sm font-bold text-[#D4DBF5]/80">Đang tải không gian số AVASTAR...</p>
+        <p className="text-sm font-bold text-[#F4F0E8]/80">Đang tải không gian số AVASTAR...</p>
       </div>
     );
   }
 
   return (
-    <main className="relative h-[100dvh] w-screen overflow-hidden bg-[#0B1A2C]">
+    <main className="relative h-[100dvh] w-screen overflow-hidden bg-[#07111F]">
       <PushNotificationPrompt />
       
       {/* TOP FLOATING NAVIGATION BAR */}
       <header className="fixed top-0 left-0 right-0 z-50 px-4 py-3 flex items-center justify-between pointer-events-none">
         {/* Brand Logo */}
         <div className="pointer-events-auto flex items-center gap-2.5 glass-pill px-3.5 py-1.5 rounded-full shadow-lg">
-          <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#0095CF] to-[#183A60] flex items-center justify-center font-black text-white text-xs">
+          <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#C9AA72] to-[#102A43] flex items-center justify-center font-black text-white text-xs">
             Z
           </div>
           <span className="text-xs font-black text-white tracking-wider">
-            PERSONAL <span className="text-[#0095CF]">HUB</span>
+            PERSONAL <span className="text-[#C9AA72]">HUB</span>
           </span>
-          <span className="max-[440px]:hidden text-[10px] px-1.5 py-0.2 rounded bg-[#FEC401]/20 text-[#FEC401] font-extrabold border border-[#FEC401]/30">
+          <span className="max-[440px]:hidden text-[10px] px-1.5 py-0.2 rounded bg-[#C9AA72]/20 text-[#C9AA72] font-extrabold border border-[#C9AA72]/30">
             PWA
           </span>
         </div>
@@ -304,18 +359,18 @@ export default function FeedPage() {
         <div className="pointer-events-auto flex items-center gap-2">
           <Link
             href="/landing"
-            className="glass-pill px-3 py-1.5 rounded-full text-xs font-bold text-white hover:text-[#0095CF] transition flex items-center gap-1 shadow-lg"
+            className="glass-pill px-3 py-1.5 rounded-full text-xs font-bold text-white hover:text-[#C9AA72] transition flex items-center gap-1 shadow-lg"
           >
-            <Info className="w-3.5 h-3.5 text-[#0095CF]" />
+            <Info className="w-3.5 h-3.5 text-[#C9AA72]" />
             <span className="hidden sm:inline">Giới Thiệu</span>
           </Link>
 
           <Link
             href="/gioi-thieu"
             title="Sản phẩm và dịch vụ của ZANGX"
-            className="glass-pill px-3 py-1.5 rounded-full text-xs font-bold text-white hover:text-[#0095CF] transition flex items-center gap-1 shadow-lg"
+            className="glass-pill px-3 py-1.5 rounded-full text-xs font-bold text-white hover:text-[#C9AA72] transition flex items-center gap-1 shadow-lg"
           >
-            <Briefcase className="w-3.5 h-3.5 text-[#FEC401]" />
+            <Briefcase className="w-3.5 h-3.5 text-[#C9AA72]" />
             <span className="hidden sm:inline">Hồ sơ ZANGX</span>
           </Link>
 
@@ -324,12 +379,12 @@ export default function FeedPage() {
               setIsChatDrawerOpen(true);
               setUnreadChatCount(0);
             }}
-            className="glass-pill p-2 rounded-full text-white hover:text-[#0095CF] transition shadow-lg relative"
+            className="glass-pill p-2 rounded-full text-white hover:text-[#C9AA72] transition shadow-lg relative"
             title="Chat 1-1 với Owner"
           >
-            <MessageSquare className="w-4 h-4 text-[#0095CF]" />
+            <MessageSquare className="w-4 h-4 text-[#C9AA72]" />
             {isOwner && unreadChatCount > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#FF7F00] text-[10px] font-black text-white flex items-center justify-center shadow-md animate-pulse">
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#8B6F3F] text-[10px] font-black text-white flex items-center justify-center shadow-md animate-pulse">
                 {unreadChatCount > 99 ? "99+" : unreadChatCount}
               </span>
             )}
@@ -337,23 +392,23 @@ export default function FeedPage() {
 
           <button
             onClick={() => setIsAuthModalOpen(true)}
-            className="glass-pill px-3 py-1.5 rounded-full text-xs font-bold text-white flex items-center gap-1.5 shadow-lg border hover:border-[#0095CF] transition"
+            className="glass-pill px-3 py-1.5 rounded-full text-xs font-bold text-white flex items-center gap-1.5 shadow-lg border hover:border-[#C9AA72] transition"
           >
             {user ? (
               <>
                 <img
                   src={user.avatarUrl || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100"}
-                  className="w-5 h-5 rounded-full object-cover border border-[#D4DBF5]/30"
+                  className="w-5 h-5 rounded-full object-cover border border-[#F4F0E8]/30"
                   alt=""
                 />
                 <span className="hidden sm:inline max-w-[80px] truncate">{user.fullName}</span>
-                <span className={`text-[9px] px-1 rounded font-black ${isOwner ? "bg-[#FEC401] text-darkBg" : "bg-[#0095CF] text-white"}`}>
+                <span className={`text-[9px] px-1 rounded font-black ${isOwner ? "bg-[#C9AA72] text-darkBg" : "bg-[#C9AA72] text-white"}`}>
                   {user.role.toUpperCase()}
                 </span>
               </>
             ) : (
               <>
-                <User className="w-4 h-4 text-[#0095CF]" />
+                <User className="w-4 h-4 text-[#C9AA72]" />
                 <span>Đăng Nhập</span>
               </>
             )}
@@ -380,9 +435,9 @@ export default function FeedPage() {
             return (
               <section
                 key={post.id}
-                className="h-[100dvh] w-full snap-start snap-always relative flex items-center justify-center bg-[#0B1A2C]"
+                className="h-[100dvh] w-full snap-start snap-always relative flex items-center justify-center bg-[#07111F]"
               >
-                <div className="w-8 h-8 rounded-full border-2 border-[#0095CF]/20 border-t-[#0095CF] animate-spin" />
+                <div className="w-8 h-8 rounded-full border-2 border-[#C9AA72]/20 border-t-[#C9AA72] animate-spin" />
               </section>
             );
           }
@@ -399,7 +454,7 @@ export default function FeedPage() {
                   backgroundImage: `url(${activeCard?.mediaUrl || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1080"})`,
                 }}
               />
-              <div className="absolute inset-0 bg-gradient-to-b from-[#0B1A2C]/60 via-transparent to-[#0B1A2C]/90 pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-b from-[#07111F]/60 via-transparent to-[#07111F]/90 pointer-events-none" />
 
               {/* MAIN FLOATING CARD CAROUSEL CONTAINER (Fix B: Centered layout on mobile with balanced height) */}
               <div
@@ -439,7 +494,7 @@ export default function FeedPage() {
                             e.stopPropagation();
                             handleSwitchCard(post.id, cardIdx - 1, totalCards);
                           }}
-                          className="hidden sm:flex absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-[#183A60]/80 text-white backdrop-blur-md border border-[#D4DBF5]/20 hover:bg-[#0095CF] transition z-30 shadow-lg items-center justify-center"
+                          className="hidden sm:flex absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-[#102A43]/80 text-white backdrop-blur-md border border-[#F4F0E8]/20 hover:bg-[#C9AA72] transition z-30 shadow-lg items-center justify-center"
                         >
                           <ChevronLeft className="w-4 h-4" />
                         </button>
@@ -450,7 +505,7 @@ export default function FeedPage() {
                             e.stopPropagation();
                             handleSwitchCard(post.id, cardIdx + 1, totalCards);
                           }}
-                          className="hidden sm:flex absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-[#183A60]/80 text-white backdrop-blur-md border border-[#D4DBF5]/20 hover:bg-[#0095CF] transition z-30 shadow-lg items-center justify-center"
+                          className="hidden sm:flex absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-[#102A43]/80 text-white backdrop-blur-md border border-[#F4F0E8]/20 hover:bg-[#C9AA72] transition z-30 shadow-lg items-center justify-center"
                         >
                           <ChevronRight className="w-4 h-4" />
                         </button>
@@ -461,7 +516,7 @@ export default function FeedPage() {
                   {/* Multi-Card Indicator Badge */}
                   {totalCards > 1 && (
                     <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-black tracking-wider bg-black/60 text-white backdrop-blur-md border border-white/20 flex items-center gap-1 shadow-lg pointer-events-none">
-                      <Layers className="w-3 h-3 text-[#0095CF]" />
+                      <Layers className="w-3 h-3 text-[#C9AA72]" />
                       <span>{cardIdx + 1}/{totalCards}</span>
                     </div>
                   )}
@@ -473,37 +528,51 @@ export default function FeedPage() {
                     <div className="flex items-center gap-1.5">
                       <img
                         src={post.owner?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100"}
-                        className="w-6 h-6 sm:w-7 sm:h-7 rounded-full object-cover border border-[#FEC401]/50 shadow-md"
+                        className="w-6 h-6 sm:w-7 sm:h-7 rounded-full object-cover border border-[#C9AA72]/50 shadow-md"
                         alt=""
                       />
                       <span className="text-[11px] sm:text-xs font-black text-white drop-shadow truncate max-w-[110px] sm:max-w-none">
                         {post.owner?.fullName || "Zangx"}
                       </span>
-                      <span className="px-1.5 py-0.2 rounded-full text-[8px] sm:text-[9px] font-extrabold uppercase bg-[#0095CF]/20 text-[#0095CF] border border-[#0095CF]/30">
+                      <span className="px-1.5 py-0.2 rounded-full text-[8px] sm:text-[9px] font-extrabold uppercase bg-[#C9AA72]/20 text-[#C9AA72] border border-[#C9AA72]/30">
                         {post.category}
                       </span>
                     </div>
 
                     {/* Owner View Count Button */}
-                    <button
-                      onClick={() => {
-                        if (isOwner) {
-                          setIsAnalyticsOpen(true);
-                        } else {
-                          showToast(`Lượt xem bài viết: ${post._count?.views || 1} lượt`, "info");
-                        }
-                      }}
-                      className="flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[10px] sm:text-[11px] font-bold bg-[#183A60]/80 text-[#D4DBF5] border border-[#D4DBF5]/20 hover:border-[#0095CF] transition shadow-md shrink-0"
-                      title={isOwner ? "Bấm để xem thống kê chi tiết" : "Lượt xem"}
-                    >
-                      <Eye className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#0095CF]" />
-                      <span>{post._count?.views || 1}</span>
-                    </button>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        onClick={() => {
+                          if (isOwner) {
+                            setIsAnalyticsOpen(true);
+                          } else {
+                            showToast(`Lượt xem bài viết: ${post._count?.views || 1} lượt`, "info");
+                          }
+                        }}
+                        className="flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[10px] sm:text-[11px] font-bold bg-[#102A43]/80 text-[#F4F0E8] border border-[#F4F0E8]/20 hover:border-[#C9AA72] transition shadow-md"
+                        title={isOwner ? "Bấm để xem thống kê chi tiết" : "Lượt xem"}
+                      >
+                        <Eye className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#C9AA72]" />
+                        <span>{post._count?.views || 1}</span>
+                      </button>
+
+                      {/* Chia sẻ đúng bài viết này (không cần bài đang active) */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSharePost(post);
+                        }}
+                        className="flex items-center justify-center p-1 sm:p-1.5 rounded-full bg-[#102A43]/80 text-[#F4F0E8] border border-[#F4F0E8]/20 hover:border-[#C9AA72] hover:text-[#C9AA72] transition shadow-md"
+                        title="Chia sẻ bài viết này"
+                      >
+                        <Share2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                      </button>
+                    </div>
                   </div>
 
                   {/* Caption */}
                   {post.caption && (
-                    <p className="text-[11px] sm:text-xs text-[#D4DBF5]/90 leading-tight sm:leading-relaxed drop-shadow line-clamp-2">
+                    <p className="text-[11px] sm:text-xs text-[#F4F0E8]/90 leading-tight sm:leading-relaxed drop-shadow line-clamp-2">
                       {post.caption}
                     </p>
                   )}
@@ -515,7 +584,7 @@ export default function FeedPage() {
                 <button
                   disabled={activePostIndex === 0}
                   onClick={() => scrollToPost(activePostIndex - 1)}
-                  className="p-3 rounded-full glass-pill text-white disabled:opacity-30 hover:bg-[#0095CF] transition shadow-xl"
+                  className="p-3 rounded-full glass-pill text-white disabled:opacity-30 hover:bg-[#C9AA72] transition shadow-xl"
                   title="Bài trước"
                 >
                   <ChevronUp className="w-5 h-5" />
@@ -523,7 +592,7 @@ export default function FeedPage() {
                 <button
                   disabled={activePostIndex === posts.length - 1}
                   onClick={() => scrollToPost(activePostIndex + 1)}
-                  className="p-3 rounded-full glass-pill text-white disabled:opacity-30 hover:bg-[#0095CF] transition shadow-xl"
+                  className="p-3 rounded-full glass-pill text-white disabled:opacity-30 hover:bg-[#C9AA72] transition shadow-xl"
                   title="Bài tiếp theo"
                 >
                   <ChevronDown className="w-5 h-5" />
@@ -538,11 +607,9 @@ export default function FeedPage() {
       {activePost && (
         <ActionRail
           giftValue={activePost.totalGiftValue}
-          commentCount={activePost._count?.comments}
           open={isRailOpen}
           onOpenChange={setIsRailOpen}
           onGift={() => setIsGiftModalOpen(true)}
-          onComment={() => setIsCommentDrawerOpen(true)}
           onShare={handleShare}
         />
       )}
@@ -555,15 +622,6 @@ export default function FeedPage() {
             onClose={() => setIsGiftModalOpen(false)}
             postId={activePost.id}
             onGiftSent={handleGiftSent}
-          />
-          <CommentDrawer
-            isOpen={isCommentDrawerOpen}
-            onClose={() => setIsCommentDrawerOpen(false)}
-            postId={activePost.id}
-            onOpenAuth={() => {
-              setIsCommentDrawerOpen(false);
-              setIsAuthModalOpen(true);
-            }}
           />
           <ViewAnalyticsModal
             isOpen={isAnalyticsOpen}

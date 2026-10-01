@@ -2,19 +2,19 @@
 
 @layer base {
   :root {
-    --primary: #183A60;
-    --accent-blue: #0095CF;
-    --soft-lavender: #D4DBF5;
-    --accent-orange: #FF7F00;
-    --accent-gold: #FEC401;
-    --dark-bg: #0B1A2C;
-    --dark-card: rgba(24, 58, 96, 0.75);
+    --primary: #102A43;
+    --accent-blue: #C9AA72;
+    --soft-lavender: #F4F0E8;
+    --accent-orange: #8B6F3F;
+    --accent-gold: #C9AA72;
+    --dark-bg: #07111F;
+    --dark-card: rgba(16, 42, 67, 0.75);
   }
 
   body {
     background-color: var(--dark-bg);
     color: var(--soft-lavender);
-    font-family: Plus Jakarta Sans, system-ui, -apple-system, sans-serif;
+    font-family: "Manrope", system-ui, -apple-system, sans-serif;
     overflow-x: hidden;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
@@ -23,27 +23,27 @@
 
 /* Glassmorphism Classes */
 .glass-panel {
-  background: rgba(24, 58, 96, 0.75);
+  background: rgba(16, 42, 67, 0.75);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(212, 219, 245, 0.15);
+  border: 1px solid rgba(244, 240, 232, 0.15);
   box-shadow: 0 12px 32px 0 rgba(0, 0, 0, 0.37);
   border-radius: 20px;
 }
 
 .glass-pill {
-  background: rgba(24, 58, 96, 0.65);
+  background: rgba(16, 42, 67, 0.65);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(212, 219, 245, 0.2);
+  border: 1px solid rgba(244, 240, 232, 0.2);
 }
 
 .glass-gold-glow {
-  box-shadow: 0 0 25px rgba(254, 196, 1, 0.35);
+  box-shadow: 0 0 25px rgba(201, 170, 114, 0.35);
 }
 
 .glass-blue-glow {
-  box-shadow: 0 0 25px rgba(0, 149, 207, 0.35);
+  box-shadow: 0 0 25px rgba(201, 170, 114, 0.35);
 }
 
 /* Custom Slim Scrollbars for Box Doc */
@@ -51,15 +51,15 @@
   width: 4px;
 }
 .custom-slim-scroll::-webkit-scrollbar-track {
-  background: rgba(11, 26, 44, 0.4);
+  background: rgba(7, 17, 31, 0.4);
   border-radius: 4px;
 }
 .custom-slim-scroll::-webkit-scrollbar-thumb {
-  background: rgba(0, 149, 207, 0.5);
+  background: rgba(201, 170, 114, 0.5);
   border-radius: 4px;
 }
 .custom-slim-scroll::-webkit-scrollbar-thumb:hover {
-  background: #0095CF;
+  background: #C9AA72;
 }
 
 /* Hide scrollbar utility */
@@ -93,10 +93,14 @@
 }
 
 @keyframes pulseGold {
-  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 8px rgba(254, 196, 1, 0.6)); }
-  50% { transform: scale(1.06); filter: drop-shadow(0 0 16px rgba(254, 196, 1, 0.9)); }
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 8px rgba(201, 170, 114, 0.6)); }
+  50% { transform: scale(1.06); filter: drop-shadow(0 0 16px rgba(201, 170, 114, 0.9)); }
 }
 
 .animate-pulse-gold {
   animation: pulseGold 2s infinite ease-in-out;
+}
+
+.font-serif-brand {
+  font-family: "Playfair Display", Georgia, "Times New Roman", serif;
 }

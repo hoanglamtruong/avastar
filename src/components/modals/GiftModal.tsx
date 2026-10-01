@@ -83,7 +83,7 @@ export function GiftModal({ isOpen, onClose, postId, onGiftSent }: GiftModalProp
           particleCount: 120,
           spread: 80,
           origin: { y: 0.6 },
-          colors: ["#FEC401", "#FF7F00", "#0095CF", "#FFFFFF"],
+          colors: ["#C9AA72", "#8B6F3F", "#C9AA72", "#FFFFFF"],
         });
 
         showToast(
@@ -109,7 +109,7 @@ export function GiftModal({ isOpen, onClose, postId, onGiftSent }: GiftModalProp
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md max-h-[55vh] h-auto rounded-t-[26px] sm:rounded-[26px] glass-panel border border-[#FEC401]/30 p-4 sm:p-5 shadow-2xl relative bg-[#0B1A2C]/98 overflow-y-auto custom-slim-scroll flex flex-col justify-between"
+        className="w-full max-w-md max-h-[55vh] h-auto rounded-t-[26px] sm:rounded-[26px] glass-panel border border-[#C9AA72]/30 p-4 sm:p-5 shadow-2xl relative bg-[#07111F]/98 overflow-y-auto custom-slim-scroll flex flex-col justify-between"
         onClick={(e) => e.stopPropagation()}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -126,12 +126,12 @@ export function GiftModal({ isOpen, onClose, postId, onGiftSent }: GiftModalProp
         </button>
 
         <div className="flex items-center gap-2 mb-2">
-          <div className="w-8 h-8 rounded-xl bg-[#FEC401]/20 flex items-center justify-center text-[#FEC401] border border-[#FEC401]/40">
+          <div className="w-8 h-8 rounded-xl bg-[#C9AA72]/20 flex items-center justify-center text-[#C9AA72] border border-[#C9AA72]/40">
             <Sparkles className="w-4 h-4" />
           </div>
           <div>
             <h3 className="text-xs sm:text-sm font-extrabold text-white">Tặng Quà VIP Cho Owner</h3>
-            <p className="text-[10px] text-[#FEC401] font-semibold">100% Doanh thu gửi trực tiếp đến tác giả</p>
+            <p className="text-[10px] text-[#C9AA72] font-semibold">100% Doanh thu gửi trực tiếp đến tác giả</p>
           </div>
         </div>
 
@@ -149,13 +149,13 @@ export function GiftModal({ isOpen, onClose, postId, onGiftSent }: GiftModalProp
                 }}
                 className={`p-2 rounded-xl border text-center transition flex flex-col items-center justify-center gap-0.5 ${
                   isSelected
-                    ? "bg-[#FEC401]/20 border-[#FEC401] text-[#FEC401] glass-gold-glow scale-102"
-                    : "bg-[#183A60]/60 border-[#D4DBF5]/15 text-[#D4DBF5] hover:border-[#FEC401]/50"
+                    ? "bg-[#C9AA72]/20 border-[#C9AA72] text-[#C9AA72] glass-gold-glow scale-102"
+                    : "bg-[#102A43]/60 border-[#F4F0E8]/15 text-[#F4F0E8] hover:border-[#C9AA72]/50"
                 }`}
               >
                 <span className="text-xl">{g.icon}</span>
                 <span className="text-[11px] font-bold text-white">{g.name}</span>
-                <span className="text-[10px] text-[#FEC401] font-black">{formatCurrency(g.value)}</span>
+                <span className="text-[10px] text-[#C9AA72] font-black">{formatCurrency(g.value)}</span>
               </button>
             );
           })}
@@ -163,7 +163,7 @@ export function GiftModal({ isOpen, onClose, postId, onGiftSent }: GiftModalProp
 
         {/* Message Input */}
         <div className="space-y-1 mt-1">
-          <label className="block text-[11px] font-semibold text-[#D4DBF5]/80">
+          <label className="block text-[11px] font-semibold text-[#F4F0E8]/80">
             Lời nhắn đính kèm:
           </label>
           <input
@@ -171,7 +171,7 @@ export function GiftModal({ isOpen, onClose, postId, onGiftSent }: GiftModalProp
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Lời chúc hoặc câu hỏi gửi riêng..."
-            className="w-full px-3 py-2 rounded-xl bg-[#0B1A2C] border border-[#D4DBF5]/20 text-xs text-white placeholder:text-[#D4DBF5]/40 focus:outline-none focus:border-[#FEC401]"
+            className="w-full px-3 py-2 rounded-xl bg-[#07111F] border border-[#F4F0E8]/20 text-xs text-white placeholder:text-[#F4F0E8]/40 focus:outline-none focus:border-[#C9AA72]"
           />
         </div>
 
@@ -179,7 +179,7 @@ export function GiftModal({ isOpen, onClose, postId, onGiftSent }: GiftModalProp
         <button
           onClick={handleSendGift}
           disabled={isSending}
-          className="w-full mt-3 py-2.5 rounded-xl font-extrabold text-xs text-darkBg bg-gradient-to-r from-[#FEC401] to-[#FF7F00] hover:opacity-95 shadow-lg shadow-[#FEC401]/30 transition transform active:scale-95 flex items-center justify-center gap-2"
+          className="w-full mt-3 py-2.5 rounded-xl font-extrabold text-xs text-darkBg bg-gradient-to-r from-[#C9AA72] to-[#8B6F3F] hover:opacity-95 shadow-lg shadow-[#C9AA72]/30 transition transform active:scale-95 flex items-center justify-center gap-2"
         >
           <Send className="w-3.5 h-3.5 text-darkBg" />
           <span>
