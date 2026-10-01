@@ -23,14 +23,13 @@ import {
   ChevronUp,
   ChevronLeft,
   ChevronRight,
-  Sparkles,
   Layers,
   Info,
-  ExternalLink,
-  ShieldCheck,
   User,
 } from "lucide-react";
 import Link from "next/link";
+import { io, Socket } from "socket.io-client";
+import { PushNotificationPrompt } from "@/components/PushNotificationPrompt";
 
 export default function FeedPage() {
   const { user } = useAuth();
@@ -47,21 +46,26 @@ export default function FeedPage() {
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isChatDrawerOpen, setIsChatDrawerOpen] = useState(false);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
   const [actionModal, setActionModal] = useState<{ isOpen: boolean; actionType: string; payload: any }>({
     isOpen: false,
     actionType: "",
     payload: null,
   });
 
-  const [expandedCaptions, setExpandedCaptions] = useState<{ [postId: string]: boolean }>({});
-
   const containerRef = useRef<HTMLDivElement>(null);
   const postViewStartTime = useRef<number>(Date.now());
   const cardViewStartTime = useRef<number>(Date.now());
   const scrollRafRef = useRef<number | null>(null);
 
+  // Touch gesture refs for horizontal card swipe
+  const touchStartX = useRef<number>(0);
+  const touchStartY = useRef<number>(0);
+  const touchEndX = useRef<number>(0);
+  const touchEndY = useRef<number>(0);
+
   // Fetch Posts
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     try {
       const res = await fetch("/api/posts");
       if (res.ok) {
@@ -73,11 +77,54 @@ export default function FeedPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [showToast]);
 
   useEffect(() => {
     fetchPosts();
-  }, []);
+  }, [fetchPosts]);
+
+  // WebSocket Client Listener - strictly for Owner/Admin
+  useEffect(() => {
+    if (!user || (user.role !== "owner" && user.role !== "admin")) {
+      return;
+    }
+
+    const socket: Socket = io({
+      path: "/socket.io",
+      transports: ["websocket", "polling"],
+    });
+
+    socket.on("new_comment", (data: any) => {
+      const senderName = data?.comment?.member?.fullName || "Thành viên";
+      const snippet = data?.comment?.content ? `"${data.comment.content.substring(0, 35)}..."` : "";
+      showToast(`💬 Bình luận mới từ ${senderName} ${snippet}`, "info");
+      fetchPosts();
+    });
+
+    socket.on("new_gift", (data: any) => {
+      const senderName = data?.gift?.sender?.fullName || "Thành viên";
+      const giftName = data?.gift?.giftType || "quà tặng";
+      showToast(`👑 ${senderName} đã gửi tặng "${giftName}" VIP!`, "gold");
+      fetchPosts();
+    });
+
+    socket.on("new_subpage_action", (data: any) => {
+      showToast(data?.notificationText || "🔔 Tương tác mới trên trang phụ!", "info");
+    });
+
+    socket.on("new_chat_message", (data: any) => {
+      if (data?.message?.senderId !== user.id) {
+        setUnreadChatCount((prev) => prev + 1);
+        const senderName = data?.message?.sender?.fullName || "Thành viên";
+        const snippet = data?.message?.content ? `"${data.message.content.substring(0, 30)}..."` : "";
+        showToast(`💬 Tin nhắn từ ${senderName}: ${snippet}`, "info");
+      }
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [user, showToast, fetchPosts]);
 
   const activePost = posts[activePostIndex];
   const currentCardIndex = activePost ? (activeCardIndices[activePost.id] || 0) : 0;
@@ -144,6 +191,35 @@ export default function FeedPage() {
     cardViewStartTime.current = Date.now();
   };
 
+  // Touch event handlers for Horizontal Card Swipe
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+    touchEndX.current = e.touches[0].clientX;
+    touchEndY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX;
+    touchEndY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (postId: string, currentIdx: number, totalCards: number) => {
+    const deltaX = touchEndX.current - touchStartX.current;
+    const deltaY = touchEndY.current - touchStartY.current;
+
+    // Threshold: |deltaX| > 50px and horizontal movement exceeds vertical movement to prevent conflict with vertical snap-scroll
+    if (Math.abs(deltaX) > 50 && Math.abs(deltaX) > Math.abs(deltaY)) {
+      if (deltaX < 0 && currentIdx < totalCards - 1) {
+        // Swiped Left -> Next Card
+        handleSwitchCard(postId, currentIdx + 1, totalCards);
+      } else if (deltaX > 0 && currentIdx > 0) {
+        // Swiped Right -> Prev Card
+        handleSwitchCard(postId, currentIdx - 1, totalCards);
+      }
+    }
+  };
+
   const scrollToPost = (index: number) => {
     if (!containerRef.current || index < 0 || index >= posts.length) return;
     containerRef.current.scrollTo({
@@ -196,6 +272,7 @@ export default function FeedPage() {
 
   return (
     <main className="relative h-[100dvh] w-screen overflow-hidden bg-[#0B1A2C]">
+      <PushNotificationPrompt />
       
       {/* TOP FLOATING NAVIGATION BAR */}
       <header className="fixed top-0 left-0 right-0 z-50 px-4 py-3 flex items-center justify-between pointer-events-none">
@@ -223,12 +300,19 @@ export default function FeedPage() {
           </Link>
 
           <button
-            onClick={() => setIsChatDrawerOpen(true)}
+            onClick={() => {
+              setIsChatDrawerOpen(true);
+              setUnreadChatCount(0);
+            }}
             className="glass-pill p-2 rounded-full text-white hover:text-[#0095CF] transition shadow-lg relative"
             title="Chat 1-1 với Owner"
           >
             <MessageSquare className="w-4 h-4 text-[#0095CF]" />
-            <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-[#FF7F00] animate-ping" />
+            {isOwner && unreadChatCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#FF7F00] text-[10px] font-black text-white flex items-center justify-center shadow-md animate-pulse">
+                {unreadChatCount > 99 ? "99+" : unreadChatCount}
+              </span>
+            )}
           </button>
 
           <button
@@ -286,7 +370,7 @@ export default function FeedPage() {
           return (
             <section
               key={post.id}
-              className="h-[100dvh] w-full snap-start snap-always relative flex items-center justify-center overflow-hidden"
+              className="h-[100dvh] w-full snap-start snap-always relative flex flex-col items-center justify-center pt-12 pb-20 sm:pt-0 sm:pb-0 overflow-hidden"
             >
               {/* DYNAMIC BLURRED BACKGROUND */}
               <div
@@ -297,9 +381,13 @@ export default function FeedPage() {
               />
               <div className="absolute inset-0 bg-gradient-to-b from-[#0B1A2C]/60 via-transparent to-[#0B1A2C]/90 pointer-events-none" />
 
-              {/* MAIN FLOATING CARD CAROUSEL CONTAINER */}
-              <div className="relative z-10 w-full max-w-[420px] h-[78dvh] max-h-[640px] px-3 flex flex-col items-center justify-center">
-                
+              {/* MAIN FLOATING CARD CAROUSEL CONTAINER (Fix B: Centered layout on mobile with balanced height) */}
+              <div
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={() => handleTouchEnd(post.id, cardIdx, totalCards)}
+                className="relative z-10 w-full max-w-[390px] sm:max-w-[420px] h-[65dvh] sm:h-[78dvh] max-h-[520px] sm:max-h-[640px] px-3.5 sm:px-3 flex flex-col items-center justify-center mx-auto select-none"
+              >
                 {/* CARD CONTAINER WITH X-AXIS CAROUSEL */}
                 <div className="relative w-full h-full rounded-[24px] shadow-2xl transition-all duration-300">
                   {activeCard && (
@@ -322,21 +410,27 @@ export default function FeedPage() {
                     </>
                   )}
 
-                  {/* Horizontal Swipe / Navigation Arrows */}
+                  {/* Fix A: Horizontal Swipe / Navigation Arrows (HIDDEN ON MOBILE, VISIBLE ON DESKTOP) */}
                   {totalCards > 1 && (
                     <>
                       {cardIdx > 0 && (
                         <button
-                          onClick={() => handleSwitchCard(post.id, cardIdx - 1, totalCards)}
-                          className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-[#183A60]/80 text-white backdrop-blur-md border border-[#D4DBF5]/20 hover:bg-[#0095CF] transition z-30 shadow-lg"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSwitchCard(post.id, cardIdx - 1, totalCards);
+                          }}
+                          className="hidden sm:flex absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-[#183A60]/80 text-white backdrop-blur-md border border-[#D4DBF5]/20 hover:bg-[#0095CF] transition z-30 shadow-lg items-center justify-center"
                         >
                           <ChevronLeft className="w-4 h-4" />
                         </button>
                       )}
                       {cardIdx < totalCards - 1 && (
                         <button
-                          onClick={() => handleSwitchCard(post.id, cardIdx + 1, totalCards)}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-[#183A60]/80 text-white backdrop-blur-md border border-[#D4DBF5]/20 hover:bg-[#0095CF] transition z-30 shadow-lg"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSwitchCard(post.id, cardIdx + 1, totalCards);
+                          }}
+                          className="hidden sm:flex absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-[#183A60]/80 text-white backdrop-blur-md border border-[#D4DBF5]/20 hover:bg-[#0095CF] transition z-30 shadow-lg items-center justify-center"
                         >
                           <ChevronRight className="w-4 h-4" />
                         </button>
@@ -346,26 +440,26 @@ export default function FeedPage() {
 
                   {/* Multi-Card Indicator Badge */}
                   {totalCards > 1 && (
-                    <div className="absolute top-4 right-4 z-20 px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider bg-black/60 text-white backdrop-blur-md border border-white/20 flex items-center gap-1 shadow-lg pointer-events-none">
+                    <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-black tracking-wider bg-black/60 text-white backdrop-blur-md border border-white/20 flex items-center gap-1 shadow-lg pointer-events-none">
                       <Layers className="w-3 h-3 text-[#0095CF]" />
-                      <span>{cardIdx + 1} / {totalCards}</span>
+                      <span>{cardIdx + 1}/{totalCards}</span>
                     </div>
                   )}
                 </div>
 
                 {/* BOTTOM OVERLAY INFO (Caption & Owner) */}
-                <div className="w-full mt-3 px-2 z-20">
-                  <div className="flex items-center justify-between gap-2 mb-1.5">
-                    <div className="flex items-center gap-2">
+                <div className="w-full mt-2.5 px-1 sm:px-2 z-20">
+                  <div className="flex items-center justify-between gap-1.5 mb-1">
+                    <div className="flex items-center gap-1.5">
                       <img
                         src={post.owner?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100"}
-                        className="w-7 h-7 rounded-full object-cover border border-[#FEC401]/50 shadow-md"
+                        className="w-6 h-6 sm:w-7 sm:h-7 rounded-full object-cover border border-[#FEC401]/50 shadow-md"
                         alt=""
                       />
-                      <span className="text-xs font-black text-white drop-shadow">
+                      <span className="text-[11px] sm:text-xs font-black text-white drop-shadow truncate max-w-[110px] sm:max-w-none">
                         {post.owner?.fullName || "Zangx"}
                       </span>
-                      <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase bg-[#0095CF]/20 text-[#0095CF] border border-[#0095CF]/30">
+                      <span className="px-1.5 py-0.2 rounded-full text-[8px] sm:text-[9px] font-extrabold uppercase bg-[#0095CF]/20 text-[#0095CF] border border-[#0095CF]/30">
                         {post.category}
                       </span>
                     </div>
@@ -379,25 +473,25 @@ export default function FeedPage() {
                           showToast(`Lượt xem bài viết: ${post._count?.views || 1} lượt`, "info");
                         }
                       }}
-                      className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#183A60]/80 text-[#D4DBF5] border border-[#D4DBF5]/20 hover:border-[#0095CF] transition shadow-md"
+                      className="flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[10px] sm:text-[11px] font-bold bg-[#183A60]/80 text-[#D4DBF5] border border-[#D4DBF5]/20 hover:border-[#0095CF] transition shadow-md shrink-0"
                       title={isOwner ? "Bấm để xem thống kê chi tiết" : "Lượt xem"}
                     >
-                      <Eye className="w-3.5 h-3.5 text-[#0095CF]" />
+                      <Eye className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#0095CF]" />
                       <span>{post._count?.views || 1}</span>
                     </button>
                   </div>
 
                   {/* Caption */}
                   {post.caption && (
-                    <p className="text-xs text-[#D4DBF5]/90 leading-relaxed drop-shadow line-clamp-2">
+                    <p className="text-[11px] sm:text-xs text-[#D4DBF5]/90 leading-tight sm:leading-relaxed drop-shadow line-clamp-2">
                       {post.caption}
                     </p>
                   )}
                 </div>
               </div>
 
-              {/* VERTICAL ACTION BAR (Right Side) */}
-              <div className="absolute right-3 sm:right-6 bottom-20 z-40 flex flex-col items-center gap-4 select-none">
+              {/* DESKTOP VERTICAL ACTION BAR (Right Side - Visible ONLY >= sm:) */}
+              <div className="hidden sm:flex sm:absolute sm:right-6 sm:bottom-20 z-40 flex-col items-center gap-4 select-none">
                 
                 {/* 1. Tặng Quà VIP Button (#FEC401 GOLD) */}
                 <div className="flex flex-col items-center gap-1">
@@ -408,7 +502,7 @@ export default function FeedPage() {
                   >
                     <Gift className="w-6 h-6 text-[#0B1A2C]" />
                   </button>
-                  <span className="text-[10px] font-black text-[#FEC401] drop-shadow">
+                  <span className="text-[10px] font-black text-[#FEC401] drop-shadow text-center">
                     {post.totalGiftValue ? `${Math.round(post.totalGiftValue / 1000)}k` : "Tặng Quà"}
                   </span>
                 </div>
@@ -422,7 +516,7 @@ export default function FeedPage() {
                   >
                     <MessageSquare className="w-5 h-5 text-[#0095CF]" />
                   </button>
-                  <span className="text-[10px] font-bold text-white drop-shadow">
+                  <span className="text-[10px] font-bold text-white drop-shadow text-center">
                     {post._count?.comments || 0}
                   </span>
                 </div>
@@ -436,13 +530,13 @@ export default function FeedPage() {
                   >
                     <Share2 className="w-5 h-5" />
                   </button>
-                  <span className="text-[10px] font-bold text-[#D4DBF5]/80 drop-shadow">
+                  <span className="text-[10px] font-bold text-[#D4DBF5]/80 drop-shadow text-center">
                     Chia sẻ
                   </span>
                 </div>
               </div>
 
-              {/* VERTICAL POST NAVIGATION HINTS */}
+              {/* VERTICAL POST NAVIGATION HINTS (Desktop) */}
               <div className="hidden lg:flex fixed right-8 top-1/2 -translate-y-1/2 flex-col gap-3 z-30 pointer-events-auto">
                 <button
                   disabled={activePostIndex === 0}
@@ -465,6 +559,52 @@ export default function FeedPage() {
           );
         })}
       </div>
+
+      {/* MOBILE HORIZONTAL BOTTOMNAV (Fix B: Fixed bottom bar on mobile with safe-area support) */}
+      <nav className="sm:hidden fixed bottom-0 inset-x-0 z-40 pb-[max(env(safe-area-inset-bottom,0px),0.65rem)] pt-2 px-6 bg-[#0B1A2C]/92 backdrop-blur-xl border-t border-[#D4DBF5]/15 shadow-2xl flex items-center justify-around select-none">
+        
+        {/* 1. Tặng Quà VIP Button */}
+        <button
+          onClick={() => setIsGiftModalOpen(true)}
+          className="flex flex-col items-center gap-1 group active:scale-90 transition"
+          title="Tặng Quà VIP"
+        >
+          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#FEC401] to-[#FF7F00] flex items-center justify-center shadow-lg glass-gold-glow animate-pulse-gold">
+            <Gift className="w-5 h-5 text-[#0B1A2C]" />
+          </div>
+          <span className="text-[10px] font-black text-[#FEC401] tracking-tight">
+            {activePost?.totalGiftValue ? `${Math.round(activePost.totalGiftValue / 1000)}k` : "Tặng Quà"}
+          </span>
+        </button>
+
+        {/* 2. Bình luận 1-1 Button */}
+        <button
+          onClick={() => setIsCommentDrawerOpen(true)}
+          className="flex flex-col items-center gap-1 group active:scale-90 transition"
+          title="Bình Luận 1-1"
+        >
+          <div className="w-10 h-10 rounded-full glass-panel flex items-center justify-center text-white border border-[#D4DBF5]/25 shadow-md">
+            <MessageSquare className="w-5 h-5 text-[#0095CF]" />
+          </div>
+          <span className="text-[10px] font-bold text-[#D4DBF5]">
+            {activePost?._count?.comments ? `${activePost._count.comments} Bình luận` : "Bình luận"}
+          </span>
+        </button>
+
+        {/* 3. Chia sẻ Button */}
+        <button
+          onClick={handleShare}
+          className="flex flex-col items-center gap-1 group active:scale-90 transition"
+          title="Chia sẻ"
+        >
+          <div className="w-10 h-10 rounded-full glass-panel flex items-center justify-center text-white border border-[#D4DBF5]/25 shadow-md">
+            <Share2 className="w-5 h-5 text-white/90" />
+          </div>
+          <span className="text-[10px] font-bold text-[#D4DBF5]/80">
+            Chia sẻ
+          </span>
+        </button>
+      </nav>
 
       {/* MODALS & DRAWERS */}
       {activePost && (

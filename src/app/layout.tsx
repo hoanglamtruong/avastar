@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { ToastProvider } from "@/components/ui/Toast";
+import { CreatePostFab } from "@/components/CreatePostFab";
 
 export const metadata: Metadata = {
   title: "Personal Hub - AVASTAR | Nền Tảng Không Gian Số Độc Bản",
@@ -41,6 +42,7 @@ export default function RootLayout({
       <body className="bg-[#0B1A2C] text-[#D4DBF5] antialiased overflow-hidden min-h-[100dvh]">
         <AuthProvider>
           <ToastProvider>{children}</ToastProvider>
+          <CreatePostFab />
         </AuthProvider>
         <script
           dangerouslySetInnerHTML={{
