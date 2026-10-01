@@ -10,6 +10,7 @@ import { GiftModal } from "@/components/modals/GiftModal";
 import { CommentDrawer } from "@/components/modals/CommentDrawer";
 import { ViewAnalyticsModal } from "@/components/modals/ViewAnalyticsModal";
 import { AuthModal } from "@/components/modals/AuthModal";
+import { ActionRail } from "@/components/hub/ActionRail";
 import { ChatDrawer } from "@/components/modals/ChatDrawer";
 import { SubpageActionModal } from "@/components/modals/SubpageActionModal";
 import { useAuth } from "@/context/AuthContext";
@@ -26,6 +27,7 @@ import {
   Layers,
   Info,
   User,
+  Briefcase,
 } from "lucide-react";
 import Link from "next/link";
 import { io, Socket } from "socket.io-client";
@@ -46,6 +48,7 @@ export default function FeedPage() {
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isChatDrawerOpen, setIsChatDrawerOpen] = useState(false);
+  const [isRailOpen, setIsRailOpen] = useState(true);
   const [unreadChatCount, setUnreadChatCount] = useState(0);
   const [actionModal, setActionModal] = useState<{ isOpen: boolean; actionType: string; payload: any }>({
     isOpen: false,
@@ -56,6 +59,7 @@ export default function FeedPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const postViewStartTime = useRef<number>(Date.now());
   const cardViewStartTime = useRef<number>(Date.now());
+  const scrollRafRef = useRef<number | null>(null);
 
   // Touch gesture refs for horizontal card swipe
   const touchStartX = useRef<number>(0);
@@ -125,6 +129,14 @@ export default function FeedPage() {
     };
   }, [user, showToast, fetchPosts]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("chat") === "1") {
+      setIsChatDrawerOpen(true);
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  }, []);
+
   const activePost = posts[activePostIndex];
   const currentCardIndex = activePost ? (activeCardIndices[activePost.id] || 0) : 0;
   const currentCard = activePost?.cards?.[currentCardIndex];
@@ -143,28 +155,38 @@ export default function FeedPage() {
     }).catch(() => {});
   }, []);
 
-  // Handle scroll detection for snap Y-axis
+  // Handle scroll detection for snap Y-axis (rAF-throttled to keep scroll buttery smooth)
   const handleScroll = () => {
-    if (!containerRef.current) return;
-    const scrollTop = containerRef.current.scrollTop;
-    const viewportHeight = window.innerHeight;
-    const newIndex = Math.round(scrollTop / viewportHeight);
+    if (scrollRafRef.current !== null) return;
+    scrollRafRef.current = requestAnimationFrame(() => {
+      scrollRafRef.current = null;
+      if (!containerRef.current) return;
+      const scrollTop = containerRef.current.scrollTop;
+      const viewportHeight = window.innerHeight;
+      const newIndex = Math.round(scrollTop / viewportHeight);
 
-    if (newIndex !== activePostIndex && newIndex >= 0 && newIndex < posts.length) {
-      // Log previous post duration
-      const prevPost = posts[activePostIndex];
-      if (prevPost) {
-        const duration = Math.round((Date.now() - postViewStartTime.current) / 1000);
-        const cardIdx = activeCardIndices[prevPost.id] || 0;
-        const cardType = prevPost.cards[cardIdx]?.cardType || "image";
-        logViewMetrics(prevPost.id, duration, cardIdx, cardType);
+      if (newIndex !== activePostIndex && newIndex >= 0 && newIndex < posts.length) {
+        // Log previous post duration
+        const prevPost = posts[activePostIndex];
+        if (prevPost) {
+          const duration = Math.round((Date.now() - postViewStartTime.current) / 1000);
+          const cardIdx = activeCardIndices[prevPost.id] || 0;
+          const cardType = prevPost.cards[cardIdx]?.cardType || "image";
+          logViewMetrics(prevPost.id, duration, cardIdx, cardType);
+        }
+
+        setActivePostIndex(newIndex);
+        postViewStartTime.current = Date.now();
+        cardViewStartTime.current = Date.now();
       }
-
-      setActivePostIndex(newIndex);
-      postViewStartTime.current = Date.now();
-      cardViewStartTime.current = Date.now();
-    }
+    });
   };
+
+  useEffect(() => {
+    return () => {
+      if (scrollRafRef.current !== null) cancelAnimationFrame(scrollRafRef.current);
+    };
+  }, []);
 
   // Switch card within current post
   const handleSwitchCard = (postId: string, newIdx: number, totalCards: number) => {
@@ -232,6 +254,20 @@ export default function FeedPage() {
     }
   };
 
+  const handleGiftSent = useCallback((giftValue: number) => {
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === activePost?.id
+          ? {
+              ...p,
+              totalGiftValue: (p.totalGiftValue || 0) + giftValue,
+              _count: p._count ? { ...p._count, gifts: p._count.gifts + 1 } : p._count,
+            }
+          : p
+      )
+    );
+  }, [activePost?.id]);
+
   const isOwner = user?.role === "owner" || user?.role === "admin";
 
   if (isLoading) {
@@ -259,7 +295,7 @@ export default function FeedPage() {
           <span className="text-xs font-black text-white tracking-wider">
             PERSONAL <span className="text-[#0095CF]">HUB</span>
           </span>
-          <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#FEC401]/20 text-[#FEC401] font-extrabold border border-[#FEC401]/30">
+          <span className="max-[440px]:hidden text-[10px] px-1.5 py-0.2 rounded bg-[#FEC401]/20 text-[#FEC401] font-extrabold border border-[#FEC401]/30">
             PWA
           </span>
         </div>
@@ -272,6 +308,15 @@ export default function FeedPage() {
           >
             <Info className="w-3.5 h-3.5 text-[#0095CF]" />
             <span className="hidden sm:inline">Giới Thiệu</span>
+          </Link>
+
+          <Link
+            href="/gioi-thieu"
+            title="Sản phẩm và dịch vụ của ZANGX"
+            className="glass-pill px-3 py-1.5 rounded-full text-xs font-bold text-white hover:text-[#0095CF] transition flex items-center gap-1 shadow-lg"
+          >
+            <Briefcase className="w-3.5 h-3.5 text-[#FEC401]" />
+            <span className="hidden sm:inline">Hồ sơ ZANGX</span>
           </Link>
 
           <button
@@ -345,7 +390,7 @@ export default function FeedPage() {
           return (
             <section
               key={post.id}
-              className="h-[100dvh] w-full snap-start snap-always relative flex flex-col items-center justify-center pt-12 pb-20 sm:pt-0 sm:pb-0 overflow-hidden"
+              className={`h-[100dvh] w-full snap-start snap-always relative flex flex-col items-center justify-center pt-12 pb-4 sm:pt-0 sm:pb-0 overflow-hidden transition-[padding] duration-300 ${isRailOpen ? "pr-[4.25rem]" : "pr-6"} sm:pr-0`}
             >
               {/* DYNAMIC BLURRED BACKGROUND */}
               <div
@@ -465,52 +510,6 @@ export default function FeedPage() {
                 </div>
               </div>
 
-              {/* DESKTOP VERTICAL ACTION BAR (Right Side - Visible ONLY >= sm:) */}
-              <div className="hidden sm:flex sm:absolute sm:right-6 sm:bottom-20 z-40 flex-col items-center gap-4 select-none">
-                
-                {/* 1. Tặng Quà VIP Button (#FEC401 GOLD) */}
-                <div className="flex flex-col items-center gap-1">
-                  <button
-                    onClick={() => setIsGiftModalOpen(true)}
-                    className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#FEC401] to-[#FF7F00] text-darkBg flex items-center justify-center shadow-2xl glass-gold-glow animate-pulse-gold transform active:scale-90 transition"
-                    title="Tặng Quà VIP"
-                  >
-                    <Gift className="w-6 h-6 text-[#0B1A2C]" />
-                  </button>
-                  <span className="text-[10px] font-black text-[#FEC401] drop-shadow text-center">
-                    {post.totalGiftValue ? `${Math.round(post.totalGiftValue / 1000)}k` : "Tặng Quà"}
-                  </span>
-                </div>
-
-                {/* 2. Bình luận 1-1 Button */}
-                <div className="flex flex-col items-center gap-1">
-                  <button
-                    onClick={() => setIsCommentDrawerOpen(true)}
-                    className="w-12 h-12 rounded-full glass-panel text-white flex items-center justify-center hover:text-[#0095CF] hover:border-[#0095CF] shadow-xl transform active:scale-90 transition border border-[#D4DBF5]/20"
-                    title="Bình Luận 1-1 Riêng Tư"
-                  >
-                    <MessageSquare className="w-5 h-5 text-[#0095CF]" />
-                  </button>
-                  <span className="text-[10px] font-bold text-white drop-shadow text-center">
-                    {post._count?.comments || 0}
-                  </span>
-                </div>
-
-                {/* 3. Chia sẻ Button */}
-                <div className="flex flex-col items-center gap-1">
-                  <button
-                    onClick={handleShare}
-                    className="w-12 h-12 rounded-full glass-panel text-white flex items-center justify-center hover:text-[#0095CF] hover:border-[#0095CF] shadow-xl transform active:scale-90 transition border border-[#D4DBF5]/20"
-                    title="Chia sẻ"
-                  >
-                    <Share2 className="w-5 h-5" />
-                  </button>
-                  <span className="text-[10px] font-bold text-[#D4DBF5]/80 drop-shadow text-center">
-                    Chia sẻ
-                  </span>
-                </div>
-              </div>
-
               {/* VERTICAL POST NAVIGATION HINTS (Desktop) */}
               <div className="hidden lg:flex fixed right-8 top-1/2 -translate-y-1/2 flex-col gap-3 z-30 pointer-events-auto">
                 <button
@@ -535,51 +534,18 @@ export default function FeedPage() {
         })}
       </div>
 
-      {/* MOBILE HORIZONTAL BOTTOMNAV (Fix B: Fixed bottom bar on mobile with safe-area support) */}
-      <nav className="sm:hidden fixed bottom-0 inset-x-0 z-40 pb-[max(env(safe-area-inset-bottom,0px),0.65rem)] pt-2 px-6 bg-[#0B1A2C]/92 backdrop-blur-xl border-t border-[#D4DBF5]/15 shadow-2xl flex items-center justify-around select-none">
-        
-        {/* 1. Tặng Quà VIP Button */}
-        <button
-          onClick={() => setIsGiftModalOpen(true)}
-          className="flex flex-col items-center gap-1 group active:scale-90 transition"
-          title="Tặng Quà VIP"
-        >
-          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#FEC401] to-[#FF7F00] flex items-center justify-center shadow-lg glass-gold-glow animate-pulse-gold">
-            <Gift className="w-5 h-5 text-[#0B1A2C]" />
-          </div>
-          <span className="text-[10px] font-black text-[#FEC401] tracking-tight">
-            {activePost?.totalGiftValue ? `${Math.round(activePost.totalGiftValue / 1000)}k` : "Tặng Quà"}
-          </span>
-        </button>
-
-        {/* 2. Bình luận 1-1 Button */}
-        <button
-          onClick={() => setIsCommentDrawerOpen(true)}
-          className="flex flex-col items-center gap-1 group active:scale-90 transition"
-          title="Bình Luận 1-1"
-        >
-          <div className="w-10 h-10 rounded-full glass-panel flex items-center justify-center text-white border border-[#D4DBF5]/25 shadow-md">
-            <MessageSquare className="w-5 h-5 text-[#0095CF]" />
-          </div>
-          <span className="text-[10px] font-bold text-[#D4DBF5]">
-            {activePost?._count?.comments ? `${activePost._count.comments} Bình luận` : "Bình luận"}
-          </span>
-        </button>
-
-        {/* 3. Chia sẻ Button */}
-        <button
-          onClick={handleShare}
-          className="flex flex-col items-center gap-1 group active:scale-90 transition"
-          title="Chia sẻ"
-        >
-          <div className="w-10 h-10 rounded-full glass-panel flex items-center justify-center text-white border border-[#D4DBF5]/25 shadow-md">
-            <Share2 className="w-5 h-5 text-white/90" />
-          </div>
-          <span className="text-[10px] font-bold text-[#D4DBF5]/80">
-            Chia sẻ
-          </span>
-        </button>
-      </nav>
+      {/* CỘT THAO TÁC DỌC BÊN PHẢI (C2O/C2C): xem trước, thao tác sau; kéo trượt vào/ra mép phải */}
+      {activePost && (
+        <ActionRail
+          giftValue={activePost.totalGiftValue}
+          commentCount={activePost._count?.comments}
+          open={isRailOpen}
+          onOpenChange={setIsRailOpen}
+          onGift={() => setIsGiftModalOpen(true)}
+          onComment={() => setIsCommentDrawerOpen(true)}
+          onShare={handleShare}
+        />
+      )}
 
       {/* MODALS & DRAWERS */}
       {activePost && (
@@ -588,7 +554,7 @@ export default function FeedPage() {
             isOpen={isGiftModalOpen}
             onClose={() => setIsGiftModalOpen(false)}
             postId={activePost.id}
-            onGiftSent={fetchPosts}
+            onGiftSent={handleGiftSent}
           />
           <CommentDrawer
             isOpen={isCommentDrawerOpen}

@@ -10,7 +10,7 @@ interface GiftModalProps {
   isOpen: boolean;
   onClose: () => void;
   postId: string;
-  onGiftSent?: () => void;
+  onGiftSent?: (giftValue: number) => void;
 }
 
 const PRESET_GIFTS = [
@@ -90,7 +90,7 @@ export function GiftModal({ isOpen, onClose, postId, onGiftSent }: GiftModalProp
           `Đã gửi tặng ${selectedGift.name} (${formatCurrency(giftValue)}) thành công!`,
           "gold"
         );
-        if (onGiftSent) onGiftSent();
+        if (onGiftSent) onGiftSent(giftValue);
         setTimeout(onClose, 1000);
       } else {
         const data = await res.json();
