@@ -16,12 +16,6 @@ export default function PortfolioLayout({ children }: { children: React.ReactNod
           <Link href="/gioi-thieu" aria-label="ZANGX, The Digital Atelier">
             <ZxLogoLockup size="sm" />
           </Link>
-          <Link
-            href="/"
-            className="rounded-full border border-[var(--zx-accent)]/50 px-4 py-2 text-xs font-bold text-[var(--zx-accent)] transition-colors hover:bg-[var(--zx-accent)] hover:text-[var(--zx-bg)]"
-          >
-            Về Personal Hub
-          </Link>
         </div>
       </header>
 

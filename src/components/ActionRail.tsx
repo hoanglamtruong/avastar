@@ -3,10 +3,11 @@
 import React, { useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Heart, MessageCircle, ChevronLeft, ChevronRight, Info, Briefcase, Package, FolderKanban } from "lucide-react";
+import { Heart, MessageCircle, ChevronLeft, ChevronRight, Info, Briefcase, Package, FolderKanban, GalleryVerticalEnd } from "lucide-react";
 import { PORTFOLIO_NAV } from "@/lib/portfolio-content";
 
 const NAV_ICONS: Record<string, typeof Info> = {
+  "/": GalleryVerticalEnd,
   "/gioi-thieu": Info,
   "/dich-vu": Briefcase,
   "/san-pham": Package,
@@ -15,6 +16,9 @@ const NAV_ICONS: Record<string, typeof Info> = {
 const NAV_LABELS: Record<string, string> = {
   "/gioi-thieu": "Về Zangx",
 };
+
+// Wallface: trang chủ (bảng tin) đứng đầu danh sách điều hướng, trước 4 trang Zangx
+const RAIL_NAV = [{ href: "/", label: "Wallface" }, ...PORTFOLIO_NAV];
 
 type Action = { href: string } | { onClick: () => void };
 
@@ -28,8 +32,8 @@ interface ActionRailProps {
 
 /**
  * Cột thao tác dọc mép phải, dùng chung cho mọi trang (Hub + 4 trang Zangx):
- * Donate, Nhắn chủ, rồi 4 icon điều hướng sang Về Zangx/Dịch vụ/Sản phẩm/Dự án.
- * Kéo sang phải để thu lại, bấm tay nắm để mở ra.
+ * Donate, Nhắn chủ, rồi Wallface (trang chủ) + 4 icon điều hướng sang
+ * Về Zangx/Dịch vụ/Sản phẩm/Dự án. Kéo sang phải để thu lại, bấm tay nắm để mở ra.
  */
 export function ActionRail({ open, onOpenChange, giftValue, gift, chat }: ActionRailProps) {
   const startX = useRef<number | null>(null);
@@ -124,7 +128,7 @@ export function ActionRail({ open, onOpenChange, giftValue, gift, chat }: Action
 
         <div className="w-7 border-t border-[#F4F0E8]/15 my-0.5" aria-hidden="true" />
 
-        {PORTFOLIO_NAV.map((item) => {
+        {RAIL_NAV.map((item) => {
           const active = pathname === item.href;
           const Icon = NAV_ICONS[item.href] ?? Info;
           const label = NAV_LABELS[item.href] ?? item.label;
