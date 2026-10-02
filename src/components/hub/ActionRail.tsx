@@ -2,28 +2,26 @@
 
 import React, { useRef, useState } from "react";
 import Link from "next/link";
-import { Heart, Share2, ChevronLeft, ChevronRight, Info, Briefcase, Package, FolderKanban } from "lucide-react";
+import { Heart, ChevronLeft, ChevronRight, Info, Package, FolderKanban } from "lucide-react";
 
 interface ActionRailProps {
   giftValue?: number;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onGift: () => void;
-  onShare: () => void;
 }
 
 const ZANGX_LINKS = [
   { href: "/gioi-thieu", label: "Về Zangx", Icon: Info },
-  { href: "/dich-vu", label: "Dịch vụ", Icon: Briefcase },
   { href: "/san-pham", label: "Sản phẩm", Icon: Package },
   { href: "/du-an", label: "Dự án", Icon: FolderKanban },
 ] as const;
 
 /**
- * Cột nút thao tác của khách (C2O: donate; C2C: chia sẻ; điều hướng sang 4 trang Zangx).
+ * Cột nút thao tác của khách (C2O: donate; điều hướng sang trang Zangx).
  * Nằm dọc ở mép phải màn hình, kéo sang phải để thu lại, bấm tay nắm để mở ra.
  */
-export function ActionRail({ giftValue, open, onOpenChange, onGift, onShare }: ActionRailProps) {
+export function ActionRail({ giftValue, open, onOpenChange, onGift }: ActionRailProps) {
   const startX = useRef<number | null>(null);
   const [dragging, setDragging] = useState(false);
 
@@ -83,18 +81,6 @@ export function ActionRail({ giftValue, open, onOpenChange, onGift, onShare }: A
           <span className="text-[10px] font-black text-[#C9AA72] drop-shadow text-center">
             {giftValue ? `${Math.round(giftValue / 1000)}k` : "Donate"}
           </span>
-        </div>
-
-        <div className="flex flex-col items-center gap-1">
-          <button
-            type="button"
-            onClick={onShare}
-            className="w-11 h-11 sm:w-12 sm:h-12 rounded-full glass-panel text-white flex items-center justify-center hover:text-[#C9AA72] hover:border-[#C9AA72] shadow-xl transform active:scale-90 transition border border-[#F4F0E8]/20"
-            title="Chia sẻ"
-          >
-            <Share2 className="w-5 h-5" />
-          </button>
-          <span className="text-[10px] font-bold text-[#F4F0E8]/80 drop-shadow text-center">Chia sẻ</span>
         </div>
 
         <div className="w-7 border-t border-[#F4F0E8]/15 my-0.5" aria-hidden="true" />

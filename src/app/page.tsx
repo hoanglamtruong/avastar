@@ -15,7 +15,6 @@ import { SubpageActionModal } from "@/components/modals/SubpageActionModal";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/components/ui/Toast";
 import {
-  MessageSquare,
   Share2,
   Eye,
   ChevronDown,
@@ -25,7 +24,6 @@ import {
   Layers,
   Info,
   User,
-  Briefcase,
 } from "lucide-react";
 import Link from "next/link";
 import { io, Socket } from "socket.io-client";
@@ -46,7 +44,6 @@ export default function FeedPage() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isChatDrawerOpen, setIsChatDrawerOpen] = useState(false);
   const [isRailOpen, setIsRailOpen] = useState(true);
-  const [unreadChatCount, setUnreadChatCount] = useState(0);
   const [actionModal, setActionModal] = useState<{ isOpen: boolean; actionType: string; payload: any }>({
     isOpen: false,
     actionType: "",
@@ -114,7 +111,6 @@ export default function FeedPage() {
 
     socket.on("new_chat_message", (data: any) => {
       if (data?.message?.senderId !== user.id) {
-        setUnreadChatCount((prev) => prev + 1);
         const senderName = data?.message?.sender?.fullName || "Thành viên";
         const snippet = data?.message?.content ? `"${data.message.content.substring(0, 30)}..."` : "";
         showToast(`💬 Tin nhắn từ ${senderName}: ${snippet}`, "info");
@@ -279,20 +275,6 @@ export default function FeedPage() {
     }
   };
 
-  const handleShare = () => {
-    if (navigator.share && activePost) {
-      navigator
-        .share({
-          title: "Personal Hub - AVASTAR",
-          text: activePost.caption || "Khám phá không gian số độc bản trên Personal Hub",
-          url: window.location.href,
-        })
-        .catch(() => {});
-    } else {
-      copyLink(window.location.href);
-    }
-  };
-
   // Chia sẻ đúng 1 bài viết cụ thể trong feed (không cần bài đó đang active)
   const handleSharePost = (post: PostData) => {
     const url = `${window.location.origin}${window.location.pathname}?post=${post.id}`;
@@ -364,31 +346,6 @@ export default function FeedPage() {
             <Info className="w-3.5 h-3.5 text-[#C9AA72]" />
             <span className="hidden sm:inline">Giới Thiệu</span>
           </Link>
-
-          <Link
-            href="/gioi-thieu"
-            title="Sản phẩm và dịch vụ của ZANGX"
-            className="glass-pill px-3 py-1.5 rounded-full text-xs font-bold text-white hover:text-[#C9AA72] transition flex items-center gap-1 shadow-lg"
-          >
-            <Briefcase className="w-3.5 h-3.5 text-[#C9AA72]" />
-            <span className="hidden sm:inline">Hồ sơ ZANGX</span>
-          </Link>
-
-          <button
-            onClick={() => {
-              setIsChatDrawerOpen(true);
-              setUnreadChatCount(0);
-            }}
-            className="glass-pill p-2 rounded-full text-white hover:text-[#C9AA72] transition shadow-lg relative"
-            title="Chat 1-1 với Owner"
-          >
-            <MessageSquare className="w-4 h-4 text-[#C9AA72]" />
-            {isOwner && unreadChatCount > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#8B6F3F] text-[10px] font-black text-white flex items-center justify-center shadow-md animate-pulse">
-                {unreadChatCount > 99 ? "99+" : unreadChatCount}
-              </span>
-            )}
-          </button>
 
           <button
             onClick={() => setIsAuthModalOpen(true)}
@@ -610,7 +567,6 @@ export default function FeedPage() {
           open={isRailOpen}
           onOpenChange={setIsRailOpen}
           onGift={() => setIsGiftModalOpen(true)}
-          onShare={handleShare}
         />
       )}
 
