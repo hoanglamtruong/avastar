@@ -39,7 +39,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="bg-[#07111F] text-[#F4F0E8] antialiased overflow-hidden min-h-[100dvh]">
+      <body className="bg-[#07111F] text-[#F4F0E8] antialiased min-h-[100dvh]">
         <AuthProvider>
           <ToastProvider>
             {children}
