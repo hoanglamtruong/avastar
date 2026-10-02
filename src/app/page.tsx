@@ -9,7 +9,8 @@ import { SubpageCard } from "@/components/cards/SubpageCard";
 import { GiftModal } from "@/components/modals/GiftModal";
 import { ViewAnalyticsModal } from "@/components/modals/ViewAnalyticsModal";
 import { AuthModal } from "@/components/modals/AuthModal";
-import { ActionRail } from "@/components/hub/ActionRail";
+import { ActionRail } from "@/components/ActionRail";
+import { ZxStar } from "@/components/portfolio/ZxStar";
 import { ChatDrawer } from "@/components/modals/ChatDrawer";
 import { SubpageActionModal } from "@/components/modals/SubpageActionModal";
 import { useAuth } from "@/context/AuthContext";
@@ -145,6 +146,18 @@ export default function FeedPage() {
       window.history.replaceState(null, "", window.location.pathname);
     }
     didDeepLinkToPost.current = true;
+  }, [posts]);
+
+  // Mở GiftModal khi vào Hub từ nút Donate trên trang khác (?donate=1)
+  const didDeepLinkToDonate = useRef(false);
+  useEffect(() => {
+    if (didDeepLinkToDonate.current || posts.length === 0) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("donate") === "1") {
+      setIsGiftModalOpen(true);
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+    didDeepLinkToDonate.current = true;
   }, [posts]);
 
   const activePost = posts[activePostIndex];
@@ -325,12 +338,10 @@ export default function FeedPage() {
       {/* TOP FLOATING NAVIGATION BAR */}
       <header className="fixed top-0 left-0 right-0 z-50 px-4 py-3 flex items-center justify-between pointer-events-none">
         {/* Brand Logo */}
-        <div className="pointer-events-auto flex items-center gap-2.5 glass-pill px-3.5 py-1.5 rounded-full shadow-lg">
-          <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#C9AA72] to-[#102A43] flex items-center justify-center font-black text-white text-xs">
-            Z
-          </div>
-          <span className="text-xs font-black text-white tracking-wider">
-            PERSONAL <span className="text-[#C9AA72]">HUB</span>
+        <div className="pointer-events-auto flex items-center gap-2 glass-pill px-3.5 py-1.5 rounded-full shadow-lg">
+          <ZxStar className="w-5 h-5 text-[#C9AA72]" />
+          <span className="text-xs font-black text-white tracking-[0.12em]">
+            ZANG<span className="text-[#C9AA72]">X</span>
           </span>
           <span className="max-[440px]:hidden text-[10px] px-1.5 py-0.2 rounded bg-[#C9AA72]/20 text-[#C9AA72] font-extrabold border border-[#C9AA72]/30">
             PWA
@@ -566,7 +577,8 @@ export default function FeedPage() {
           giftValue={activePost.totalGiftValue}
           open={isRailOpen}
           onOpenChange={setIsRailOpen}
-          onGift={() => setIsGiftModalOpen(true)}
+          gift={{ onClick: () => setIsGiftModalOpen(true) }}
+          chat={{ onClick: () => setIsChatDrawerOpen(true) }}
         />
       )}
 

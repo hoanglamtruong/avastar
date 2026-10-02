@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ZxWordmark } from "@/components/portfolio/ZxStar";
-import { ZxActionRail } from "@/components/portfolio/ZxActionRail";
+import { PortfolioActionRail } from "@/components/portfolio/PortfolioActionRail";
 import "./portfolio.css";
 
 export default function PortfolioLayout({ children }: { children: React.ReactNode }) {
@@ -33,7 +33,7 @@ export default function PortfolioLayout({ children }: { children: React.ReactNod
           <p className="font-semibold uppercase tracking-[0.25em] text-[var(--zx-text)]">Xưởng Sáng Tạo Số</p>
         </div>
       </footer>
-      <ZxActionRail />
+      <PortfolioActionRail />
     </div>
   );
 }
