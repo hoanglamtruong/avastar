@@ -9,7 +9,8 @@ import { SubpageCard } from "@/components/cards/SubpageCard";
 import { GiftModal } from "@/components/modals/GiftModal";
 import { ViewAnalyticsModal } from "@/components/modals/ViewAnalyticsModal";
 import { AuthModal } from "@/components/modals/AuthModal";
-import { ActionRail } from "@/components/ActionRail";
+import { AtelierDock, ViewMode } from "@/components/AtelierDock";
+import { ShowroomBento } from "@/components/ShowroomBento";
 import { ZxStar, ZxLogoLockup } from "@/components/portfolio/ZxStar";
 import { ChatDrawer } from "@/components/modals/ChatDrawer";
 import { SubpageActionModal } from "@/components/modals/SubpageActionModal";
@@ -25,6 +26,7 @@ import {
   Layers,
   Info,
   User,
+  LayoutGrid,
 } from "lucide-react";
 import Link from "next/link";
 import { io, Socket } from "socket.io-client";
@@ -44,7 +46,8 @@ export default function FeedPage() {
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isChatDrawerOpen, setIsChatDrawerOpen] = useState(false);
-  const [isRailOpen, setIsRailOpen] = useState(true);
+  const [viewMode, setViewMode] = useState<ViewMode>("showroom");
+  const [selectedPostIdForGift, setSelectedPostIdForGift] = useState<string | null>(null);
   const [actionModal, setActionModal] = useState<{ isOpen: boolean; actionType: string; payload: any }>({
     isOpen: false,
     actionType: "",
@@ -129,6 +132,9 @@ export default function FeedPage() {
       setIsChatDrawerOpen(true);
       window.history.replaceState(null, "", window.location.pathname);
     }
+    if (params.get("story") === "1") {
+      setViewMode("story");
+    }
   }, []);
 
   // Mở đúng bài viết được chia sẻ qua ?post=<id> (chờ posts tải xong, chỉ chạy 1 lần)
@@ -141,6 +147,7 @@ export default function FeedPage() {
       const idx = posts.findIndex((p) => p.id === postId);
       if (idx !== -1) {
         setActivePostIndex(idx);
+        setViewMode("story");
         requestAnimationFrame(() => scrollToPost(idx));
       }
       window.history.replaceState(null, "", window.location.pathname);
@@ -332,7 +339,23 @@ export default function FeedPage() {
   }
 
   return (
-    <main className="relative h-[100dvh] w-screen overflow-hidden bg-[#07111F]">
+    <main className={`relative w-screen bg-[#07111F] ${viewMode === "story" ? "h-[100dvh] overflow-hidden" : "min-h-[100dvh] overflow-x-hidden"}`}>
+      {/* SHOWROOM BENTO VIEW */}
+      {viewMode === "showroom" && (
+        <ShowroomBento
+          posts={posts}
+          onOpenPostInStory={(idx) => {
+            setActivePostIndex(idx);
+            setViewMode("story");
+            requestAnimationFrame(() => scrollToPost(idx));
+          }}
+          onOpenGift={(id) => {
+            setSelectedPostIdForGift(id);
+            setIsGiftModalOpen(true);
+          }}
+          onSharePost={handleSharePost}
+        />
+      )}
       <PushNotificationPrompt />
       
       {/* TOP FLOATING NAVIGATION BAR */}
@@ -389,7 +412,7 @@ export default function FeedPage() {
       <div
         ref={containerRef}
         onScroll={handleScroll}
-        className="h-full w-full overflow-y-scroll snap-y-mandatory no-scrollbar relative"
+        className={`${viewMode === "story" ? "h-full w-full overflow-y-scroll snap-y-mandatory" : "hidden"} no-scrollbar relative`}
       >
         {posts.map((post, postIndex) => {
           // Virtualization 3 Viewport Rule: Render ONLY [i-1, i, i+1]
@@ -414,7 +437,7 @@ export default function FeedPage() {
           return (
             <section
               key={post.id}
-              className={`h-[100dvh] w-full snap-start snap-always relative flex flex-col items-center justify-center pt-12 pb-4 sm:pt-0 sm:pb-0 overflow-hidden transition-[padding] duration-300 ${isRailOpen ? "pr-[4.25rem]" : "pr-6"} sm:pr-0`}
+              className="h-[100dvh] w-full snap-start snap-always relative flex flex-col items-center justify-center pt-12 pb-20 sm:pt-0 sm:pb-0 overflow-hidden px-2 sm:px-0"
             >
               {/* DYNAMIC BLURRED BACKGROUND */}
               <div
@@ -572,32 +595,30 @@ export default function FeedPage() {
         })}
       </div>
 
-      {/* CỘT THAO TÁC DỌC BÊN PHẢI (C2O/C2C): xem trước, thao tác sau; kéo trượt vào/ra mép phải */}
-      {activePost && (
-        <ActionRail
-          giftValue={activePost.totalGiftValue}
-          open={isRailOpen}
-          onOpenChange={setIsRailOpen}
-          gift={{ onClick: () => setIsGiftModalOpen(true) }}
-          chat={{ onClick: () => setIsChatDrawerOpen(true) }}
-        />
-      )}
+      {/* FLOATING ATELIER DYNAMIC DOCK (C2O/C2C) */}
+      <AtelierDock
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        onDonate={() => {
+          setSelectedPostIdForGift(activePost?.id || posts[0]?.id || "");
+          setIsGiftModalOpen(true);
+        }}
+        onChat={() => setIsChatDrawerOpen(true)}
+      />
 
       {/* MODALS & DRAWERS */}
+      <GiftModal
+        isOpen={isGiftModalOpen}
+        onClose={() => setIsGiftModalOpen(false)}
+        postId={selectedPostIdForGift || activePost?.id || posts[0]?.id || ""}
+        onGiftSent={handleGiftSent}
+      />
       {activePost && (
-        <>
-          <GiftModal
-            isOpen={isGiftModalOpen}
-            onClose={() => setIsGiftModalOpen(false)}
-            postId={activePost.id}
-            onGiftSent={handleGiftSent}
-          />
-          <ViewAnalyticsModal
-            isOpen={isAnalyticsOpen}
-            onClose={() => setIsAnalyticsOpen(false)}
-            postId={activePost.id}
-          />
-        </>
+        <ViewAnalyticsModal
+          isOpen={isAnalyticsOpen}
+          onClose={() => setIsAnalyticsOpen(false)}
+          postId={activePost.id}
+        />
       )}
 
       <AuthModal
