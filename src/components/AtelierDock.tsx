@@ -4,8 +4,6 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutGrid,
-  Layers,
   Heart,
   MessageCircle,
   Info,
@@ -14,11 +12,7 @@ import {
   FolderKanban,
 } from "lucide-react";
 
-export type ViewMode = "showroom" | "story";
-
 interface AtelierDockProps {
-  viewMode?: ViewMode;
-  onViewModeChange?: (mode: ViewMode) => void;
   onDonate?: () => void;
   onChat?: () => void;
 }
@@ -31,57 +25,25 @@ const NAV_ITEMS = [
 ];
 
 export function AtelierDock({
-  viewMode,
-  onViewModeChange,
   onDonate,
   onChat,
 }: AtelierDockProps) {
   const pathname = usePathname();
-  const isHub = pathname === "/";
 
   return (
     <nav
       aria-label="Atelier Dynamic Dock"
       className="fixed bottom-3 sm:bottom-6 left-1/2 -translate-x-1/2 z-50 select-none max-w-[96vw]"
     >
-      <div className="flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full bg-[#07111F]/85 backdrop-blur-2xl border border-[#C9AA72]/35 shadow-[0_12px_40px_rgba(0,0,0,0.7)] transition-all hover:border-[#C9AA72]/60">
-        {/* 1. NÚT CHUYỂN VIEW MODE (Nếu đang ở trang Hub) */}
-        {isHub && onViewModeChange && viewMode && (
-          <>
-            <button
-              type="button"
-              onClick={() => onViewModeChange(viewMode === "showroom" ? "story" : "showroom")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black tracking-wide transition-all transform active:scale-95 ${
-                viewMode === "showroom"
-                  ? "bg-[#C9AA72] text-[#07111F] shadow-[0_0_15px_rgba(201,170,114,0.4)]"
-                  : "bg-white/10 text-[#F4F0E8] hover:bg-white/15"
-              }`}
-              title={viewMode === "showroom" ? "Chuyển sang chế độ lướt Story (TikTok snap)" : "Chuyển sang chế độ Showroom Bento"}
-            >
-              {viewMode === "showroom" ? (
-                <>
-                  <LayoutGrid className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">Showroom</span>
-                </>
-              ) : (
-                <>
-                  <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#A8F238]" />
-                  <span className="text-[#A8F238]">Story View</span>
-                </>
-              )}
-            </button>
-            <div className="w-[1px] h-5 bg-white/15 mx-0.5" aria-hidden="true" />
-          </>
-        )}
-
-        {/* 2. NÚT DONATE */}
+      <div className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-[#07111F]/85 backdrop-blur-2xl border border-[#C9AA72]/35 shadow-[0_12px_40px_rgba(0,0,0,0.7)] transition-all hover:border-[#C9AA72]/60">
+        {/* 1. NÚT DONATE (MÃ QR NGÂN HÀNG) */}
         {onDonate ? (
           <button
             type="button"
             onClick={onDonate}
             className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-tr from-[#C9AA72] to-[#8B6F3F] text-[#07111F] shadow-lg transform active:scale-90 hover:scale-105 transition"
-            title="Gửi tặng / Donate"
-            aria-label="Gửi tặng / Donate"
+            title="Ủng hộ / QR Ngân hàng"
+            aria-label="Ủng hộ / QR Ngân hàng"
           >
             <Heart className="w-4 h-4 fill-current" />
           </button>
@@ -89,14 +51,14 @@ export function AtelierDock({
           <Link
             href="/?donate=1"
             className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-tr from-[#C9AA72] to-[#8B6F3F] text-[#07111F] shadow-lg transform active:scale-90 hover:scale-105 transition"
-            title="Gửi tặng / Donate"
-            aria-label="Gửi tặng / Donate"
+            title="Ủng hộ / QR Ngân hàng"
+            aria-label="Ủng hộ / QR Ngân hàng"
           >
             <Heart className="w-4 h-4 fill-current" />
           </Link>
         )}
 
-        {/* 3. NÚT NHẮN CHỦ (CHAT 1-1) */}
+        {/* 2. NÚT NHẮN CHỦ (CHAT 1-1) */}
         {onChat ? (
           <button
             type="button"
@@ -120,7 +82,7 @@ export function AtelierDock({
 
         <div className="w-[1px] h-5 bg-white/15 mx-0.5" aria-hidden="true" />
 
-        {/* 4. LỐI TẮT SANG 4 CHUYÊN MỤC */}
+        {/* 3. LỐI TẮT SANG 4 CHUYÊN MỤC */}
         <div className="flex items-center gap-1 sm:gap-1.5">
           {NAV_ITEMS.map((item) => {
             const active = pathname === item.href;

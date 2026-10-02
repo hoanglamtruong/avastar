@@ -23,14 +23,14 @@ import { ZxStar } from "@/components/portfolio/ZxStar";
 
 interface ShowroomBentoProps {
   posts: PostData[];
-  onOpenPostInStory: (postIndex: number) => void;
+  onOpenPostDetail: (post: PostData) => void;
   onOpenGift: (postId: string) => void;
   onSharePost: (post: PostData) => void;
 }
 
 export function ShowroomBento({
   posts,
-  onOpenPostInStory,
+  onOpenPostDetail,
   onOpenGift,
   onSharePost,
 }: ShowroomBentoProps) {
@@ -216,7 +216,7 @@ export function ShowroomBento({
           return (
             <article
               key={post.id}
-              onClick={() => onOpenPostInStory(postIndex)}
+              onClick={() => onOpenPostDetail(post)}
               className="group rounded-3xl border border-white/10 bg-[#102A43]/40 hover:bg-[#102A43]/70 hover:border-[#C9AA72]/50 p-5 sm:p-6 backdrop-blur-xl flex flex-col justify-between shadow-xl hover:shadow-[0_15px_35px_rgba(201,170,114,0.15)] transition-all duration-300 cursor-pointer"
             >
               <div>
@@ -305,7 +305,7 @@ export function ShowroomBento({
                 </div>
 
                 <span className="inline-flex items-center gap-1 text-xs font-bold text-[#C9AA72] group-hover:translate-x-0.5 transition-transform">
-                  <span>Mở xem</span>
+                  <span>Xem chi tiết</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </span>
               </div>

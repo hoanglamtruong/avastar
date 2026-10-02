@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, useRef } from "react";
-import { X, Sparkles, Send } from "lucide-react";
+import React, { useState } from "react";
+import { X, QrCode, Copy, Check, Heart, Sparkles, Building, CreditCard, ShieldCheck } from "lucide-react";
 import confetti from "canvas-confetti";
 import { useToast } from "@/components/ui/Toast";
 import { formatCurrency } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 
 interface GiftModalProps {
   isOpen: boolean;
@@ -13,177 +14,312 @@ interface GiftModalProps {
   onGiftSent?: (giftValue: number) => void;
 }
 
-const PRESET_GIFTS = [
-  { id: "coffee", name: "Cà Phê", icon: "☕", value: 50000 },
-  { id: "rose", name: "Hoa Hồng", icon: "🌹", value: 100000 },
-  { id: "wine", name: "Ly Rượu", icon: "🥂", value: 200000 },
-  { id: "crown", name: "Vương Miện", icon: "👑", value: 500000 },
-  { id: "diamond", name: "Kim Cương", icon: "💎", value: 1000000 },
-  { id: "rocket", name: "Tên Lửa VIP", icon: "🚀", value: 2000000 },
+const PRESET_AMOUNTS = [
+  { label: "50k", value: 50000, desc: "☕ Cà phê sáng" },
+  { label: "100k", value: 100000, desc: "⚡ Sáng tạo" },
+  { label: "200k", value: 200000, desc: "🍽️ Tiếp sức" },
+  { label: "500k", value: 500000, desc: "👑 Bảo trợ VIP" },
 ];
 
+const BANK_INFO = {
+  bankId: "MB",
+  bankName: "MBBank (Ngân Hàng Quân Đội)",
+  accountNo: "0901234567",
+  accountName: "TRUONG HOANG LAM",
+};
+
 export function GiftModal({ isOpen, onClose, postId, onGiftSent }: GiftModalProps) {
+  const { user } = useAuth();
   const { showToast } = useToast();
-  const [selectedGift, setSelectedGift] = useState(PRESET_GIFTS[3]); // Default crown
-  const [customValue, setCustomValue] = useState("");
-  const [message, setMessage] = useState("");
-  const [isSending, setIsSending] = useState(false);
 
-  // Swipe-down to close gesture
-  const touchStartY = useRef<number>(0);
-  const touchStartX = useRef<number>(0);
-  const touchEndY = useRef<number>(0);
-  const touchEndX = useRef<number>(0);
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartY.current = e.touches[0].clientY;
-    touchStartX.current = e.touches[0].clientX;
-    touchEndY.current = e.touches[0].clientY;
-    touchEndX.current = e.touches[0].clientX;
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    touchEndY.current = e.touches[0].clientY;
-    touchEndX.current = e.touches[0].clientX;
-  };
-
-  const handleTouchEnd = () => {
-    const deltaY = touchEndY.current - touchStartY.current;
-    const deltaX = touchEndX.current - touchStartX.current;
-    if (deltaY > 50 && deltaY > Math.abs(deltaX)) {
-      onClose();
-    }
-  };
+  const [selectedAmount, setSelectedAmount] = useState<number>(100000);
+  const [customAmount, setCustomAmount] = useState<string>("");
+  const [transferMessage, setTransferMessage] = useState<string>("ZANGX UNG HO");
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [isConfirming, setIsConfirming] = useState<boolean>(false);
 
   if (!isOpen) return null;
 
-  const handleSendGift = async () => {
-    const giftValue = customValue ? parseInt(customValue) : selectedGift.value;
-    if (!giftValue || giftValue <= 0) {
-      showToast("Vui lòng chọn hoặc nhập giá trị quà tặng", "error");
+  const currentAmount = customAmount
+    ? Math.max(0, parseInt(customAmount.replace(/\D/g, "") || "0", 10))
+    : selectedAmount;
+
+  // VietQR Dynamic Image URL
+  const qrUrl = `https://img.vietqr.io/image/${BANK_INFO.bankId}-${BANK_INFO.accountNo}-compact2.png?amount=${currentAmount}&addInfo=${encodeURIComponent(transferMessage.trim() || "ZANGX UNG HO")}&accountName=${encodeURIComponent(BANK_INFO.accountName)}`;
+
+  const copyToClipboard = (text: string, fieldName: string) => {
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        setCopiedField(fieldName);
+        showToast(`Đã sao chép ${fieldName}!`, "success");
+        setTimeout(() => setCopiedField(null), 2000);
+      });
+    } else {
+      try {
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+        setCopiedField(fieldName);
+        showToast(`Đã sao chép ${fieldName}!`, "success");
+        setTimeout(() => setCopiedField(null), 2000);
+      } catch {
+        showToast("Không thể sao chép tự động", "error");
+      }
+    }
+  };
+
+  const handleConfirmTransfer = async () => {
+    if (currentAmount <= 0) {
+      showToast("Vui lòng chọn hoặc nhập số tiền ủng hộ", "error");
       return;
     }
 
-    setIsSending(true);
+    setIsConfirming(true);
+
     try {
-      const res = await fetch("/api/gifts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          postId,
-          giftType: selectedGift.id,
-          giftValue,
-          message: message.trim() || `Tặng ${selectedGift.name} chúc mừng bài viết!`,
-        }),
+      if (user) {
+        await fetch("/api/gifts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            postId: postId || "zangx-hub-atelier",
+            giftType: "Mã QR Ngân Hàng",
+            giftValue: currentAmount,
+            message: transferMessage.trim() || "Ủng hộ xưởng sáng tạo số ZANGX",
+          }),
+        }).catch(() => {});
+      }
+
+      confetti({
+        particleCount: 120,
+        spread: 80,
+        origin: { y: 0.6 },
+        colors: ["#C9AA72", "#A8F238", "#FFFFFF", "#102A43"],
       });
 
-      if (res.ok) {
-        // Trigger Fullscreen Confetti Animation
-        confetti({
-          particleCount: 120,
-          spread: 80,
-          origin: { y: 0.6 },
-          colors: ["#C9AA72", "#8B6F3F", "#C9AA72", "#FFFFFF"],
-        });
-
-        showToast(
-          `Đã gửi tặng ${selectedGift.name} (${formatCurrency(giftValue)}) thành công!`,
-          "gold"
-        );
-        if (onGiftSent) onGiftSent(giftValue);
-        setTimeout(onClose, 1000);
-      } else {
-        const data = await res.json();
-        showToast(data.error || "Không thể gửi quà, vui lòng thử lại", "error");
-      }
+      showToast(`Cảm ơn bạn đã đồng hành & ủng hộ ${formatCurrency(currentAmount)} cho ZANGX!`, "gold");
+      if (onGiftSent) onGiftSent(currentAmount);
+      setTimeout(() => {
+        setIsConfirming(false);
+        onClose();
+      }, 1200);
     } catch {
-      showToast("Lỗi kết nối khi gửi quà", "error");
-    } finally {
-      setIsSending(false);
+      showToast("Cảm ơn bạn đã ủng hộ xưởng ZANGX!", "gold");
+      setIsConfirming(false);
+      onClose();
     }
   };
 
   return (
     <div
-      className="fixed inset-0 z-[1000] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-float-up"
+      className="fixed inset-0 z-[1000] bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 animate-float-up"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md max-h-[55vh] h-auto rounded-t-[26px] sm:rounded-[26px] glass-panel border border-[#C9AA72]/30 p-4 sm:p-5 shadow-2xl relative bg-[#07111F]/98 overflow-y-auto custom-slim-scroll flex flex-col justify-between"
+        className="w-full max-w-lg max-h-[92vh] rounded-t-[28px] sm:rounded-[28px] bg-[#07111F]/98 border border-[#C9AA72]/40 p-5 sm:p-6 shadow-2xl relative overflow-y-auto custom-slim-scroll flex flex-col gap-4 text-white"
         onClick={(e) => e.stopPropagation()}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
       >
-        {/* Drag handle */}
-        <div className="w-10 h-1 rounded-full bg-white/30 mx-auto -mt-1 mb-2 shrink-0 sm:hidden cursor-pointer" onClick={onClose} />
+        {/* Mobile drag bar */}
+        <div
+          className="w-10 h-1 rounded-full bg-white/20 mx-auto -mt-1 mb-1 shrink-0 sm:hidden cursor-pointer"
+          onClick={onClose}
+        />
 
+        {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-white/10 text-white/70 hover:text-white transition"
+          className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/10 text-white/70 hover:text-white transition"
+          title="Đóng"
         >
           <X className="w-4 h-4" />
         </button>
 
-        <div className="flex items-center gap-2 mb-2">
-          <div className="w-8 h-8 rounded-xl bg-[#C9AA72]/20 flex items-center justify-center text-[#C9AA72] border border-[#C9AA72]/40">
-            <Sparkles className="w-4 h-4" />
+        {/* Header */}
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#C9AA72] to-[#8B6F3F] flex items-center justify-center text-[#07111F] shadow-lg shrink-0">
+            <QrCode className="w-5 h-5 stroke-[2.5]" />
           </div>
           <div>
-            <h3 className="text-xs sm:text-sm font-extrabold text-white">Tặng Quà VIP Cho Owner</h3>
-            <p className="text-[10px] text-[#C9AA72] font-semibold">100% Doanh thu gửi trực tiếp đến tác giả</p>
+            <div className="flex items-center gap-2">
+              <h3 className="text-base sm:text-lg font-black tracking-wide text-white">Ủng Hộ & Đồng Hành Cùng ZANGX</h3>
+              <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-[#C9AA72]/20 text-[#C9AA72] border border-[#C9AA72]/30">
+                VIETQR
+              </span>
+            </div>
+            <p className="text-xs text-[#AEBCC5]">Tiếp sức cho xưởng sáng tạo số & các dự án độc bản</p>
           </div>
         </div>
 
-        {/* Gift Grid */}
-        <div className="grid grid-cols-3 gap-2 my-2">
-          {PRESET_GIFTS.map((g) => {
-            const isSelected = selectedGift.id === g.id && !customValue;
-            return (
-              <button
-                key={g.id}
-                type="button"
-                onClick={() => {
-                  setSelectedGift(g);
-                  setCustomValue("");
-                }}
-                className={`p-2 rounded-xl border text-center transition flex flex-col items-center justify-center gap-0.5 ${
-                  isSelected
-                    ? "bg-[#C9AA72]/20 border-[#C9AA72] text-[#C9AA72] glass-gold-glow scale-102"
-                    : "bg-[#102A43]/60 border-[#F4F0E8]/15 text-[#F4F0E8] hover:border-[#C9AA72]/50"
-                }`}
-              >
-                <span className="text-xl">{g.icon}</span>
-                <span className="text-[11px] font-bold text-white">{g.name}</span>
-                <span className="text-[10px] text-[#C9AA72] font-black">{formatCurrency(g.value)}</span>
-              </button>
-            );
-          })}
+        {/* VietQR Showcase Box */}
+        <div className="flex flex-col items-center justify-center py-2 px-3 rounded-2xl bg-[#030914] border border-[#C9AA72]/20">
+          <div className="relative p-2.5 rounded-2xl bg-white shadow-[0_0_30px_rgba(201,170,114,0.25)] border-2 border-[#C9AA72]/50">
+            <img
+              src={qrUrl}
+              alt="Mã VietQR Ngân Hàng MBBank"
+              className="w-48 h-48 sm:w-56 sm:h-56 object-contain rounded-lg"
+              loading="eager"
+            />
+          </div>
+          <div className="flex items-center gap-1.5 mt-2.5 text-[11px] text-[#C9AA72] font-semibold">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#A8F238]" />
+            <span>Quét bằng app của bất kỳ ngân hàng nào tại Việt Nam</span>
+          </div>
         </div>
 
-        {/* Message Input */}
-        <div className="space-y-1 mt-1">
-          <label className="block text-[11px] font-semibold text-[#F4F0E8]/80">
-            Lời nhắn đính kèm:
+        {/* Quick Amount Selector */}
+        <div>
+          <label className="block text-xs font-bold text-[#AEBCC5] mb-1.5">
+            Chọn mức ủng hộ:
           </label>
-          <input
-            type="text"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="Lời chúc hoặc câu hỏi gửi riêng..."
-            className="w-full px-3 py-2 rounded-xl bg-[#07111F] border border-[#F4F0E8]/20 text-xs text-white placeholder:text-[#F4F0E8]/40 focus:outline-none focus:border-[#C9AA72]"
-          />
+          <div className="grid grid-cols-4 gap-2">
+            {PRESET_AMOUNTS.map((item) => {
+              const isSelected = selectedAmount === item.value && !customAmount;
+              return (
+                <button
+                  key={item.value}
+                  type="button"
+                  onClick={() => {
+                    setSelectedAmount(item.value);
+                    setCustomAmount("");
+                  }}
+                  className={`py-2 px-1 rounded-xl text-center border transition-all transform active:scale-95 ${
+                    isSelected
+                      ? "bg-[#C9AA72] border-[#C9AA72] text-[#07111F] font-black shadow-[0_0_15px_rgba(201,170,114,0.4)]"
+                      : "bg-[#102A43]/50 border-white/10 text-white hover:border-[#C9AA72]/40"
+                  }`}
+                >
+                  <div className="text-xs font-extrabold">{item.label}</div>
+                  <div className={`text-[9px] truncate ${isSelected ? "text-[#07111F]/90 font-bold" : "text-[#AEBCC5]"}`}>
+                    {item.desc}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Custom Amount Input */}
+          <div className="mt-2 flex items-center gap-2">
+            <div className="relative flex-1">
+              <input
+                type="text"
+                value={customAmount}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, "");
+                  setCustomAmount(val ? Number(val).toLocaleString("vi-VN") : "");
+                }}
+                placeholder="Nhập số tiền khác (VNĐ)..."
+                className="w-full px-3 py-2 rounded-xl bg-[#102A43]/60 border border-white/15 text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-[#C9AA72]"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#AEBCC5] font-bold">
+                đ
+              </span>
+            </div>
+            {customAmount && (
+              <button
+                type="button"
+                onClick={() => setCustomAmount("")}
+                className="px-2.5 py-2 text-xs text-[#AEBCC5] hover:text-white"
+              >
+                Hủy
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Send Button */}
+        {/* Bank Details Card with One-Click Copy */}
+        <div className="space-y-2 p-3 rounded-2xl bg-[#102A43]/30 border border-white/10 text-xs">
+          {/* Ngân hàng */}
+          <div className="flex items-center justify-between">
+            <span className="text-[#AEBCC5] flex items-center gap-1.5">
+              <Building className="w-3.5 h-3.5 text-[#C9AA72]" />
+              Ngân hàng:
+            </span>
+            <span className="font-bold text-white">{BANK_INFO.bankName}</span>
+          </div>
+
+          {/* Chủ tài khoản */}
+          <div className="flex items-center justify-between">
+            <span className="text-[#AEBCC5] flex items-center gap-1.5">
+              <CreditCard className="w-3.5 h-3.5 text-[#C9AA72]" />
+              Chủ tài khoản:
+            </span>
+            <span className="font-bold text-[#C9AA72] tracking-wider">{BANK_INFO.accountName}</span>
+          </div>
+
+          {/* Số tài khoản */}
+          <div className="flex items-center justify-between pt-1 border-t border-white/10">
+            <span className="text-[#AEBCC5]">Số tài khoản:</span>
+            <div className="flex items-center gap-2">
+              <span className="font-black text-sm text-white tracking-widest">{BANK_INFO.accountNo}</span>
+              <button
+                type="button"
+                onClick={() => copyToClipboard(BANK_INFO.accountNo, "Số tài khoản")}
+                className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#C9AA72]/20 hover:bg-[#C9AA72]/30 text-[#C9AA72] text-[11px] font-bold border border-[#C9AA72]/40 transition"
+              >
+                {copiedField === "Số tài khoản" ? (
+                  <>
+                    <Check className="w-3 h-3 text-[#A8F238]" />
+                    <span className="text-[#A8F238]">Đã chép</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3 h-3" />
+                    <span>Sao chép</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Lời nhắn / Nội dung CK */}
+          <div className="flex items-center justify-between pt-1 border-t border-white/10">
+            <span className="text-[#AEBCC5]">Nội dung:</span>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={transferMessage}
+                onChange={(e) => setTransferMessage(e.target.value)}
+                className="w-32 sm:w-40 px-2 py-0.5 rounded bg-[#07111F] border border-white/20 text-white font-mono text-[11px] focus:outline-none focus:border-[#C9AA72]"
+              />
+              <button
+                type="button"
+                onClick={() => copyToClipboard(transferMessage, "Nội dung chuyển khoản")}
+                className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#C9AA72]/20 hover:bg-[#C9AA72]/30 text-[#C9AA72] text-[11px] font-bold border border-[#C9AA72]/40 transition"
+              >
+                {copiedField === "Nội dung chuyển khoản" ? (
+                  <>
+                    <Check className="w-3 h-3 text-[#A8F238]" />
+                    <span className="text-[#A8F238]">Đã chép</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3 h-3" />
+                    <span>Sao chép</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Action Button */}
         <button
-          onClick={handleSendGift}
-          disabled={isSending}
-          className="w-full mt-3 py-2.5 rounded-xl font-extrabold text-xs text-darkBg bg-gradient-to-r from-[#C9AA72] to-[#8B6F3F] hover:opacity-95 shadow-lg shadow-[#C9AA72]/30 transition transform active:scale-95 flex items-center justify-center gap-2"
+          type="button"
+          onClick={handleConfirmTransfer}
+          disabled={isConfirming}
+          className="w-full py-3 rounded-2xl bg-gradient-to-r from-[#C9AA72] to-[#8B6F3F] text-[#07111F] font-black text-sm flex items-center justify-center gap-2 shadow-[0_4px_25px_rgba(201,170,114,0.35)] hover:opacity-95 active:scale-98 transition transform"
         >
-          <Send className="w-3.5 h-3.5 text-darkBg" />
+          <Heart className="w-4 h-4 fill-current" />
           <span>
-            {isSending ? "Đang gửi..." : `Tặng Ngay ${formatCurrency(customValue ? parseInt(customValue) : selectedGift.value)}`}
+            {isConfirming
+              ? "Đang ghi nhận..."
+              : `Tôi Đã Chuyển Khoản ${formatCurrency(currentAmount)}`}
           </span>
         </button>
       </div>
