@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ZxNav } from "@/components/portfolio/ZxNav";
 import { ZxWordmark } from "@/components/portfolio/ZxStar";
 import { ZxActionRail } from "@/components/portfolio/ZxActionRail";
 import "./portfolio.css";
@@ -13,19 +12,16 @@ export default function PortfolioLayout({ children }: { children: React.ReactNod
         precedence="default"
       />
       <header className="sticky top-0 z-10 border-b border-[var(--zx-muted)]/15 bg-[var(--zx-bg)]/90 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 py-3 sm:px-6">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-x-6 px-4 py-3 sm:px-6">
           <Link href="/gioi-thieu" aria-label="ZANGX, trang giới thiệu">
             <ZxWordmark />
           </Link>
           <Link
             href="/"
-            className="order-2 rounded-full border border-[var(--zx-accent)]/50 px-4 py-2 text-xs font-bold text-[var(--zx-accent)] transition-colors hover:bg-[var(--zx-accent)] hover:text-[var(--zx-bg)] sm:order-3"
+            className="rounded-full border border-[var(--zx-accent)]/50 px-4 py-2 text-xs font-bold text-[var(--zx-accent)] transition-colors hover:bg-[var(--zx-accent)] hover:text-[var(--zx-bg)]"
           >
             Về Personal Hub
           </Link>
-          <div className="order-3 w-full sm:order-2 sm:w-auto">
-            <ZxNav />
-          </div>
         </div>
       </header>
 

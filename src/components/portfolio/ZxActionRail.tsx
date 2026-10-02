@@ -1,17 +1,30 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useRef, useState } from "react";
+import { PORTFOLIO_NAV } from "@/lib/portfolio-content";
+import { Info, Briefcase, Package, FolderKanban } from "lucide-react";
+
+const NAV_ICONS: Record<string, typeof Info> = {
+  "/gioi-thieu": Info,
+  "/dich-vu": Briefcase,
+  "/san-pham": Package,
+  "/du-an": FolderKanban,
+};
 
 /**
  * Cột thao tác của khách trên trang portfolio: xem trước, thao tác sau.
  * C2O: nhắn chủ (mở khung chat trên Personal Hub). C2C: chia sẻ trang.
+ * Điều hướng: 4 trang Zangx (Giới thiệu/Dịch vụ/Sản phẩm/Dự án), thay cho
+ * thanh nav ngang cũ trên header — gộp hết vào 1 cột dọc mép phải.
  * Dọc ở mép phải, kéo sang phải để thu lại, bấm tay nắm để mở ra.
  */
 export function ZxActionRail() {
   const [open, setOpen] = useState(true);
   const [note, setNote] = useState("");
   const startX = useRef<number | null>(null);
+  const pathname = usePathname();
 
   const share = async () => {
     const url = window.location.href;
@@ -29,7 +42,9 @@ export function ZxActionRail() {
   };
 
   const itemClass =
-    "flex h-14 w-14 flex-col items-center justify-center gap-0.5 rounded-2xl border border-[var(--zx-accent)]/40 bg-[var(--zx-surface)] text-[10px] font-bold text-[var(--zx-text)] transition-colors hover:border-[var(--zx-accent)] hover:text-[var(--zx-accent)] focus-visible:outline-none";
+    "flex h-14 w-14 flex-col items-center justify-center gap-0.5 rounded-2xl border border-[var(--zx-accent)]/40 bg-[var(--zx-surface)] text-[9px] font-bold text-[var(--zx-text)] transition-colors hover:border-[var(--zx-accent)] hover:text-[var(--zx-accent)] focus-visible:outline-none";
+  const activeItemClass =
+    "flex h-14 w-14 flex-col items-center justify-center gap-0.5 rounded-2xl border border-[var(--zx-accent)] bg-[var(--zx-accent)] text-[9px] font-bold text-[var(--zx-bg)] transition-colors focus-visible:outline-none";
 
   return (
     <div
@@ -61,7 +76,7 @@ export function ZxActionRail() {
           startX.current = null;
         }}
         style={{ touchAction: "pan-y" }}
-        className="flex flex-col items-center gap-2.5 rounded-l-2xl border border-r-0 border-[var(--zx-accent)]/25 bg-[var(--zx-bg)]/90 py-3 pl-2 pr-3 backdrop-blur"
+        className="flex flex-col items-center gap-2.5 rounded-l-2xl border border-r-0 border-[var(--zx-accent)]/25 bg-[var(--zx-bg)]/90 py-3 pl-2 pr-3 backdrop-blur max-h-[85dvh] overflow-y-auto no-scrollbar"
       >
         <Link href="/?chat=1" className={itemClass} title="Nhắn trực tiếp cho chủ trên Personal Hub">
           <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -78,6 +93,19 @@ export function ZxActionRail() {
           </svg>
           Chia sẻ
         </button>
+
+        <div className="w-8 border-t border-[var(--zx-accent)]/20 my-0.5" aria-hidden="true" />
+
+        {PORTFOLIO_NAV.map((item) => {
+          const active = pathname === item.href;
+          const Icon = NAV_ICONS[item.href] ?? Info;
+          return (
+            <Link key={item.href} href={item.href} className={active ? activeItemClass : itemClass} title={item.label} aria-current={active ? "page" : undefined}>
+              <Icon className="h-4 w-4" />
+              <span className="leading-tight">{item.label}</span>
+            </Link>
+          );
+        })}
       </div>
       <p role="status" aria-live="polite" className="sr-only">{note}</p>
       {note && (
