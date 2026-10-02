@@ -10,7 +10,7 @@ import { GiftModal } from "@/components/modals/GiftModal";
 import { ViewAnalyticsModal } from "@/components/modals/ViewAnalyticsModal";
 import { AuthModal } from "@/components/modals/AuthModal";
 import { ActionRail } from "@/components/ActionRail";
-import { ZxStar } from "@/components/portfolio/ZxStar";
+import { ZxStar, ZxLogoLockup } from "@/components/portfolio/ZxStar";
 import { ChatDrawer } from "@/components/modals/ChatDrawer";
 import { SubpageActionModal } from "@/components/modals/SubpageActionModal";
 import { useAuth } from "@/context/AuthContext";
@@ -338,15 +338,16 @@ export default function FeedPage() {
       {/* TOP FLOATING NAVIGATION BAR */}
       <header className="fixed top-0 left-0 right-0 z-50 px-4 py-3 flex items-center justify-between pointer-events-none">
         {/* Brand Logo */}
-        <div className="pointer-events-auto flex items-center gap-2 glass-pill px-3.5 py-1.5 rounded-full shadow-lg">
-          <ZxStar className="w-5 h-5 text-[#C9AA72]" />
-          <span className="text-xs font-black text-white tracking-[0.12em]">
-            ZANG<span className="text-[#C9AA72]">X</span>
+        <Link
+          href="/gioi-thieu"
+          className="pointer-events-auto flex items-center gap-2.5 glass-pill px-3 py-1.5 rounded-full shadow-lg hover:border-[#C9AA72]/50 transition-colors"
+          title="ZANGX · The Digital Atelier"
+        >
+          <ZxLogoLockup size="sm" showTagline={false} />
+          <span className="max-[440px]:hidden text-[9px] px-1.5 py-0.5 rounded bg-[#C9AA72]/20 text-[#C9AA72] font-extrabold border border-[#C9AA72]/30">
+            ATELIER
           </span>
-          <span className="max-[440px]:hidden text-[10px] px-1.5 py-0.2 rounded bg-[#C9AA72]/20 text-[#C9AA72] font-extrabold border border-[#C9AA72]/30">
-            PWA
-          </span>
-        </div>
+        </Link>
 
         {/* Action Controls & Profile */}
         <div className="pointer-events-auto flex items-center gap-2">

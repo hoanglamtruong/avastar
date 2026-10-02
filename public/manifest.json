@@ -1,13 +1,18 @@
 {
-  "name": "Personal Hub - AVASTAR",
-  "short_name": "AVASTAR",
-  "description": "Nền Tảng Không Gian Số Độc Bản Cho Chuyên Gia & Doanh Chủ",
+  "name": "ZANGX - The Digital Atelier",
+  "short_name": "ZANGX",
+  "description": "Ideas Designed Into Systems. Creative Thinking. Intelligent Execution. Real Products.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0B1A2C",
-  "theme_color": "#183A60",
+  "background_color": "#07111F",
+  "theme_color": "#07111F",
   "orientation": "portrait",
   "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
     {
       "src": "/icons/icon-192.png",
       "sizes": "192x192",

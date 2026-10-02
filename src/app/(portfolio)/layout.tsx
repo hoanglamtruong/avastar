@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ZxWordmark } from "@/components/portfolio/ZxStar";
+import { ZxLogoLockup } from "@/components/portfolio/ZxStar";
 import { PortfolioActionRail } from "@/components/portfolio/PortfolioActionRail";
 import "./portfolio.css";
 
@@ -13,8 +13,8 @@ export default function PortfolioLayout({ children }: { children: React.ReactNod
       />
       <header className="sticky top-0 z-10 border-b border-[var(--zx-muted)]/15 bg-[var(--zx-bg)]/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-x-6 px-4 py-3 sm:px-6">
-          <Link href="/gioi-thieu" aria-label="ZANGX, trang giới thiệu">
-            <ZxWordmark />
+          <Link href="/gioi-thieu" aria-label="ZANGX, The Digital Atelier">
+            <ZxLogoLockup size="sm" />
           </Link>
           <Link
             href="/"
@@ -30,7 +30,7 @@ export default function PortfolioLayout({ children }: { children: React.ReactNod
       <footer className="border-t border-[var(--zx-muted)]/15">
         <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-3 px-4 py-8 text-xs text-[var(--zx-muted)] sm:flex-row sm:items-center sm:px-6">
           <p>© {new Date().getFullYear()} ZANGX · Trương Hoàng Lam. Bảo lưu mọi quyền.</p>
-          <p className="font-semibold uppercase tracking-[0.25em] text-[var(--zx-text)]">Xưởng Sáng Tạo Số</p>
+          <p className="font-semibold uppercase tracking-[0.25em] text-[var(--zx-text)]">THE DIGITAL ATELIER</p>
         </div>
       </footer>
       <PortfolioActionRail />

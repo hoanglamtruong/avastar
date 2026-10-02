@@ -5,13 +5,18 @@ import { ToastProvider } from "@/components/ui/Toast";
 import { CreatePostFab } from "@/components/CreatePostFab";
 
 export const metadata: Metadata = {
-  title: "Personal Hub - AVASTAR | Nền Tảng Không Gian Số Độc Bản",
-  description: "Xóa bỏ sự phụ thuộc thuật toán MXH. Trải nghiệm TikTok snap scroll kết hợp Carousel đa thẻ nổi, bình luận bảo mật 1-1 và hệ thống tặng quà VIP.",
+  title: "ZANGX | The Digital Atelier",
+  description: "Ideas Designed Into Systems. Creative Thinking. Intelligent Execution. Real Products. Xưởng Sáng Tạo Số ZANGX.",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+    apple: "/favicon.svg",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "AVASTAR",
+    title: "ZANGX",
   },
 };
 
@@ -21,7 +26,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: "cover",
-  themeColor: "#102A43",
+  themeColor: "#07111F",
 };
 
 export default function RootLayout({
@@ -32,6 +37,7 @@ export default function RootLayout({
   return (
     <html lang="vi" className="dark scroll-smooth">
       <head>
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
