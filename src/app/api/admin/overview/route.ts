@@ -1,0 +1,58 @@
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth";
+
+export async function GET() {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser || (currentUser.role !== "owner" && currentUser.role !== "admin")) {
+      return NextResponse.json(
+        { error: "Chỉ Owner hoặc Admin mới có quyền truy cập trang quản trị" },
+        { status: 403 }
+      );
+    }
+
+    const [postsCount, viewsCount, commentsCount, conversationsCount, gifts] = await Promise.all([
+      prisma.post.count(),
+      prisma.postView.count(),
+      prisma.comment.count(),
+      prisma.chatConversation.count(),
+      prisma.gift.findMany({
+        include: {
+          sender: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              avatarUrl: true,
+            },
+          },
+          post: {
+            select: {
+              id: true,
+              caption: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 20,
+      }),
+    ]);
+
+    const totalGiftSum = gifts.reduce((acc, g) => acc + Number(g.giftValue || 0), 0);
+
+    return NextResponse.json({
+      success: true,
+      stats: {
+        postsCount,
+        viewsCount,
+        commentsCount,
+        conversationsCount,
+        totalGiftSum,
+      },
+      recentGifts: gifts,
+    });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}

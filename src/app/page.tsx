@@ -13,7 +13,7 @@ import { ChatDrawer } from "@/components/modals/ChatDrawer";
 import { SubpageActionModal } from "@/components/modals/SubpageActionModal";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/components/ui/Toast";
-import { Info, User } from "lucide-react";
+import { Info, User, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { io, Socket } from "socket.io-client";
 import { PushNotificationPrompt } from "@/components/PushNotificationPrompt";
@@ -235,6 +235,17 @@ export default function FeedPage() {
 
         {/* Action Controls & Profile */}
         <div className="pointer-events-auto flex items-center gap-2">
+          {isOwner && (
+            <Link
+              href="/admin"
+              className="glass-pill px-3 py-1.5 rounded-full text-xs font-bold text-[#C9AA72] hover:bg-[#C9AA72]/20 border border-[#C9AA72]/40 transition flex items-center gap-1.5 shadow-lg"
+              title="Vào Trang Quản Trị Atelier"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-[#C9AA72]" />
+              <span>Quản Trị</span>
+            </Link>
+          )}
+
           <Link
             href="/landing"
             className="glass-pill px-3 py-1.5 rounded-full text-xs font-bold text-white hover:text-[#C9AA72] transition flex items-center gap-1 shadow-lg"
