@@ -1,13 +1,26 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PROJECTS, PROJECT_TYPES, type ProjectType } from "@/lib/portfolio-content";
-import { ArrowUpRight, FolderKanban, Sparkles } from "lucide-react";
+import { ArrowUpRight, Sparkles } from "lucide-react";
 
 export function ProjectGrid() {
   const [active, setActive] = useState<ProjectType>("Tất cả");
-  const shown = active === "Tất cả" ? PROJECTS : PROJECTS.filter((p) => p.type === active);
+  const [projects, setProjects] = useState<any[]>(PROJECTS as any);
+
+  useEffect(() => {
+    fetch("/api/admin/cms?section=projects")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.items && d.items.length > 0) {
+          setProjects(d.items);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const shown = active === "Tất cả" ? projects : projects.filter((p) => p.type === active);
 
   return (
     <div className="mt-12">
@@ -45,7 +58,7 @@ export function ProjectGrid() {
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {shown.map((p) => (
             <article
-              key={p.title}
+              key={p.id || p.title}
               className="flex flex-col justify-between rounded-3xl border border-white/10 bg-[#102A43]/50 hover:bg-[#102A43]/75 hover:border-[#C9AA72]/50 p-6 sm:p-7 backdrop-blur-xl shadow-xl hover:shadow-[0_15px_35px_rgba(201,170,114,0.15)] transition-all duration-300 group"
             >
               <div>

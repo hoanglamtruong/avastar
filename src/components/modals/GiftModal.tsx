@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X, QrCode, Copy, Check, Heart, Sparkles, Building, CreditCard, ShieldCheck } from "lucide-react";
 import confetti from "canvas-confetti";
 import { useToast } from "@/components/ui/Toast";
@@ -21,22 +21,35 @@ const PRESET_AMOUNTS = [
   { label: "500k", value: 500000, desc: "👑 Bảo trợ VIP" },
 ];
 
-const BANK_INFO = {
-  bankId: "MB",
-  bankName: "MBBank (Ngân Hàng Quân Đội)",
-  accountNo: "0901234567",
-  accountName: "TRUONG HOANG LAM",
-};
-
 export function GiftModal({ isOpen, onClose, postId, onGiftSent }: GiftModalProps) {
   const { user } = useAuth();
   const { showToast } = useToast();
+
+  const [bankInfo, setBankInfo] = useState({
+    bankId: "MB",
+    bankName: "MBBank (Ngân Hàng Quân Đội)",
+    accountNo: "0901234567",
+    accountName: "TRUONG HOANG LAM",
+  });
 
   const [selectedAmount, setSelectedAmount] = useState<number>(100000);
   const [customAmount, setCustomAmount] = useState<string>("");
   const [transferMessage, setTransferMessage] = useState<string>("ZANGX UNG HO");
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [isConfirming, setIsConfirming] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetch("/api/admin/cms?section=all")
+        .then((r) => r.json())
+        .then((d) => {
+          if (d.data?.bankInfo) {
+            setBankInfo(d.data.bankInfo);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -45,7 +58,7 @@ export function GiftModal({ isOpen, onClose, postId, onGiftSent }: GiftModalProp
     : selectedAmount;
 
   // VietQR Dynamic Image URL
-  const qrUrl = `https://img.vietqr.io/image/${BANK_INFO.bankId}-${BANK_INFO.accountNo}-compact2.png?amount=${currentAmount}&addInfo=${encodeURIComponent(transferMessage.trim() || "ZANGX UNG HO")}&accountName=${encodeURIComponent(BANK_INFO.accountName)}`;
+  const qrUrl = `https://img.vietqr.io/image/${bankInfo.bankId}-${bankInfo.accountNo}-compact2.png?amount=${currentAmount}&addInfo=${encodeURIComponent(transferMessage.trim() || "ZANGX UNG HO")}&accountName=${encodeURIComponent(bankInfo.accountName)}`;
 
   const copyToClipboard = (text: string, fieldName: string) => {
     if (navigator.clipboard?.writeText) {
@@ -240,7 +253,7 @@ export function GiftModal({ isOpen, onClose, postId, onGiftSent }: GiftModalProp
               <Building className="w-3.5 h-3.5 text-[#C9AA72]" />
               Ngân hàng:
             </span>
-            <span className="font-bold text-white">{BANK_INFO.bankName}</span>
+            <span className="font-bold text-white">{bankInfo.bankName}</span>
           </div>
 
           {/* Chủ tài khoản */}
@@ -249,17 +262,17 @@ export function GiftModal({ isOpen, onClose, postId, onGiftSent }: GiftModalProp
               <CreditCard className="w-3.5 h-3.5 text-[#C9AA72]" />
               Chủ tài khoản:
             </span>
-            <span className="font-bold text-[#C9AA72] tracking-wider">{BANK_INFO.accountName}</span>
+            <span className="font-bold text-[#C9AA72] tracking-wider">{bankInfo.accountName}</span>
           </div>
 
           {/* Số tài khoản */}
           <div className="flex items-center justify-between pt-1 border-t border-white/10">
             <span className="text-[#AEBCC5]">Số tài khoản:</span>
             <div className="flex items-center gap-2">
-              <span className="font-black text-sm text-white tracking-widest">{BANK_INFO.accountNo}</span>
+              <span className="font-black text-sm text-white tracking-widest">{bankInfo.accountNo}</span>
               <button
                 type="button"
-                onClick={() => copyToClipboard(BANK_INFO.accountNo, "Số tài khoản")}
+                onClick={() => copyToClipboard(bankInfo.accountNo, "Số tài khoản")}
                 className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#C9AA72]/20 hover:bg-[#C9AA72]/30 text-[#C9AA72] text-[11px] font-bold border border-[#C9AA72]/40 transition"
               >
                 {copiedField === "Số tài khoản" ? (

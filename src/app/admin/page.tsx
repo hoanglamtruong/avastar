@@ -7,12 +7,14 @@ import { useToast } from "@/components/ui/Toast";
 import { formatCurrency } from "@/lib/utils";
 import { PostData } from "@/lib/types";
 import { CreatePostModal } from "@/components/modals/CreatePostModal";
-import { ZxLogoLockup, ZxStar } from "@/components/portfolio/ZxStar";
+import { EditPostModal } from "@/components/modals/EditPostModal";
+import { CmsItemModal, CmsSectionType } from "@/components/modals/CmsItemModal";
+import { ZxLogoLockup } from "@/components/portfolio/ZxStar";
 import {
   ShieldCheck,
   Plus,
   Trash2,
-  Eye,
+  Edit3,
   ExternalLink,
   LogOut,
   ArrowLeft,
@@ -23,6 +25,14 @@ import {
   Lock,
   UserCheck,
   Sparkles,
+  Briefcase,
+  Package,
+  FolderKanban,
+  User as UserIcon,
+  CreditCard,
+  Building,
+  Save,
+  Check,
 } from "lucide-react";
 
 interface AdminStats {
@@ -33,34 +43,45 @@ interface AdminStats {
   totalGiftSum: number;
 }
 
-interface RecentGift {
-  id: string;
-  giftType: string;
-  giftValue: number;
-  message: string | null;
-  createdAt: string;
-  sender: {
-    fullName: string;
-    email: string;
-    avatarUrl: string | null;
-  };
-  post: {
-    id: string;
-    caption: string | null;
-  };
-}
-
 export default function AdminPage() {
   const { user, isLoading: isAuthLoading, login, switchUser, logout } = useAuth();
   const { showToast } = useToast();
 
+  // Navigation tab
+  const [activeTab, setActiveTab] = useState<"posts" | "projects" | "products" | "services" | "profile">("posts");
+
+  // Data states
   const [posts, setPosts] = useState<PostData[]>([]);
   const [stats, setStats] = useState<AdminStats | null>(null);
-  const [recentGifts, setRecentGifts] = useState<RecentGift[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
+  const [services, setServices] = useState<any[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"posts" | "gifts">("posts");
-  const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
+
+  // Modals state
+  const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
+  const [editingPost, setEditingPost] = useState<PostData | null>(null);
+
+  // CMS modal state
+  const [cmsModal, setCmsModal] = useState<{
+    isOpen: boolean;
+    section: CmsSectionType;
+    item: any | null;
+  }>({
+    isOpen: false,
+    section: "projects",
+    item: null,
+  });
+
+  // Admin Profile & Bank state
+  const [adminFullName, setAdminFullName] = useState("");
+  const [adminAvatarUrl, setAdminAvatarUrl] = useState("");
+  const [adminPhone, setAdminPhone] = useState("");
+  const [bankId, setBankId] = useState("MB");
+  const [bankName, setBankName] = useState("MBBank (Ngân Hàng Quân Đội)");
+  const [accountNo, setAccountNo] = useState("0901234567");
+  const [accountName, setAccountName] = useState("TRUONG HOANG LAM");
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
 
   // Login Form State
   const [emailInput, setEmailInput] = useState("");
@@ -69,25 +90,47 @@ export default function AdminPage() {
 
   const isOwner = user?.role === "owner" || user?.role === "admin";
 
-  // Fetch admin overview and posts
-  const loadDashboardData = useCallback(async () => {
+  // Fetch all dashboard & CMS data
+  const loadAllData = useCallback(async () => {
     if (!isOwner) return;
     setIsLoadingData(true);
     try {
-      const [overviewRes, postsRes] = await Promise.all([
+      const [overviewRes, postsRes, cmsRes, profileRes] = await Promise.all([
         fetch("/api/admin/overview"),
         fetch("/api/posts"),
+        fetch("/api/admin/cms"),
+        fetch("/api/admin/profile"),
       ]);
 
       if (overviewRes.ok) {
-        const overviewData = await overviewRes.json();
-        setStats(overviewData.stats);
-        setRecentGifts(overviewData.recentGifts || []);
+        const oData = await overviewRes.json();
+        setStats(oData.stats);
       }
-
       if (postsRes.ok) {
-        const postsData = await postsRes.json();
-        setPosts(postsData.posts || []);
+        const pData = await postsRes.json();
+        setPosts(pData.posts || []);
+      }
+      if (cmsRes.ok) {
+        const cData = await cmsRes.json();
+        if (cData.data) {
+          setProjects(cData.data.projects || []);
+          setProducts(cData.data.products || []);
+          setServices(cData.data.services || []);
+        }
+      }
+      if (profileRes.ok) {
+        const profData = await profileRes.json();
+        if (profData.profile) {
+          setAdminFullName(profData.profile.fullName || "");
+          setAdminAvatarUrl(profData.profile.avatarUrl || "");
+          setAdminPhone(profData.profile.phoneNumber || "");
+        }
+        if (profData.bankInfo) {
+          setBankId(profData.bankInfo.bankId || "MB");
+          setBankName(profData.bankInfo.bankName || "MBBank");
+          setAccountNo(profData.bankInfo.accountNo || "0901234567");
+          setAccountName(profData.bankInfo.accountName || "TRUONG HOANG LAM");
+        }
       }
     } catch {
       showToast("Không thể tải thông tin quản trị", "error");
@@ -98,9 +141,9 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (isOwner) {
-      loadDashboardData();
+      loadAllData();
     }
-  }, [isOwner, loadDashboardData]);
+  }, [isOwner, loadAllData]);
 
   // Handle Quick Login as Owner
   const handleQuickLoginAsOwner = async () => {
@@ -134,28 +177,71 @@ export default function AdminPage() {
 
   // Delete Post
   const handleDeletePost = async (postId: string) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa bài viết này không? Hành động này không thể hoàn tác.")) {
-      return;
-    }
-
-    setDeletingPostId(postId);
+    if (!window.confirm("Bạn có chắc muốn xóa bài viết này không? Không thể hoàn tác.")) return;
     try {
-      const res = await fetch(`/api/posts/${postId}`, {
-        method: "DELETE",
-      });
-
+      const res = await fetch(`/api/posts/${postId}`, { method: "DELETE" });
       if (res.ok) {
         showToast("Đã xóa bài viết thành công!", "success");
         setPosts((prev) => prev.filter((p) => p.id !== postId));
-        loadDashboardData();
+        loadAllData();
       } else {
         const err = await res.json();
         showToast(err.error || "Không thể xóa bài viết", "error");
       }
     } catch {
       showToast("Lỗi kết nối khi xóa bài viết", "error");
+    }
+  };
+
+  // Delete CMS Item (Project, Product, Service)
+  const handleDeleteCmsItem = async (section: CmsSectionType, id: string, name: string) => {
+    if (!window.confirm(`Bạn có chắc muốn xóa "${name}" không?`)) return;
+    try {
+      const res = await fetch(`/api/admin/cms?section=${section}&id=${id}`, { method: "DELETE" });
+      if (res.ok) {
+        showToast(`Đã xóa "${name}" thành công!`, "success");
+        loadAllData();
+      } else {
+        const err = await res.json();
+        showToast(err.error || "Không thể xóa mục", "error");
+      }
+    } catch {
+      showToast("Lỗi kết nối khi xóa dữ liệu", "error");
+    }
+  };
+
+  // Save Admin Profile & Bank settings
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingProfile(true);
+    try {
+      const res = await fetch("/api/admin/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fullName: adminFullName.trim(),
+          avatarUrl: adminAvatarUrl.trim(),
+          phoneNumber: adminPhone.trim(),
+          bankInfo: {
+            bankId: bankId.trim(),
+            bankName: bankName.trim(),
+            accountNo: accountNo.trim(),
+            accountName: accountName.trim().toUpperCase(),
+          },
+        }),
+      });
+
+      if (res.ok) {
+        showToast("Đã cập nhật thông tin Admin và cấu hình VietQR thành công!", "success");
+        loadAllData();
+      } else {
+        const err = await res.json();
+        showToast(err.error || "Không thể lưu hồ sơ", "error");
+      }
+    } catch {
+      showToast("Lỗi kết nối khi lưu hồ sơ", "error");
     } finally {
-      setDeletingPostId(null);
+      setIsSavingProfile(false);
     }
   };
 
@@ -174,7 +260,6 @@ export default function AdminPage() {
   if (!isOwner) {
     return (
       <main className="min-h-screen w-screen bg-[#07111F] flex flex-col items-center justify-center p-4 relative overflow-hidden">
-        {/* Glow ambient */}
         <div className="absolute w-[500px] h-[500px] rounded-full bg-[#C9AA72]/10 blur-[120px] pointer-events-none" />
 
         <div className="w-full max-w-md p-6 sm:p-8 rounded-[32px] bg-[#102A43]/50 border border-[#C9AA72]/30 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,0.8)] relative z-10 space-y-6">
@@ -210,14 +295,12 @@ export default function AdminPage() {
             </p>
           </div>
 
-          {/* Divider */}
           <div className="flex items-center gap-3">
             <div className="h-[1px] flex-1 bg-white/10" />
             <span className="text-[10px] uppercase font-bold text-[#AEBCC5]">Hoặc đăng nhập mật khẩu</span>
             <div className="h-[1px] flex-1 bg-white/10" />
           </div>
 
-          {/* Login Form */}
           <form onSubmit={handleLoginForm} className="space-y-3">
             <div>
               <label className="block text-xs font-semibold text-[#AEBCC5] mb-1">Email:</label>
@@ -249,7 +332,6 @@ export default function AdminPage() {
             </button>
           </form>
 
-          {/* Back to Home */}
           <div className="text-center pt-2 border-t border-white/10">
             <Link
               href="/"
@@ -264,11 +346,11 @@ export default function AdminPage() {
     );
   }
 
-  // 2. MÀN HÌNH DASHBOARD QUẢN TRỊ TRUNG TÂM (Đã đăng nhập Owner)
+  // 2. DASHBOARD QUẢN TRỊ TRUNG TÂM (Đã đăng nhập Owner)
   return (
     <main className="min-h-screen w-screen bg-[#07111F] text-white p-4 sm:p-8 space-y-6">
       {/* TOP HEADER */}
-      <header className="max-w-6xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-3xl bg-[#102A43]/40 border border-[#C9AA72]/30 backdrop-blur-xl">
+      <header className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-3xl bg-[#102A43]/40 border border-[#C9AA72]/30 backdrop-blur-xl">
         <div className="flex items-center gap-3">
           <Link href="/" title="Về trang chủ">
             <ZxLogoLockup size="sm" showTagline={false} />
@@ -282,16 +364,15 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* User profile actions */}
         <div className="flex items-center gap-3 self-end sm:self-auto">
           <div className="flex items-center gap-2">
             <img
-              src={user?.avatarUrl || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100"}
+              src={adminAvatarUrl || user?.avatarUrl || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100"}
               alt=""
-              className="w-7 h-7 rounded-full object-cover border border-[#C9AA72]/50"
+              className="w-8 h-8 rounded-full object-cover border border-[#C9AA72]/50 shadow"
             />
             <div className="text-left hidden md:block">
-              <p className="text-xs font-black text-white">{user?.fullName}</p>
+              <p className="text-xs font-black text-white">{adminFullName || user?.fullName}</p>
               <p className="text-[10px] text-[#C9AA72] font-mono">{user?.role?.toUpperCase()}</p>
             </div>
           </div>
@@ -315,7 +396,7 @@ export default function AdminPage() {
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="max-w-7xl mx-auto space-y-6">
         {/* KPI CARDS */}
         <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <div className="p-4 sm:p-5 rounded-2xl bg-[#102A43]/40 border border-white/10 flex items-center gap-3">
@@ -323,75 +404,115 @@ export default function AdminPage() {
               <Layers className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-[11px] text-[#AEBCC5] font-semibold uppercase">Tổng bài viết</p>
-              <h3 className="text-xl sm:text-2xl font-black text-white">{stats?.postsCount ?? posts.length}</h3>
+              <p className="text-[11px] text-[#AEBCC5] font-semibold uppercase">Tác phẩm / Ảnh</p>
+              <h3 className="text-xl sm:text-2xl font-black text-white">{posts.length}</h3>
             </div>
           </div>
 
           <div className="p-4 sm:p-5 rounded-2xl bg-[#102A43]/40 border border-white/10 flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-[#A8F238]/20 flex items-center justify-center text-[#A8F238] border border-[#A8F238]/30">
-              <Eye className="w-5 h-5" />
+              <FolderKanban className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-[11px] text-[#AEBCC5] font-semibold uppercase">Lượt xem tổng</p>
-              <h3 className="text-xl sm:text-2xl font-black text-white">{stats?.viewsCount ?? 0}</h3>
+              <p className="text-[11px] text-[#AEBCC5] font-semibold uppercase">Dự án đã làm</p>
+              <h3 className="text-xl sm:text-2xl font-black text-white">{projects.length}</h3>
             </div>
           </div>
 
           <div className="p-4 sm:p-5 rounded-2xl bg-[#102A43]/40 border border-white/10 flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-[#C9AA72]/20 flex items-center justify-center text-[#C9AA72] border border-[#C9AA72]/30">
-              <Heart className="w-5 h-5 fill-current" />
+              <Package className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-[11px] text-[#AEBCC5] font-semibold uppercase">Donate & Quà</p>
-              <h3 className="text-lg sm:text-xl font-black text-[#C9AA72]">
-                {formatCurrency(stats?.totalGiftSum ?? 0)}
-              </h3>
+              <p className="text-[11px] text-[#AEBCC5] font-semibold uppercase">Sản phẩm R&D</p>
+              <h3 className="text-xl sm:text-2xl font-black text-[#C9AA72]">{products.length}</h3>
             </div>
           </div>
 
           <div className="p-4 sm:p-5 rounded-2xl bg-[#102A43]/40 border border-white/10 flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400 border border-blue-500/30">
-              <MessageSquare className="w-5 h-5" />
+              <Briefcase className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-[11px] text-[#AEBCC5] font-semibold uppercase">Hội thoại & Chat</p>
-              <h3 className="text-xl sm:text-2xl font-black text-white">{stats?.conversationsCount ?? 0}</h3>
+              <p className="text-[11px] text-[#AEBCC5] font-semibold uppercase">Gói dịch vụ</p>
+              <h3 className="text-xl sm:text-2xl font-black text-white">{services.length}</h3>
             </div>
           </div>
         </section>
 
-        {/* ACTION BAR */}
-        <section className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl bg-[#102A43]/20 border border-white/10">
-          <div className="flex items-center gap-2">
+        {/* 5-TAB NAVIGATION BAR */}
+        <section className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl bg-[#102A43]/20 border border-white/10">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
             <button
               type="button"
               onClick={() => setActiveTab("posts")}
-              className={`px-4 py-2 rounded-xl text-xs font-extrabold transition ${
+              className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition ${
                 activeTab === "posts"
                   ? "bg-[#C9AA72] text-[#07111F] shadow-lg"
                   : "bg-white/5 text-[#AEBCC5] hover:text-white"
               }`}
             >
-              Quản Lý Bài Viết ({posts.length})
+              <Layers className="w-4 h-4" />
+              <span>Tác Phẩm & Ảnh ({posts.length})</span>
             </button>
+
             <button
               type="button"
-              onClick={() => setActiveTab("gifts")}
-              className={`px-4 py-2 rounded-xl text-xs font-extrabold transition ${
-                activeTab === "gifts"
+              onClick={() => setActiveTab("projects")}
+              className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition ${
+                activeTab === "projects"
                   ? "bg-[#C9AA72] text-[#07111F] shadow-lg"
                   : "bg-white/5 text-[#AEBCC5] hover:text-white"
               }`}
             >
-              Lịch Sử Donate ({recentGifts.length})
+              <FolderKanban className="w-4 h-4" />
+              <span>Dự Án ({projects.length})</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab("products")}
+              className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition ${
+                activeTab === "products"
+                  ? "bg-[#C9AA72] text-[#07111F] shadow-lg"
+                  : "bg-white/5 text-[#AEBCC5] hover:text-white"
+              }`}
+            >
+              <Package className="w-4 h-4" />
+              <span>Sản Phẩm R&D ({products.length})</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab("services")}
+              className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition ${
+                activeTab === "services"
+                  ? "bg-[#C9AA72] text-[#07111F] shadow-lg"
+                  : "bg-white/5 text-[#AEBCC5] hover:text-white"
+              }`}
+            >
+              <Briefcase className="w-4 h-4" />
+              <span>Dịch Vụ ({services.length})</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab("profile")}
+              className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition ${
+                activeTab === "profile"
+                  ? "bg-[#C9AA72] text-[#07111F] shadow-lg"
+                  : "bg-white/5 text-[#AEBCC5] hover:text-white"
+              }`}
+            >
+              <UserIcon className="w-4 h-4" />
+              <span>Hồ Sơ & VietQR</span>
             </button>
           </div>
 
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={loadDashboardData}
+              onClick={loadAllData}
               disabled={isLoadingData}
               className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-[#AEBCC5] hover:text-white transition"
               title="Làm mới dữ liệu"
@@ -399,27 +520,63 @@ export default function AdminPage() {
               <RefreshCw className={`w-4 h-4 ${isLoadingData ? "animate-spin text-[#C9AA72]" : ""}`} />
             </button>
 
-            <button
-              type="button"
-              onClick={() => setIsCreateModalOpen(true)}
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#C9AA72] to-[#8B6F3F] text-[#07111F] font-black text-xs flex items-center gap-2 shadow-lg hover:opacity-95 active:scale-95 transition transform"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Tạo Bài Viết Mới</span>
-            </button>
+            {/* Quick Create Buttons based on active tab */}
+            {activeTab === "posts" && (
+              <button
+                type="button"
+                onClick={() => setIsCreatePostOpen(true)}
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#C9AA72] to-[#8B6F3F] text-[#07111F] font-black text-xs flex items-center gap-1.5 shadow-lg hover:opacity-95 transition"
+              >
+                <Plus className="w-4 h-4" />
+                <span>+ Đăng Tác Phẩm Mới</span>
+              </button>
+            )}
+
+            {activeTab === "projects" && (
+              <button
+                type="button"
+                onClick={() => setCmsModal({ isOpen: true, section: "projects", item: null })}
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#C9AA72] to-[#8B6F3F] text-[#07111F] font-black text-xs flex items-center gap-1.5 shadow-lg hover:opacity-95 transition"
+              >
+                <Plus className="w-4 h-4" />
+                <span>+ Thêm Dự Án Mới</span>
+              </button>
+            )}
+
+            {activeTab === "products" && (
+              <button
+                type="button"
+                onClick={() => setCmsModal({ isOpen: true, section: "products", item: null })}
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#C9AA72] to-[#8B6F3F] text-[#07111F] font-black text-xs flex items-center gap-1.5 shadow-lg hover:opacity-95 transition"
+              >
+                <Plus className="w-4 h-4" />
+                <span>+ Thêm Sản Phẩm Mới</span>
+              </button>
+            )}
+
+            {activeTab === "services" && (
+              <button
+                type="button"
+                onClick={() => setCmsModal({ isOpen: true, section: "services", item: null })}
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#C9AA72] to-[#8B6F3F] text-[#07111F] font-black text-xs flex items-center gap-1.5 shadow-lg hover:opacity-95 transition"
+              >
+                <Plus className="w-4 h-4" />
+                <span>+ Thêm Dịch Vụ Mới</span>
+              </button>
+            )}
           </div>
         </section>
 
-        {/* TAB 1: POSTS TABLE */}
+        {/* TAB 1: TÁC PHẨM & ẢNH (POSTS & MEDIA CRUD) */}
         {activeTab === "posts" && (
           <section className="rounded-3xl bg-[#102A43]/30 border border-white/10 overflow-hidden shadow-xl">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead className="bg-[#07111F]/80 text-[#AEBCC5] uppercase text-[10px] tracking-wider border-b border-white/10">
                   <tr>
-                    <th className="py-3 px-4">Bài Viết</th>
+                    <th className="py-3 px-4">Ảnh & Tác Phẩm</th>
                     <th className="py-3 px-3">Chuyên mục</th>
-                    <th className="py-3 px-3">Số thẻ</th>
+                    <th className="py-3 px-3">Số thẻ ảnh</th>
                     <th className="py-3 px-3">Lượt xem</th>
                     <th className="py-3 px-3">Donate</th>
                     <th className="py-3 px-4 text-right">Thao tác</th>
@@ -428,11 +585,10 @@ export default function AdminPage() {
                 <tbody className="divide-y divide-white/5">
                   {posts.map((post) => {
                     const firstCard = post.cards?.[0];
-                    const isDeleting = deletingPostId === post.id;
                     return (
                       <tr key={post.id} className="hover:bg-white/5 transition">
                         <td className="py-3 px-4 flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-xl bg-[#07111F] border border-white/10 overflow-hidden shrink-0 flex items-center justify-center">
+                          <div className="w-14 h-14 rounded-xl bg-[#07111F] border border-white/10 overflow-hidden shrink-0 flex items-center justify-center">
                             {firstCard?.mediaUrl ? (
                               <img src={firstCard.mediaUrl} alt="" className="w-full h-full object-cover" />
                             ) : (
@@ -472,20 +628,28 @@ export default function AdminPage() {
                             <Link
                               href={`/?post=${post.id}`}
                               target="_blank"
-                              className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-[#AEBCC5] hover:text-white transition"
-                              title="Xem chi tiết bài viết"
+                              className="p-2 rounded-lg bg-white/5 hover:bg-white/15 text-[#AEBCC5] hover:text-white transition"
+                              title="Xem chi tiết"
                             >
-                              <ExternalLink className="w-4 h-4" />
+                              <ExternalLink className="w-3.5 h-3.5" />
                             </Link>
 
                             <button
                               type="button"
+                              onClick={() => setEditingPost(post)}
+                              className="p-2 rounded-lg bg-[#C9AA72]/20 hover:bg-[#C9AA72]/30 text-[#C9AA72] border border-[#C9AA72]/40 transition"
+                              title="Chỉnh sửa bài viết & ảnh"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+
+                            <button
+                              type="button"
                               onClick={() => handleDeletePost(post.id)}
-                              disabled={isDeleting}
-                              className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition"
+                              className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition"
                               title="Xóa bài viết"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         </td>
@@ -498,64 +662,376 @@ export default function AdminPage() {
           </section>
         )}
 
-        {/* TAB 2: GIFTS & DONATIONS TABLE */}
-        {activeTab === "gifts" && (
+        {/* TAB 2: DỰ ÁN (PROJECTS CRUD) */}
+        {activeTab === "projects" && (
           <section className="rounded-3xl bg-[#102A43]/30 border border-white/10 overflow-hidden shadow-xl">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead className="bg-[#07111F]/80 text-[#AEBCC5] uppercase text-[10px] tracking-wider border-b border-white/10">
                   <tr>
-                    <th className="py-3 px-4">Người Gửi</th>
-                    <th className="py-3 px-3">Loại Quà / Hình Thức</th>
-                    <th className="py-3 px-3">Số Tiền</th>
-                    <th className="py-3 px-4">Lời Nhắn</th>
-                    <th className="py-3 px-3 text-right">Thời Gian</th>
+                    <th className="py-3 px-4">Tên Dự Án</th>
+                    <th className="py-3 px-3">Phân Loại</th>
+                    <th className="py-3 px-3">Loại Thẻ</th>
+                    <th className="py-3 px-4">Mô Tả</th>
+                    <th className="py-3 px-3">Liên Kết</th>
+                    <th className="py-3 px-4 text-right">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {recentGifts.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="py-8 text-center text-[#AEBCC5]">
-                        Chưa có lịch sử ủng hộ nào.
+                  {projects.map((proj) => (
+                    <tr key={proj.id} className="hover:bg-white/5 transition">
+                      <td className="py-3 px-4 font-bold text-white text-xs">
+                        {proj.title}
+                      </td>
+
+                      <td className="py-3 px-3">
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-[#A8F238]/20 text-[#A8F238] border border-[#A8F238]/30">
+                          {proj.type}
+                        </span>
+                      </td>
+
+                      <td className="py-3 px-3">
+                        {proj.sample ? (
+                          <span className="text-[10px] text-[#AEBCC5]">Nội dung mẫu</span>
+                        ) : (
+                          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#C9AA72]/20 text-[#C9AA72]">
+                            Chạy thật
+                          </span>
+                        )}
+                      </td>
+
+                      <td className="py-3 px-4 text-[#AEBCC5] max-w-sm truncate">
+                        {proj.body}
+                      </td>
+
+                      <td className="py-3 px-3 text-[#C9AA72] font-mono text-[10px] max-w-[120px] truncate">
+                        {proj.href || "-"}
+                      </td>
+
+                      <td className="py-3 px-4 text-right">
+                        <div className="inline-flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setCmsModal({ isOpen: true, section: "projects", item: proj })}
+                            className="p-2 rounded-lg bg-[#C9AA72]/20 hover:bg-[#C9AA72]/30 text-[#C9AA72] border border-[#C9AA72]/40 transition"
+                            title="Sửa dự án"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteCmsItem("projects", proj.id, proj.title)}
+                            className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition"
+                            title="Xóa dự án"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
-                  ) : (
-                    recentGifts.map((gift) => (
-                      <tr key={gift.id} className="hover:bg-white/5 transition">
-                        <td className="py-3 px-4 flex items-center gap-2.5">
-                          <img
-                            src={gift.sender?.avatarUrl || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100"}
-                            alt=""
-                            className="w-7 h-7 rounded-full object-cover border border-[#C9AA72]/40"
-                          />
-                          <div>
-                            <p className="font-bold text-white text-xs">{gift.sender?.fullName || "Ẩn danh"}</p>
-                            <p className="text-[10px] text-[#AEBCC5]">{gift.sender?.email}</p>
-                          </div>
-                        </td>
-
-                        <td className="py-3 px-3">
-                          <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-[#C9AA72]/20 text-[#C9AA72] border border-[#C9AA72]/30">
-                            {gift.giftType}
-                          </span>
-                        </td>
-
-                        <td className="py-3 px-3 font-extrabold text-[#C9AA72]">
-                          {formatCurrency(Number(gift.giftValue))}
-                        </td>
-
-                        <td className="py-3 px-4 text-[#AEBCC5] italic max-w-xs truncate">
-                          "{gift.message || "Không có lời nhắn"}"
-                        </td>
-
-                        <td className="py-3 px-3 text-right font-mono text-[10px] text-[#AEBCC5]">
-                          {new Date(gift.createdAt).toLocaleString("vi-VN")}
-                        </td>
-                      </tr>
-                    ))
-                  )}
+                  ))}
                 </tbody>
               </table>
+            </div>
+          </section>
+        )}
+
+        {/* TAB 3: SẢN PHẨM R&D (PRODUCTS CRUD) */}
+        {activeTab === "products" && (
+          <section className="rounded-3xl bg-[#102A43]/30 border border-white/10 overflow-hidden shadow-xl">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-[#07111F]/80 text-[#AEBCC5] uppercase text-[10px] tracking-wider border-b border-white/10">
+                  <tr>
+                    <th className="py-3 px-4">Mã Code</th>
+                    <th className="py-3 px-4">Tên Sản Phẩm</th>
+                    <th className="py-3 px-3">Nhóm</th>
+                    <th className="py-3 px-3">Trạng Thái</th>
+                    <th className="py-3 px-3">Vật Liệu</th>
+                    <th className="py-3 px-3">Phiên Bản</th>
+                    <th className="py-3 px-4 text-right">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {products.map((prod) => (
+                    <tr key={prod.id} className="hover:bg-white/5 transition">
+                      <td className="py-3 px-4 font-mono font-black text-[#A8F238] text-xs">
+                        {prod.code}
+                      </td>
+
+                      <td className="py-3 px-4 font-bold text-white text-xs">
+                        {prod.name}
+                      </td>
+
+                      <td className="py-3 px-3">
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-[#C9AA72]/20 text-[#C9AA72] border border-[#C9AA72]/30">
+                          {prod.groupKey}
+                        </span>
+                      </td>
+
+                      <td className="py-3 px-3 text-[#AEBCC5]">
+                        {prod.status}
+                      </td>
+
+                      <td className="py-3 px-3 text-[#AEBCC5]">
+                        {prod.material}
+                      </td>
+
+                      <td className="py-3 px-3 font-mono text-[11px] text-white">
+                        {prod.version}
+                      </td>
+
+                      <td className="py-3 px-4 text-right">
+                        <div className="inline-flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setCmsModal({ isOpen: true, section: "products", item: prod })}
+                            className="p-2 rounded-lg bg-[#C9AA72]/20 hover:bg-[#C9AA72]/30 text-[#C9AA72] border border-[#C9AA72]/40 transition"
+                            title="Sửa sản phẩm"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteCmsItem("products", prod.id, prod.name)}
+                            className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition"
+                            title="Xóa sản phẩm"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
+
+        {/* TAB 4: DỊCH VỤ SỐ (SERVICES CRUD) */}
+        {activeTab === "services" && (
+          <section className="rounded-3xl bg-[#102A43]/30 border border-white/10 overflow-hidden shadow-xl">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-[#07111F]/80 text-[#AEBCC5] uppercase text-[10px] tracking-wider border-b border-white/10">
+                  <tr>
+                    <th className="py-3 px-4">Tên Dịch Vụ</th>
+                    <th className="py-3 px-4">Mô Tả Năng Lực</th>
+                    <th className="py-3 px-3">Quy Trình Thực Hiện</th>
+                    <th className="py-3 px-4 text-right">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {services.map((srv) => (
+                    <tr key={srv.id} className="hover:bg-white/5 transition">
+                      <td className="py-3 px-4 font-bold text-white text-xs">
+                        {srv.name}
+                      </td>
+
+                      <td className="py-3 px-4 text-[#AEBCC5] max-w-sm truncate">
+                        {srv.body}
+                      </td>
+
+                      <td className="py-3 px-3 text-[#C9AA72]">
+                        {srv.steps?.length || 0} bước quy trình
+                      </td>
+
+                      <td className="py-3 px-4 text-right">
+                        <div className="inline-flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setCmsModal({ isOpen: true, section: "services", item: srv })}
+                            className="p-2 rounded-lg bg-[#C9AA72]/20 hover:bg-[#C9AA72]/30 text-[#C9AA72] border border-[#C9AA72]/40 transition"
+                            title="Sửa dịch vụ"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteCmsItem("services", srv.id, srv.name)}
+                            className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition"
+                            title="Xóa dịch vụ"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
+
+        {/* TAB 5: HỒ SƠ ADMIN & CÀI ĐẶT VIETQR */}
+        {activeTab === "profile" && (
+          <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Form Edit */}
+            <form
+              onSubmit={handleSaveProfile}
+              className="lg:col-span-2 rounded-3xl bg-[#102A43]/40 border border-[#C9AA72]/30 p-6 sm:p-7 backdrop-blur-xl shadow-xl space-y-6 text-xs"
+            >
+              <div>
+                <h3 className="text-base font-extrabold text-white flex items-center gap-2">
+                  <UserIcon className="w-5 h-5 text-[#C9AA72]" />
+                  <span>Thông Tin Cá Nhân & Chủ Xưởng</span>
+                </h3>
+                <p className="text-[#AEBCC5] text-xs mt-0.5">
+                  Cập nhật họ tên, ảnh đại diện và số điện thoại liên hệ
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-bold text-[#AEBCC5] mb-1">Họ và tên:</label>
+                  <input
+                    type="text"
+                    value={adminFullName}
+                    onChange={(e) => setAdminFullName(e.target.value)}
+                    placeholder="Trương Hoàng Lam"
+                    className="w-full px-3 py-2 rounded-xl bg-[#07111F] border border-white/15 text-white focus:outline-none focus:border-[#C9AA72]"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-[#AEBCC5] mb-1">Số điện thoại:</label>
+                  <input
+                    type="text"
+                    value={adminPhone}
+                    onChange={(e) => setAdminPhone(e.target.value)}
+                    placeholder="0901234567"
+                    className="w-full px-3 py-2 rounded-xl bg-[#07111F] border border-white/15 text-white focus:outline-none focus:border-[#C9AA72]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-[#AEBCC5] mb-1">URL Ảnh Đại Diện (Avatar):</label>
+                <input
+                  type="url"
+                  value={adminAvatarUrl}
+                  onChange={(e) => setAdminAvatarUrl(e.target.value)}
+                  placeholder="https://..."
+                  className="w-full px-3 py-2 rounded-xl bg-[#07111F] border border-white/15 text-white focus:outline-none focus:border-[#C9AA72]"
+                />
+              </div>
+
+              {/* Bank VietQR Settings */}
+              <div className="pt-4 border-t border-white/10 space-y-4">
+                <div>
+                  <h3 className="text-base font-extrabold text-white flex items-center gap-2">
+                    <CreditCard className="w-5 h-5 text-[#A8F238]" />
+                    <span>Cấu Hình Nhận Ủng Hộ VietQR 24/7</span>
+                  </h3>
+                  <p className="text-[#AEBCC5] text-xs mt-0.5">
+                    Thông tin tài khoản thụ hưởng sẽ hiển thị tự động trên hộp thoại Donate
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block font-bold text-[#AEBCC5] mb-1">Mã Ngân Hàng (BIN / Code):</label>
+                    <input
+                      type="text"
+                      value={bankId}
+                      onChange={(e) => setBankId(e.target.value)}
+                      placeholder="MB, VCB, TCB..."
+                      className="w-full px-3 py-2 rounded-xl bg-[#07111F] border border-white/15 text-white uppercase focus:outline-none focus:border-[#C9AA72]"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-[#AEBCC5] mb-1">Tên Ngân Hàng:</label>
+                    <input
+                      type="text"
+                      value={bankName}
+                      onChange={(e) => setBankName(e.target.value)}
+                      placeholder="MBBank (Ngân Hàng Quân Đội)"
+                      className="w-full px-3 py-2 rounded-xl bg-[#07111F] border border-white/15 text-white focus:outline-none focus:border-[#C9AA72]"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block font-bold text-[#AEBCC5] mb-1">Số Tài Khoản:</label>
+                    <input
+                      type="text"
+                      value={accountNo}
+                      onChange={(e) => setAccountNo(e.target.value)}
+                      placeholder="0901234567"
+                      className="w-full px-3 py-2 rounded-xl bg-[#07111F] border border-white/15 text-white font-mono tracking-wider focus:outline-none focus:border-[#C9AA72]"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-[#AEBCC5] mb-1">Tên Chủ Tài Khoản:</label>
+                    <input
+                      type="text"
+                      value={accountName}
+                      onChange={(e) => setAccountName(e.target.value)}
+                      placeholder="TRUONG HOANG LAM"
+                      className="w-full px-3 py-2 rounded-xl bg-[#07111F] border border-white/15 text-white uppercase font-bold tracking-wider focus:outline-none focus:border-[#C9AA72]"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2 flex justify-end">
+                <button
+                  type="submit"
+                  disabled={isSavingProfile}
+                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#C9AA72] to-[#8B6F3F] text-[#07111F] font-black text-sm flex items-center gap-2 shadow-lg hover:opacity-95 transition transform active:scale-95"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>{isSavingProfile ? "Đang lưu cấu hình..." : "Lưu Thông Tin & Cấu Hình"}</span>
+                </button>
+              </div>
+            </form>
+
+            {/* Live Preview Card */}
+            <div className="rounded-3xl bg-[#102A43]/30 border border-white/10 p-6 flex flex-col items-center justify-between text-center space-y-4">
+              <div className="space-y-3 w-full flex flex-col items-center">
+                <div className="w-20 h-20 rounded-full border-2 border-[#C9AA72] overflow-hidden shadow-xl">
+                  <img
+                    src={adminAvatarUrl || user?.avatarUrl || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200"}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div>
+                  <h4 className="font-black text-white text-base">{adminFullName || user?.fullName}</h4>
+                  <p className="text-xs text-[#C9AA72]">{adminPhone || "Chưa có SĐT"}</p>
+                </div>
+              </div>
+
+              {/* Live VietQR Preview */}
+              <div className="p-3 rounded-2xl bg-[#07111F] border border-[#C9AA72]/30 w-full flex flex-col items-center">
+                <p className="text-[10px] font-bold text-[#A8F238] uppercase tracking-wider mb-2">
+                  Xem Trước Mã VietQR Tự Động
+                </p>
+                <div className="p-2 rounded-xl bg-white shadow-md inline-block">
+                  <img
+                    src={`https://img.vietqr.io/image/${bankId}-${accountNo}-compact2.png?amount=100000&addInfo=ZANGX%20TEST&accountName=${encodeURIComponent(accountName)}`}
+                    alt="VietQR Preview"
+                    className="w-36 h-36 object-contain"
+                  />
+                </div>
+                <div className="mt-2 text-[10px] text-[#AEBCC5]">
+                  <p className="font-bold text-white">{bankName}</p>
+                  <p className="font-mono text-[#C9AA72]">{accountNo} · {accountName}</p>
+                </div>
+              </div>
             </div>
           </section>
         )}
@@ -563,12 +1039,32 @@ export default function AdminPage() {
 
       {/* CREATE POST MODAL */}
       <CreatePostModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
+        isOpen={isCreatePostOpen}
+        onClose={() => setIsCreatePostOpen(false)}
         onCreated={() => {
-          loadDashboardData();
-          setIsCreateModalOpen(false);
+          loadAllData();
+          setIsCreatePostOpen(false);
         }}
+      />
+
+      {/* EDIT POST MODAL */}
+      <EditPostModal
+        post={editingPost}
+        isOpen={!!editingPost}
+        onClose={() => setEditingPost(null)}
+        onUpdated={() => {
+          loadAllData();
+          setEditingPost(null);
+        }}
+      />
+
+      {/* CMS ITEM MODAL (PROJECTS, PRODUCTS, SERVICES) */}
+      <CmsItemModal
+        isOpen={cmsModal.isOpen}
+        onClose={() => setCmsModal((prev) => ({ ...prev, isOpen: false }))}
+        section={cmsModal.section}
+        item={cmsModal.item}
+        onSaved={loadAllData}
       />
     </main>
   );
