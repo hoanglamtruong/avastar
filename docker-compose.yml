@@ -1,6 +1,9 @@
 services:
   avastar:
-    build: .
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_GOOGLE_CLIENT_ID: "${GOOGLE_CLIENT_ID:-}"
     image: avastar-app:latest
     container_name: avastar
     environment:
@@ -8,6 +11,8 @@ services:
       JWT_SECRET: ${JWT_SECRET:-avastar_jwt_secret_key_super_secure_2026_personalhub}
       NODE_ENV: production
       PORT: 3000
+    volumes:
+      - /mnt/data/ssd/avastar-uploads:/app/public/uploads
     ports:
       - "8107:3000"
     networks:
