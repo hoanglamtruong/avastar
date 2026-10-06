@@ -13,12 +13,12 @@ export interface UserSession {
 // KHÔNG quyết định form hay hành động — hình thái giao dịch (cardType) mới quyết định.
 // Miễn phí hay thương mại giờ chỉ khác NHAU VỀ GIÁ (0 = miễn phí) trên cùng 1 hình
 // thái, không phải 2 nhóm đối tượng khác nhau — xem cardTypeMeta.ts getCtaLabel().
-export type ContentCategory = 'physical' | 'digital' | 'service' | 'knowledge';
+
 
 // 'content' = bài chia sẻ thường, không có thẻ nghiệp vụ. Các giá trị legacy
 // (knowledge/vblog/giveaway/club/diary/work/...) vẫn hiển thị được qua fallback,
 // chỉ không còn chọn được khi tạo bài mới.
-export type PostCategory = ContentCategory | 'content' | 'general' | string;
+export type PostCategory = 'content' | 'general' | string;
 
 // Hình thái giao dịch — quyết định form tạo + hành động của khách xem
 export type CardType =
@@ -45,13 +45,13 @@ export interface PackageCardMeta extends CommerceCardExtras {
   originalPrice?: number;
   stock?: number;
   features?: string[];
-  contentCategory: ContentCategory;
+  contentCategory: string;
 }
 
 export interface RequestCardMeta extends CommerceCardExtras {
   title: string;
   scopeDescription: string;
-  contentCategory: ContentCategory;
+  contentCategory: string;
   estimatedRange?: string;
 }
 
@@ -62,7 +62,7 @@ export interface ReservationCardMeta extends CommerceCardExtras {
   slotsTotal?: number;
   slotsTaken?: number;
   depositAmount?: number;
-  contentCategory: ContentCategory;
+  contentCategory: string;
 }
 
 export interface MembershipCardMeta extends CommerceCardExtras {
@@ -70,7 +70,7 @@ export interface MembershipCardMeta extends CommerceCardExtras {
   price: number;
   billingPeriod: 'month' | 'year' | 'lifetime';
   benefits?: string[];
-  contentCategory: ContentCategory;
+  contentCategory: string;
 }
 
 export interface DonateCardMeta extends CommerceCardExtras {
@@ -82,7 +82,7 @@ export interface AuctionCardMeta extends CommerceCardExtras {
   startingPrice: number;
   minIncrement: number;
   endsAt: string;
-  contentCategory: ContentCategory;
+  contentCategory: string;
 }
 
 export interface PostCardData {

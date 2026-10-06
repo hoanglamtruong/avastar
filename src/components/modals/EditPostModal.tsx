@@ -3,9 +3,10 @@
 import React, { useState, useEffect } from "react";
 import { X, Plus, Trash2, Save } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
-import { PostData, ContentCategory, CardType } from "@/lib/types";
+import { PostData, CardType } from "@/lib/types";
 import { CARD_KIND_META, isCommerceCardType } from "@/lib/cardTypeMeta";
 import { MediaPicker } from "@/components/ui/MediaPicker";
+import { CategoryPicker, CategoryOption } from "@/components/ui/CategoryPicker";
 
 interface EditPostModalProps {
   post: PostData | null;
@@ -23,13 +24,6 @@ interface MediaDraft {
   docContent: string;
 }
 
-const CONTENT_CATEGORIES: ContentCategory[] = ["physical", "digital", "service", "knowledge"];
-const CONTENT_CATEGORY_LABEL: Record<ContentCategory, string> = {
-  physical: "Vật lý",
-  digital: "Kỹ thuật số",
-  service: "Dịch vụ",
-  knowledge: "Kiến thức",
-};
 const CARD_KINDS: CardKind[] = ["content", "package", "request", "reservation", "membership", "donate", "auction"];
 
 function emptyMedia(): MediaDraft {
@@ -40,7 +34,16 @@ export function EditPostModal({ post, isOpen, onClose, onUpdated }: EditPostModa
   const { showToast } = useToast();
 
   const [cardKind, setCardKind] = useState<CardKind>("content");
-  const [contentCategory, setContentCategory] = useState<ContentCategory>("physical");
+  const [categories, setCategories] = useState<CategoryOption[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+
+  useEffect(() => {
+    if (!isOpen) return;
+    fetch("/api/categories")
+      .then((r) => r.json())
+      .then((d) => setCategories(d.categories || []))
+      .catch(() => {});
+  }, [isOpen]);
 
   const [caption, setCaption] = useState("");
   const [media, setMedia] = useState<MediaDraft[]>([emptyMedia()]);
@@ -84,6 +87,7 @@ export function EditPostModal({ post, isOpen, onClose, onUpdated }: EditPostModa
   useEffect(() => {
     if (!post) return;
     setCaption(post.caption || "");
+    setSelectedCategory(post.category || "");
 
     const mediaCards = (post.cards || []).filter((c) => !isCommerceCardType(c.cardType));
     setMedia(
@@ -101,7 +105,6 @@ export function EditPostModal({ post, isOpen, onClose, onUpdated }: EditPostModa
       const t = commerceCard.cardType as CommerceType;
       setCardKind(t);
       const meta = commerceCard.cardMetadata || {};
-      setContentCategory(meta.contentCategory || "physical");
       if (t === "package") {
         setProductName(meta.productName || "");
         setPrice(String(meta.price || ""));
@@ -183,7 +186,7 @@ export function EditPostModal({ post, isOpen, onClose, onUpdated }: EditPostModa
             originalPrice: originalPrice ? toNum(originalPrice) : undefined,
             stock: stock ? toNum(stock) : undefined,
             features: toList(features),
-            contentCategory,
+            contentCategory: selectedCategory,
           },
         };
       case "request":
@@ -197,7 +200,7 @@ export function EditPostModal({ post, isOpen, onClose, onUpdated }: EditPostModa
             title: reqTitle.trim(),
             scopeDescription: scopeDescription.trim(),
             estimatedRange: estimatedRange.trim() || undefined,
-            contentCategory,
+            contentCategory: selectedCategory,
           },
         };
       case "reservation":
@@ -214,7 +217,7 @@ export function EditPostModal({ post, isOpen, onClose, onUpdated }: EditPostModa
             slotsTotal: slotsTotal ? toNum(slotsTotal) : undefined,
             slotsTaken: slotsTaken ? toNum(slotsTaken) : 0,
             depositAmount: depositAmount ? toNum(depositAmount) : 0,
-            contentCategory,
+            contentCategory: selectedCategory,
           },
         };
       case "membership":
@@ -229,7 +232,7 @@ export function EditPostModal({ post, isOpen, onClose, onUpdated }: EditPostModa
             price: toNum(planPrice),
             billingPeriod,
             benefits: toList(benefits),
-            contentCategory,
+            contentCategory: selectedCategory,
           },
         };
       case "donate":
@@ -249,7 +252,7 @@ export function EditPostModal({ post, isOpen, onClose, onUpdated }: EditPostModa
             startingPrice: toNum(startingPrice),
             minIncrement: toNum(minIncrement) || 10000,
             endsAt: new Date(endsAt).toISOString(),
-            contentCategory,
+            contentCategory: selectedCategory,
           },
         };
     }
@@ -266,13 +269,12 @@ export function EditPostModal({ post, isOpen, onClose, onUpdated }: EditPostModa
       }));
 
     let cards: any[] = mediaCards;
-    let category: string = "content";
+    const category: string = selectedCategory || "Chưa phân loại";
 
     if (cardKind !== "content") {
       const commerceCard = buildCommerceCard();
       if (!commerceCard) return;
       cards = [...mediaCards, commerceCard];
-      category = contentCategory;
     }
 
     if (cards.length === 0) {
@@ -330,18 +332,15 @@ export function EditPostModal({ post, isOpen, onClose, onUpdated }: EditPostModa
             <p className="text-[11px] text-[#F4F0E8]/50 mt-1">{CARD_KIND_META[cardKind].hint}</p>
           </div>
 
-          {cardKind !== "content" && cardKind !== "donate" && (
-            <div>
-              <label className={labelCls}>Phân loại nội dung</label>
-              <select value={contentCategory} onChange={(e) => setContentCategory(e.target.value as ContentCategory)} className={inputCls}>
-                {CONTENT_CATEGORIES.map((c) => (
-                  <option key={c} value={c}>
-                    {CONTENT_CATEGORY_LABEL[c]}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+          <div>
+            <label className={labelCls}>Danh mục</label>
+            <CategoryPicker
+              categories={categories}
+              value={selectedCategory}
+              onChange={setSelectedCategory}
+              onCategoryCreated={(cat) => setCategories((prev) => [...prev, cat].sort((a, b) => a.name.localeCompare(b.name)))}
+            />
+          </div>
 
           {cardKind === "package" && (
             <div className="space-y-2 p-3 rounded-xl bg-[#102A43]/60 border border-[#F4F0E8]/15">

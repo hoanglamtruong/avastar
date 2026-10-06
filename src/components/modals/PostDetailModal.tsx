@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { ZxStar } from "@/components/portfolio/ZxStar";
 import { formatCurrency } from "@/lib/utils";
-import { COMMERCE_CARD_META, CONTENT_CATEGORY_LABEL, getCtaLabel, isFreeCommerceCard } from "@/lib/cardTypeMeta";
+import { COMMERCE_CARD_META, getCtaLabel, isFreeCommerceCard } from "@/lib/cardTypeMeta";
 import { VietQRPaymentModal } from "@/components/modals/VietQRPaymentModal";
 import { RequestLeadModal } from "@/components/modals/RequestLeadModal";
 import { AuctionBidModal } from "@/components/modals/AuctionBidModal";
@@ -99,7 +99,7 @@ export function PostDetailModal({
           <span>{commerceMeta.label}</span>
           {meta.contentCategory && (
             <span className="ml-auto px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[9px] font-bold text-[#AEBCC5] normal-case tracking-normal">
-              {CONTENT_CATEGORY_LABEL[meta.contentCategory as keyof typeof CONTENT_CATEGORY_LABEL]}
+              {meta.contentCategory}
             </span>
           )}
         </div>

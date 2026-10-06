@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { X, Plus, Trash2, Save, Upload, Loader2, UserIcon, CreditCard } from "lucide-react";
+import { X, Plus, Trash2, Save, Upload, Loader2, UserIcon, CreditCard, Tag, Edit3, Check } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import { MediaPicker } from "@/components/ui/MediaPicker";
 
@@ -40,6 +40,56 @@ export function HeroEditModal({ isOpen, onClose, onSaved }: HeroEditModalProps) 
   const [accountNo, setAccountNo] = useState("");
   const [accountName, setAccountName] = useState("");
 
+  // Quản lý danh mục (xem/sửa/xóa) — Owner tự định nghĩa, không còn cố định
+  const [categories, setCategories] = useState<{ id: string; name: string; postCount: number }[]>([]);
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState("");
+
+  const loadCategories = () => {
+    fetch("/api/categories")
+      .then((r) => r.json())
+      .then((d) => setCategories(d.categories || []))
+      .catch(() => {});
+  };
+
+  const handleRenameCategory = async (id: string) => {
+    const trimmed = editingName.trim();
+    if (!trimmed) return;
+    try {
+      const res = await fetch("/api/categories", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, name: trimmed }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast("Đã đổi tên danh mục!", "success");
+        setEditingCategoryId(null);
+        loadCategories();
+      } else {
+        showToast(data.error || "Không thể đổi tên danh mục", "error");
+      }
+    } catch {
+      showToast("Lỗi kết nối khi đổi tên danh mục", "error");
+    }
+  };
+
+  const handleDeleteCategory = async (id: string, name: string) => {
+    if (!window.confirm(`Xóa danh mục "${name}"? Thao tác này không thể hoàn tác.`)) return;
+    try {
+      const res = await fetch(`/api/categories?id=${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (res.ok) {
+        showToast("Đã xóa danh mục!", "success");
+        loadCategories();
+      } else {
+        showToast(data.error || "Không thể xóa danh mục", "error");
+      }
+    } catch {
+      showToast("Lỗi kết nối khi xóa danh mục", "error");
+    }
+  };
+
   useEffect(() => {
     if (!isOpen) return;
     fetch("/api/hero")
@@ -66,6 +116,8 @@ export function HeroEditModal({ isOpen, onClose, onSaved }: HeroEditModalProps) 
         }
       })
       .catch(() => {});
+
+    loadCategories();
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -212,6 +264,64 @@ export function HeroEditModal({ isOpen, onClose, onSaved }: HeroEditModalProps) 
           <div className="pt-3 border-t border-[#F4F0E8]/10">
             <label className={labelCls}>Giới thiệu ngắn về Personal Hub</label>
             <textarea value={intro} onChange={(e) => setIntro(e.target.value)} rows={3} className={inputCls} placeholder="Personal Hub là..." />
+          </div>
+
+          {/* QUẢN LÝ DANH MỤC */}
+          <div className="space-y-2.5 pt-3 border-t border-[#F4F0E8]/10">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-[#38BDF8]">
+              <Tag className="w-3.5 h-3.5" />
+              <span>Quản Lý Danh Mục</span>
+            </div>
+            <p className="text-[11px] text-[#F4F0E8]/50">Danh mục dùng khi đăng bài và lọc trên Hub — tự tạo thêm ngay tại màn đăng bài.</p>
+
+            {categories.length === 0 && <p className="text-xs text-[#F4F0E8]/50 text-center py-2">Chưa có danh mục nào.</p>}
+
+            {categories.map((cat) => (
+              <div key={cat.id} className="flex items-center gap-2 p-2.5 rounded-xl bg-[#102A43]/60 border border-[#F4F0E8]/15">
+                {editingCategoryId === cat.id ? (
+                  <>
+                    <input
+                      type="text"
+                      value={editingName}
+                      onChange={(e) => setEditingName(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleRenameCategory(cat.id)}
+                      autoFocus
+                      className="flex-1 px-2.5 py-1.5 rounded-lg bg-[#07111F] border border-[#C9AA72]/40 text-xs text-white focus:outline-none"
+                    />
+                    <button type="button" onClick={() => handleRenameCategory(cat.id)} className="p-1.5 rounded-lg text-[#A8F238] hover:bg-[#A8F238]/10 transition">
+                      <Check className="w-4 h-4" />
+                    </button>
+                    <button type="button" onClick={() => setEditingCategoryId(null)} className="p-1.5 rounded-lg text-white/50 hover:bg-white/10 transition">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span className="flex-1 text-xs font-semibold text-white truncate">{cat.name}</span>
+                    <span className="text-[10px] text-[#AEBCC5] shrink-0">{cat.postCount} bài</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingCategoryId(cat.id);
+                        setEditingName(cat.name);
+                      }}
+                      className="p-1.5 rounded-lg text-[#C9AA72] hover:bg-[#C9AA72]/10 transition"
+                      title="Sửa tên danh mục"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteCategory(cat.id, cat.name)}
+                      className="p-1.5 rounded-lg text-red-400 hover:bg-red-400/10 transition"
+                      title="Xóa danh mục"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </>
+                )}
+              </div>
+            ))}
           </div>
 
           {/* SLIDE ẢNH / VIDEO */}

@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X, Plus, Trash2, Send } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
-import { ContentCategory, CardType } from "@/lib/types";
+import { CardType } from "@/lib/types";
 import { CARD_KIND_META } from "@/lib/cardTypeMeta";
 import { MediaPicker } from "@/components/ui/MediaPicker";
+import { CategoryPicker, CategoryOption } from "@/components/ui/CategoryPicker";
 
 interface CreatePostModalProps {
   isOpen: boolean;
@@ -26,14 +27,6 @@ function emptyMedia(): MediaDraft {
   return { cardType: "image", mediaUrl: "", docContent: "" };
 }
 
-const CONTENT_CATEGORIES: ContentCategory[] = ["physical", "digital", "service", "knowledge"];
-const CONTENT_CATEGORY_LABEL: Record<ContentCategory, string> = {
-  physical: "Vật lý",
-  digital: "Kỹ thuật số",
-  service: "Dịch vụ",
-  knowledge: "Kiến thức",
-};
-
 const CARD_KINDS: CardKind[] = ["content", "package", "request", "reservation", "membership", "donate", "auction"];
 
 export function CreatePostModal({ isOpen, onClose, onCreated }: CreatePostModalProps) {
@@ -44,7 +37,20 @@ export function CreatePostModal({ isOpen, onClose, onCreated }: CreatePostModalP
   // là miễn phí (nút đổi thành "Nhận/Đăng ký miễn phí") — không còn chọn nhóm
   // Miễn phí/Thương mại riêng, vì bản chất đối tượng giống nhau, chỉ khác giá.
   const [cardKind, setCardKind] = useState<CardKind>("content");
-  const [contentCategory, setContentCategory] = useState<ContentCategory>("physical");
+  const [categories, setCategories] = useState<CategoryOption[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+
+  useEffect(() => {
+    if (!isOpen) return;
+    fetch("/api/categories")
+      .then((r) => r.json())
+      .then((d) => {
+        const list: CategoryOption[] = d.categories || [];
+        setCategories(list);
+        setSelectedCategory((prev) => prev || list[0]?.name || "");
+      })
+      .catch(() => {});
+  }, [isOpen]);
 
   const [caption, setCaption] = useState("");
   const [media, setMedia] = useState<MediaDraft[]>([emptyMedia()]);
@@ -133,7 +139,7 @@ export function CreatePostModal({ isOpen, onClose, onCreated }: CreatePostModalP
             originalPrice: originalPrice ? toNum(originalPrice) : undefined,
             stock: stock ? toNum(stock) : undefined,
             features: toList(features),
-            contentCategory,
+            contentCategory: selectedCategory,
           },
         };
       case "request":
@@ -147,7 +153,7 @@ export function CreatePostModal({ isOpen, onClose, onCreated }: CreatePostModalP
             title: reqTitle.trim(),
             scopeDescription: scopeDescription.trim(),
             estimatedRange: estimatedRange.trim() || undefined,
-            contentCategory,
+            contentCategory: selectedCategory,
           },
         };
       case "reservation":
@@ -164,7 +170,7 @@ export function CreatePostModal({ isOpen, onClose, onCreated }: CreatePostModalP
             slotsTotal: slotsTotal ? toNum(slotsTotal) : undefined,
             slotsTaken: 0,
             depositAmount: depositAmount ? toNum(depositAmount) : 0,
-            contentCategory,
+            contentCategory: selectedCategory,
           },
         };
       case "membership":
@@ -179,7 +185,7 @@ export function CreatePostModal({ isOpen, onClose, onCreated }: CreatePostModalP
             price: toNum(planPrice),
             billingPeriod,
             benefits: toList(benefits),
-            contentCategory,
+            contentCategory: selectedCategory,
           },
         };
       case "donate":
@@ -199,7 +205,7 @@ export function CreatePostModal({ isOpen, onClose, onCreated }: CreatePostModalP
             startingPrice: toNum(startingPrice),
             minIncrement: toNum(minIncrement) || 10000,
             endsAt: new Date(endsAt).toISOString(),
-            contentCategory,
+            contentCategory: selectedCategory,
           },
         };
     }
@@ -216,13 +222,12 @@ export function CreatePostModal({ isOpen, onClose, onCreated }: CreatePostModalP
       }));
 
     let cards: any[] = mediaCards;
-    let category: string = "content";
+    const category: string = selectedCategory || "Chưa phân loại";
 
     if (cardKind !== "content") {
       const commerceCard = buildCommerceCard();
       if (!commerceCard) return;
       cards = [...mediaCards, commerceCard];
-      category = contentCategory;
     }
 
     if (cards.length === 0) {
@@ -280,18 +285,15 @@ export function CreatePostModal({ isOpen, onClose, onCreated }: CreatePostModalP
             <p className="text-[11px] text-[#F4F0E8]/50 mt-1">{CARD_KIND_META[cardKind].hint}</p>
           </div>
 
-          {cardKind !== "content" && cardKind !== "donate" && (
-            <div>
-              <label className={labelCls}>Phân loại nội dung</label>
-              <select value={contentCategory} onChange={(e) => setContentCategory(e.target.value as ContentCategory)} className={inputCls}>
-                {CONTENT_CATEGORIES.map((c) => (
-                  <option key={c} value={c}>
-                    {CONTENT_CATEGORY_LABEL[c]}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+          <div>
+            <label className={labelCls}>Danh mục</label>
+            <CategoryPicker
+              categories={categories}
+              value={selectedCategory}
+              onChange={setSelectedCategory}
+              onCategoryCreated={(cat) => setCategories((prev) => [...prev, cat].sort((a, b) => a.name.localeCompare(b.name)))}
+            />
+          </div>
 
           {cardKind === "package" && (
             <div className="space-y-2 p-3 rounded-xl bg-[#102A43]/60 border border-[#F4F0E8]/15">

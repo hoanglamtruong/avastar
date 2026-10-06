@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { PostData } from "@/lib/types";
 import { PinCard } from "@/components/pins/PinCard";
 import { Search, X } from "lucide-react";
@@ -31,6 +31,14 @@ export function ShowroomPinterest({
 }: ShowroomPinterestProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("all");
+  const [categories, setCategories] = useState<{ id: string; name: string; postCount?: number }[]>([]);
+
+  useEffect(() => {
+    fetch("/api/categories")
+      .then((r) => r.json())
+      .then((d) => setCategories(d.categories || []))
+      .catch(() => {});
+  }, []);
 
   // Nút "Home" trên AtelierDock bắn tín hiệu reset bộ lọc + cuộn lên đầu
   React.useEffect(() => {
@@ -41,33 +49,11 @@ export function ShowroomPinterest({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetSignal]);
 
-  const filterTabs = [
-    { id: "all", label: "Tất cả ý tưởng" },
-    { id: "free", label: "Miễn Phí" },
-    { id: "package", label: "Mua Ngay" },
-    { id: "reservation", label: "Giữ Chỗ" },
-    { id: "membership", label: "Thành Viên" },
-    { id: "auction", label: "Đấu Giá" },
-    { id: "media", label: "Ảnh & Video" },
-  ];
-
-  const FREE_TAGS = ["knowledge", "vblog", "giveaway", "club"];
-
-  // Lọc tác phẩm dựa trên tab và từ khóa tìm kiếm
+  // Lọc tác phẩm theo danh mục động (Owner tự quản lý) + từ khóa tìm kiếm
   const filteredPosts = useMemo(() => {
     return posts.filter((post) => {
-      // 1. Lọc theo chuyên mục / tab
-      if (selectedFilter === "free" && !FREE_TAGS.includes(post.category)) return false;
-      if (
-        ["package", "reservation", "membership", "auction"].includes(selectedFilter) &&
-        !post.cards.some((c) => c.cardType === selectedFilter)
-      )
-        return false;
-      if (
-        selectedFilter === "media" &&
-        !post.cards.some((c) => c.cardType === "video" || c.cardType === "image")
-      )
-        return false;
+      // 1. Lọc theo danh mục
+      if (selectedFilter !== "all" && post.category !== selectedFilter) return false;
 
       // 2. Lọc theo từ khóa tìm kiếm
       if (searchQuery.trim()) {
@@ -155,19 +141,29 @@ export function ShowroomPinterest({
             </div>
 
             <div className="flex flex-wrap gap-2">
-              {filterTabs.map((tab) => {
-                const isActive = selectedFilter === tab.id;
+              <button
+                onClick={() => setSelectedFilter("all")}
+                className={`whitespace-nowrap px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition-all duration-200 border ${
+                  selectedFilter === "all"
+                    ? "bg-[#C9AA72] text-[#07111F] border-[#C9AA72] shadow-[0_0_15px_rgba(201,170,114,0.4)]"
+                    : "bg-[#102A43]/50 text-[#AEBCC5] hover:text-[#F4F0E8] hover:bg-[#102A43]/80 border-white/10"
+                }`}
+              >
+                Tất cả ý tưởng
+              </button>
+              {categories.map((cat) => {
+                const isActive = selectedFilter === cat.name;
                 return (
                   <button
-                    key={tab.id}
-                    onClick={() => setSelectedFilter(tab.id)}
+                    key={cat.id}
+                    onClick={() => setSelectedFilter(cat.name)}
                     className={`whitespace-nowrap px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition-all duration-200 border ${
                       isActive
                         ? "bg-[#C9AA72] text-[#07111F] border-[#C9AA72] shadow-[0_0_15px_rgba(201,170,114,0.4)]"
                         : "bg-[#102A43]/50 text-[#AEBCC5] hover:text-[#F4F0E8] hover:bg-[#102A43]/80 border-white/10"
                     }`}
                   >
-                    {tab.label}
+                    {cat.name}
                   </button>
                 );
               })}

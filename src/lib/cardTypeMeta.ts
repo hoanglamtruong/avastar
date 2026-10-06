@@ -8,7 +8,7 @@ import {
   Gavel,
 } from "lucide-react";
 import type { ComponentType } from "react";
-import type { CardType, ContentCategory } from "@/lib/types";
+import type { CardType } from "@/lib/types";
 
 export interface CardTypeMeta {
   label: string;
@@ -43,13 +43,6 @@ export const CARD_KIND_META: Record<"content" | CardType, { label: string; hint:
   membership: { label: "Thành Viên / Câu Lạc Bộ", hint: "Có thể miễn phí (câu lạc bộ) hoặc thu phí định kỳ." },
   donate: { label: "Ủng Hộ (Donate)", hint: "Khách tặng tiền cho bạn qua VietQR." },
   auction: { label: "Đấu Giá", hint: "Khách trả giá, cao nhất khi hết giờ thắng." },
-};
-
-export const CONTENT_CATEGORY_LABEL: Record<ContentCategory, string> = {
-  physical: "Vật Lý",
-  digital: "Kỹ Thuật Số",
-  service: "Dịch Vụ",
-  knowledge: "Kiến Thức",
 };
 
 const COMMERCE_TYPES: CardType[] = ["package", "request", "reservation", "membership", "donate", "auction"];

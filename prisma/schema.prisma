@@ -171,6 +171,18 @@ model PushSubscription {
 }
 
 
+// Danh mục nội dung — Owner tự quản lý (tạo/sửa/xóa), thay cho enum cứng
+// physical/digital/service/knowledge trước đây. Post.category vẫn là string
+// tự do (không FK) để không đụng vào dữ liệu cũ (sop/training/work/...) —
+// bảng này chỉ là "danh sách lựa chọn hợp lệ" cho màn tạo bài + bộ lọc.
+model Category {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique @db.VarChar(50)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("categories")
+}
+
 model Lead {
   id          String   @id @default(uuid()) @db.Uuid
   postId      String   @map("post_id") @db.Uuid
