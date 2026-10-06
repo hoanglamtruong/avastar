@@ -57,9 +57,12 @@ async function createPickerSession(accessToken: string) {
   const res = await fetch("https://photospicker.googleapis.com/v1/sessions", {
     method: "POST",
     headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ maxItemCount: "1" }),
+    body: JSON.stringify({ pickingConfig: { maxItemCount: "1" } }),
   });
-  if (!res.ok) throw new Error("Không tạo được phiên chọn ảnh Google");
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    throw new Error(`Không tạo được phiên chọn ảnh Google (${res.status}) ${detail.slice(0, 200)}`);
+  }
   return res.json();
 }
 
