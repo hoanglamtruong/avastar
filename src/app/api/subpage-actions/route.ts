@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { emitOwnerEvent } from "@/lib/socket";
 import { sendPushNotificationToOwners } from "@/lib/push";
+import { sendTelegramNotification } from "@/lib/telegram";
 
 export async function POST(request: NextRequest) {
   try {
@@ -49,6 +50,7 @@ export async function POST(request: NextRequest) {
       body: notificationText,
       url: `/?postId=${postId}`,
     }).catch((err) => console.error("Push failed:", err));
+    sendTelegramNotification(notificationText).catch((err) => console.error("Telegram failed:", err));
 
     return NextResponse.json({ success: true, message: "Hành động đã được ghi nhận thành công!" });
   } catch (error: any) {

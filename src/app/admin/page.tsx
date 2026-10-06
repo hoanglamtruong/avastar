@@ -1,39 +1,35 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/components/ui/Toast";
 import { formatCurrency } from "@/lib/utils";
 import { PostData } from "@/lib/types";
-import { CreatePostModal } from "@/components/modals/CreatePostModal";
+import { CARD_KIND_META } from "@/lib/cardTypeMeta";
 import { EditPostModal } from "@/components/modals/EditPostModal";
 import { MediaPicker } from "@/components/ui/MediaPicker";
-import { CmsItemModal, CmsSectionType } from "@/components/modals/CmsItemModal";
 import { ZxLogoLockup } from "@/components/portfolio/ZxStar";
 import {
   ShieldCheck,
-  Plus,
   Trash2,
   Edit3,
   ExternalLink,
   LogOut,
   ArrowLeft,
   RefreshCw,
-  MessageSquare,
-  Heart,
   Layers,
   Lock,
   UserCheck,
   Sparkles,
-  Briefcase,
-  Package,
-  FolderKanban,
+  ShoppingCart,
+  Inbox,
+  Gavel,
+  Gift,
+  LayoutDashboard,
   User as UserIcon,
   CreditCard,
-  Building,
   Save,
-  Check,
 } from "lucide-react";
 
 interface AdminStats {
@@ -42,37 +38,56 @@ interface AdminStats {
   commentsCount: number;
   conversationsCount: number;
   totalGiftSum: number;
+  ordersCount: number;
+  leadsCount: number;
+  bidsCount: number;
+  totalOrderSum: number;
 }
+
+interface CardTypeBreakdownRow {
+  cardType: string;
+  count: number;
+}
+
+interface AdminOverview {
+  stats: AdminStats;
+  cardTypeBreakdown: CardTypeBreakdownRow[];
+  recentGifts: any[];
+  recentOrders: any[];
+  recentLeads: any[];
+  recentBids: any[];
+}
+
+const ORDER_STATUS_LABEL: Record<string, string> = {
+  pending: "Chờ xử lý",
+  confirmed: "Đã xác nhận",
+  cancelled: "Đã hủy",
+};
+
+const LEAD_STATUS_LABEL: Record<string, string> = {
+  new: "Mới",
+  contacted: "Đã liên hệ",
+  done: "Hoàn tất",
+};
 
 export default function AdminPage() {
   const { user, isLoading: isAuthLoading, login, switchUser, logout } = useAuth();
   const { showToast } = useToast();
 
   // Navigation tab
-  const [activeTab, setActiveTab] = useState<"posts" | "projects" | "products" | "services" | "profile">("posts");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "posts" | "profile">("dashboard");
 
   // Data states
   const [posts, setPosts] = useState<PostData[]>([]);
-  const [stats, setStats] = useState<AdminStats | null>(null);
-  const [projects, setProjects] = useState<any[]>([]);
-  const [products, setProducts] = useState<any[]>([]);
-  const [services, setServices] = useState<any[]>([]);
+  const [overview, setOverview] = useState<AdminOverview | null>(null);
   const [isLoadingData, setIsLoadingData] = useState(false);
 
-  // Modals state
-  const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
-  const [editingPost, setEditingPost] = useState<PostData | null>(null);
+  // Dashboard filters
+  const [orderStatusFilter, setOrderStatusFilter] = useState<string>("all");
+  const [leadStatusFilter, setLeadStatusFilter] = useState<string>("all");
 
-  // CMS modal state
-  const [cmsModal, setCmsModal] = useState<{
-    isOpen: boolean;
-    section: CmsSectionType;
-    item: any | null;
-  }>({
-    isOpen: false,
-    section: "projects",
-    item: null,
-  });
+  // Modals state
+  const [editingPost, setEditingPost] = useState<PostData | null>(null);
 
   // Admin Profile & Bank state
   const [adminFullName, setAdminFullName] = useState("");
@@ -91,33 +106,24 @@ export default function AdminPage() {
 
   const isOwner = user?.role === "owner" || user?.role === "admin";
 
-  // Fetch all dashboard & CMS data
+  // Fetch all dashboard data
   const loadAllData = useCallback(async () => {
     if (!isOwner) return;
     setIsLoadingData(true);
     try {
-      const [overviewRes, postsRes, cmsRes, profileRes] = await Promise.all([
+      const [overviewRes, postsRes, profileRes] = await Promise.all([
         fetch("/api/admin/overview"),
         fetch("/api/posts"),
-        fetch("/api/admin/cms"),
         fetch("/api/admin/profile"),
       ]);
 
       if (overviewRes.ok) {
         const oData = await overviewRes.json();
-        setStats(oData.stats);
+        setOverview(oData);
       }
       if (postsRes.ok) {
         const pData = await postsRes.json();
         setPosts(pData.posts || []);
-      }
-      if (cmsRes.ok) {
-        const cData = await cmsRes.json();
-        if (cData.data) {
-          setProjects(cData.data.projects || []);
-          setProducts(cData.data.products || []);
-          setServices(cData.data.services || []);
-        }
       }
       if (profileRes.ok) {
         const profData = await profileRes.json();
@@ -145,6 +151,23 @@ export default function AdminPage() {
       loadAllData();
     }
   }, [isOwner, loadAllData]);
+
+  const filteredOrders = useMemo(() => {
+    const rows = overview?.recentOrders || [];
+    if (orderStatusFilter === "all") return rows;
+    return rows.filter((o) => o.status === orderStatusFilter);
+  }, [overview, orderStatusFilter]);
+
+  const filteredLeads = useMemo(() => {
+    const rows = overview?.recentLeads || [];
+    if (leadStatusFilter === "all") return rows;
+    return rows.filter((l) => l.status === leadStatusFilter);
+  }, [overview, leadStatusFilter]);
+
+  const maxCardTypeCount = useMemo(() => {
+    const rows = overview?.cardTypeBreakdown || [];
+    return Math.max(1, ...rows.map((r) => r.count));
+  }, [overview]);
 
   // Handle Quick Login as Owner
   const handleQuickLoginAsOwner = async () => {
@@ -191,23 +214,6 @@ export default function AdminPage() {
       }
     } catch {
       showToast("Lỗi kết nối khi xóa bài viết", "error");
-    }
-  };
-
-  // Delete CMS Item (Project, Product, Service)
-  const handleDeleteCmsItem = async (section: CmsSectionType, id: string, name: string) => {
-    if (!window.confirm(`Bạn có chắc muốn xóa "${name}" không?`)) return;
-    try {
-      const res = await fetch(`/api/admin/cms?section=${section}&id=${id}`, { method: "DELETE" });
-      if (res.ok) {
-        showToast(`Đã xóa "${name}" thành công!`, "success");
-        loadAllData();
-      } else {
-        const err = await res.json();
-        showToast(err.error || "Không thể xóa mục", "error");
-      }
-    } catch {
-      showToast("Lỗi kết nối khi xóa dữ liệu", "error");
     }
   };
 
@@ -349,6 +355,8 @@ export default function AdminPage() {
     );
   }
 
+  const stats = overview?.stats;
+
   // 2. DASHBOARD QUẢN TRỊ TRUNG TÂM (Đã đăng nhập Owner)
   return (
     <main className="min-h-screen w-screen bg-[#07111F] text-white p-4 sm:p-8 space-y-6">
@@ -403,52 +411,22 @@ export default function AdminPage() {
       </header>
 
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* KPI CARDS */}
-        <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          <div className="p-4 sm:p-5 rounded-2xl bg-[#102A43]/40 border border-white/10 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#C9AA72]/20 flex items-center justify-center text-[#C9AA72] border border-[#C9AA72]/30">
-              <Layers className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-[11px] text-[#AEBCC5] font-semibold uppercase">Tác phẩm / Ảnh</p>
-              <h3 className="text-xl sm:text-2xl font-black text-white">{posts.length}</h3>
-            </div>
-          </div>
-
-          <div className="p-4 sm:p-5 rounded-2xl bg-[#102A43]/40 border border-white/10 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#A8F238]/20 flex items-center justify-center text-[#A8F238] border border-[#A8F238]/30">
-              <FolderKanban className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-[11px] text-[#AEBCC5] font-semibold uppercase">Dự án đã làm</p>
-              <h3 className="text-xl sm:text-2xl font-black text-white">{projects.length}</h3>
-            </div>
-          </div>
-
-          <div className="p-4 sm:p-5 rounded-2xl bg-[#102A43]/40 border border-white/10 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#C9AA72]/20 flex items-center justify-center text-[#C9AA72] border border-[#C9AA72]/30">
-              <Package className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-[11px] text-[#AEBCC5] font-semibold uppercase">Sản phẩm R&D</p>
-              <h3 className="text-xl sm:text-2xl font-black text-[#C9AA72]">{products.length}</h3>
-            </div>
-          </div>
-
-          <div className="p-4 sm:p-5 rounded-2xl bg-[#102A43]/40 border border-white/10 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400 border border-blue-500/30">
-              <Briefcase className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-[11px] text-[#AEBCC5] font-semibold uppercase">Gói dịch vụ</p>
-              <h3 className="text-xl sm:text-2xl font-black text-white">{services.length}</h3>
-            </div>
-          </div>
-        </section>
-
-        {/* 5-TAB NAVIGATION BAR */}
+        {/* TAB NAVIGATION BAR */}
         <section className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl bg-[#102A43]/20 border border-white/10">
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+            <button
+              type="button"
+              onClick={() => setActiveTab("dashboard")}
+              className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition ${
+                activeTab === "dashboard"
+                  ? "bg-[#C9AA72] text-[#07111F] shadow-lg"
+                  : "bg-white/5 text-[#AEBCC5] hover:text-white"
+              }`}
+            >
+              <LayoutDashboard className="w-4 h-4" />
+              <span>Tổng Quan</span>
+            </button>
+
             <button
               type="button"
               onClick={() => setActiveTab("posts")}
@@ -460,45 +438,6 @@ export default function AdminPage() {
             >
               <Layers className="w-4 h-4" />
               <span>Tác Phẩm & Ảnh ({posts.length})</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab("projects")}
-              className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition ${
-                activeTab === "projects"
-                  ? "bg-[#C9AA72] text-[#07111F] shadow-lg"
-                  : "bg-white/5 text-[#AEBCC5] hover:text-white"
-              }`}
-            >
-              <FolderKanban className="w-4 h-4" />
-              <span>Dự Án ({projects.length})</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab("products")}
-              className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition ${
-                activeTab === "products"
-                  ? "bg-[#C9AA72] text-[#07111F] shadow-lg"
-                  : "bg-white/5 text-[#AEBCC5] hover:text-white"
-              }`}
-            >
-              <Package className="w-4 h-4" />
-              <span>Sản Phẩm R&D ({products.length})</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab("services")}
-              className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition ${
-                activeTab === "services"
-                  ? "bg-[#C9AA72] text-[#07111F] shadow-lg"
-                  : "bg-white/5 text-[#AEBCC5] hover:text-white"
-              }`}
-            >
-              <Briefcase className="w-4 h-4" />
-              <span>Dịch Vụ ({services.length})</span>
             </button>
 
             <button
@@ -515,65 +454,279 @@ export default function AdminPage() {
             </button>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={loadAllData}
-              disabled={isLoadingData}
-              className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-[#AEBCC5] hover:text-white transition"
-              title="Làm mới dữ liệu"
-            >
-              <RefreshCw className={`w-4 h-4 ${isLoadingData ? "animate-spin text-[#C9AA72]" : ""}`} />
-            </button>
-
-            {/* Quick Create Buttons based on active tab */}
-            {activeTab === "posts" && (
-              <button
-                type="button"
-                onClick={() => setIsCreatePostOpen(true)}
-                className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#C9AA72] to-[#8B6F3F] text-[#07111F] font-black text-xs flex items-center gap-1.5 shadow-lg hover:opacity-95 transition"
-              >
-                <Plus className="w-4 h-4" />
-                <span>+ Đăng Tác Phẩm Mới</span>
-              </button>
-            )}
-
-            {activeTab === "projects" && (
-              <button
-                type="button"
-                onClick={() => setCmsModal({ isOpen: true, section: "projects", item: null })}
-                className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#C9AA72] to-[#8B6F3F] text-[#07111F] font-black text-xs flex items-center gap-1.5 shadow-lg hover:opacity-95 transition"
-              >
-                <Plus className="w-4 h-4" />
-                <span>+ Thêm Dự Án Mới</span>
-              </button>
-            )}
-
-            {activeTab === "products" && (
-              <button
-                type="button"
-                onClick={() => setCmsModal({ isOpen: true, section: "products", item: null })}
-                className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#C9AA72] to-[#8B6F3F] text-[#07111F] font-black text-xs flex items-center gap-1.5 shadow-lg hover:opacity-95 transition"
-              >
-                <Plus className="w-4 h-4" />
-                <span>+ Thêm Sản Phẩm Mới</span>
-              </button>
-            )}
-
-            {activeTab === "services" && (
-              <button
-                type="button"
-                onClick={() => setCmsModal({ isOpen: true, section: "services", item: null })}
-                className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#C9AA72] to-[#8B6F3F] text-[#07111F] font-black text-xs flex items-center gap-1.5 shadow-lg hover:opacity-95 transition"
-              >
-                <Plus className="w-4 h-4" />
-                <span>+ Thêm Dịch Vụ Mới</span>
-              </button>
-            )}
-          </div>
+          <button
+            type="button"
+            onClick={loadAllData}
+            disabled={isLoadingData}
+            className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-[#AEBCC5] hover:text-white transition"
+            title="Làm mới dữ liệu"
+          >
+            <RefreshCw className={`w-4 h-4 ${isLoadingData ? "animate-spin text-[#C9AA72]" : ""}`} />
+          </button>
         </section>
 
-        {/* TAB 1: TÁC PHẨM & ẢNH (POSTS & MEDIA CRUD) */}
+        {/* TAB: TỔNG QUAN (DASHBOARD) */}
+        {activeTab === "dashboard" && (
+          <div className="space-y-6">
+            {/* KPI CARDS */}
+            <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              <div className="p-4 sm:p-5 rounded-2xl bg-[#102A43]/40 border border-white/10 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#C9AA72]/20 flex items-center justify-center text-[#C9AA72] border border-[#C9AA72]/30">
+                  <Layers className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-[11px] text-[#AEBCC5] font-semibold uppercase">Tác phẩm / Lượt xem</p>
+                  <h3 className="text-xl sm:text-2xl font-black text-white">
+                    {stats?.postsCount ?? 0} <span className="text-xs text-[#AEBCC5] font-bold">/ {stats?.viewsCount ?? 0}</span>
+                  </h3>
+                </div>
+              </div>
+
+              <div className="p-4 sm:p-5 rounded-2xl bg-[#102A43]/40 border border-white/10 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#38BDF8]/20 flex items-center justify-center text-[#38BDF8] border border-[#38BDF8]/30">
+                  <ShoppingCart className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-[11px] text-[#AEBCC5] font-semibold uppercase">Đơn hàng</p>
+                  <h3 className="text-xl sm:text-2xl font-black text-white">{stats?.ordersCount ?? 0}</h3>
+                  <p className="text-[10px] text-[#38BDF8] font-bold">{formatCurrency(stats?.totalOrderSum || 0)}</p>
+                </div>
+              </div>
+
+              <div className="p-4 sm:p-5 rounded-2xl bg-[#102A43]/40 border border-white/10 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#A8F238]/20 flex items-center justify-center text-[#A8F238] border border-[#A8F238]/30">
+                  <Inbox className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-[11px] text-[#AEBCC5] font-semibold uppercase">Yêu cầu / Lead</p>
+                  <h3 className="text-xl sm:text-2xl font-black text-white">{stats?.leadsCount ?? 0}</h3>
+                </div>
+              </div>
+
+              <div className="p-4 sm:p-5 rounded-2xl bg-[#102A43]/40 border border-white/10 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#E879F9]/20 flex items-center justify-center text-[#E879F9] border border-[#E879F9]/30">
+                  <Gavel className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-[11px] text-[#AEBCC5] font-semibold uppercase">Lượt đặt giá</p>
+                  <h3 className="text-xl sm:text-2xl font-black text-white">{stats?.bidsCount ?? 0}</h3>
+                </div>
+              </div>
+
+              <div className="p-4 sm:p-5 rounded-2xl bg-[#102A43]/40 border border-white/10 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#C9AA72]/20 flex items-center justify-center text-[#C9AA72] border border-[#C9AA72]/30">
+                  <Gift className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-[11px] text-[#AEBCC5] font-semibold uppercase">Tổng Donate</p>
+                  <h3 className="text-lg sm:text-xl font-black text-[#C9AA72]">{formatCurrency(stats?.totalGiftSum || 0)}</h3>
+                </div>
+              </div>
+
+              <div className="p-4 sm:p-5 rounded-2xl bg-[#102A43]/40 border border-white/10 flex items-center gap-3 col-span-2 lg:col-span-3">
+                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white border border-white/20">
+                  <Inbox className="w-5 h-5" />
+                </div>
+                <div className="flex-1 grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-[11px] text-[#AEBCC5] font-semibold uppercase">Bình luận</p>
+                    <h3 className="text-base sm:text-lg font-black text-white">{stats?.commentsCount ?? 0}</h3>
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-[#AEBCC5] font-semibold uppercase">Hội thoại 1-1</p>
+                    <h3 className="text-base sm:text-lg font-black text-white">{stats?.conversationsCount ?? 0}</h3>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* CHART: PHÂN LOẠI THEO HÌNH THÁI */}
+            <section className="rounded-3xl bg-[#102A43]/30 border border-white/10 p-5 sm:p-6 space-y-4">
+              <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
+                <LayoutDashboard className="w-4 h-4 text-[#C9AA72]" />
+                <span>Phân Bố Thẻ Theo Hình Thái</span>
+              </h3>
+              {(overview?.cardTypeBreakdown?.length ?? 0) === 0 ? (
+                <p className="text-xs text-[#AEBCC5]">Chưa có thẻ nghiệp vụ nào.</p>
+              ) : (
+                <div className="space-y-2.5">
+                  {overview!.cardTypeBreakdown.map((row) => {
+                    const label = (CARD_KIND_META as any)[row.cardType]?.label || row.cardType;
+                    const pct = Math.round((row.count / maxCardTypeCount) * 100);
+                    return (
+                      <div key={row.cardType} className="flex items-center gap-3">
+                        <div className="w-32 sm:w-40 shrink-0 text-xs font-bold text-[#AEBCC5] truncate">{label}</div>
+                        <div className="flex-1 h-5 rounded-full bg-white/5 overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-[#C9AA72] to-[#8B6F3F] flex items-center justify-end px-2"
+                            style={{ width: `${Math.max(pct, 6)}%` }}
+                          >
+                            <span className="text-[10px] font-black text-[#07111F]">{row.count}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+
+            {/* ĐƠN HÀNG GẦN ĐÂY */}
+            <section className="rounded-3xl bg-[#102A43]/30 border border-white/10 overflow-hidden shadow-xl">
+              <div className="flex flex-wrap items-center justify-between gap-2 p-4 border-b border-white/10">
+                <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
+                  <ShoppingCart className="w-4 h-4 text-[#38BDF8]" />
+                  <span>Đơn Hàng Gần Đây</span>
+                </h3>
+                <select
+                  value={orderStatusFilter}
+                  onChange={(e) => setOrderStatusFilter(e.target.value)}
+                  className="px-3 py-1.5 rounded-lg bg-[#07111F] border border-white/15 text-xs text-white focus:outline-none focus:border-[#C9AA72]"
+                >
+                  <option value="all">Tất cả trạng thái</option>
+                  <option value="pending">Chờ xử lý</option>
+                  <option value="confirmed">Đã xác nhận</option>
+                  <option value="cancelled">Đã hủy</option>
+                </select>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-[#07111F]/80 text-[#AEBCC5] uppercase text-[10px] tracking-wider border-b border-white/10">
+                    <tr>
+                      <th className="py-3 px-4">Sản phẩm</th>
+                      <th className="py-3 px-3">Khách</th>
+                      <th className="py-3 px-3">Giá trị</th>
+                      <th className="py-3 px-3">Trạng thái</th>
+                      <th className="py-3 px-4">Thời gian</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {filteredOrders.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="py-6 px-4 text-center text-[#AEBCC5]">
+                          Chưa có đơn hàng nào.
+                        </td>
+                      </tr>
+                    )}
+                    {filteredOrders.map((o) => (
+                      <tr key={o.id} className="hover:bg-white/5 transition">
+                        <td className="py-3 px-4 font-bold text-white">{o.itemName}</td>
+                        <td className="py-3 px-3 text-[#AEBCC5]">{o.customerName} · {o.customerPhone}</td>
+                        <td className="py-3 px-3 font-bold text-[#C9AA72]">{formatCurrency(Number(o.amount) || 0)}</td>
+                        <td className="py-3 px-3">
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-white/10 text-white">
+                            {ORDER_STATUS_LABEL[o.status] || o.status}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-[#AEBCC5] font-mono text-[10px]">
+                          {new Date(o.createdAt).toLocaleString("vi-VN")}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            {/* YÊU CẦU / LEAD GẦN ĐÂY */}
+            <section className="rounded-3xl bg-[#102A43]/30 border border-white/10 overflow-hidden shadow-xl">
+              <div className="flex flex-wrap items-center justify-between gap-2 p-4 border-b border-white/10">
+                <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
+                  <Inbox className="w-4 h-4 text-[#A8F238]" />
+                  <span>Yêu Cầu / Đăng Ký Gần Đây</span>
+                </h3>
+                <select
+                  value={leadStatusFilter}
+                  onChange={(e) => setLeadStatusFilter(e.target.value)}
+                  className="px-3 py-1.5 rounded-lg bg-[#07111F] border border-white/15 text-xs text-white focus:outline-none focus:border-[#C9AA72]"
+                >
+                  <option value="all">Tất cả trạng thái</option>
+                  <option value="new">Mới</option>
+                  <option value="contacted">Đã liên hệ</option>
+                  <option value="done">Hoàn tất</option>
+                </select>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-[#07111F]/80 text-[#AEBCC5] uppercase text-[10px] tracking-wider border-b border-white/10">
+                    <tr>
+                      <th className="py-3 px-4">Khách</th>
+                      <th className="py-3 px-3">Liên hệ</th>
+                      <th className="py-3 px-3">Loại</th>
+                      <th className="py-3 px-3">Trạng thái</th>
+                      <th className="py-3 px-4">Thời gian</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {filteredLeads.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="py-6 px-4 text-center text-[#AEBCC5]">
+                          Chưa có yêu cầu nào.
+                        </td>
+                      </tr>
+                    )}
+                    {filteredLeads.map((l) => (
+                      <tr key={l.id} className="hover:bg-white/5 transition">
+                        <td className="py-3 px-4 font-bold text-white">{l.name}</td>
+                        <td className="py-3 px-3 text-[#AEBCC5]">{l.phone}{l.email ? ` · ${l.email}` : ""}</td>
+                        <td className="py-3 px-3 text-[#AEBCC5]">{l.leadType === "free_claim" ? "Nhận miễn phí" : "Yêu cầu"}</td>
+                        <td className="py-3 px-3">
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-white/10 text-white">
+                            {LEAD_STATUS_LABEL[l.status] || l.status}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-[#AEBCC5] font-mono text-[10px]">
+                          {new Date(l.createdAt).toLocaleString("vi-VN")}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            {/* ĐẤU GIÁ GẦN ĐÂY */}
+            <section className="rounded-3xl bg-[#102A43]/30 border border-white/10 overflow-hidden shadow-xl">
+              <div className="p-4 border-b border-white/10">
+                <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
+                  <Gavel className="w-4 h-4 text-[#E879F9]" />
+                  <span>Đặt Giá Gần Đây</span>
+                </h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-[#07111F]/80 text-[#AEBCC5] uppercase text-[10px] tracking-wider border-b border-white/10">
+                    <tr>
+                      <th className="py-3 px-4">Người đặt giá</th>
+                      <th className="py-3 px-3">Giá đặt</th>
+                      <th className="py-3 px-4">Thời gian</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {(overview?.recentBids?.length ?? 0) === 0 && (
+                      <tr>
+                        <td colSpan={3} className="py-6 px-4 text-center text-[#AEBCC5]">
+                          Chưa có lượt đặt giá nào.
+                        </td>
+                      </tr>
+                    )}
+                    {overview?.recentBids.map((b) => (
+                      <tr key={b.id} className="hover:bg-white/5 transition">
+                        <td className="py-3 px-4 font-bold text-white">{b.bidderName} · {b.bidderPhone}</td>
+                        <td className="py-3 px-3 font-bold text-[#E879F9]">{formatCurrency(Number(b.amount) || 0)}</td>
+                        <td className="py-3 px-4 text-[#AEBCC5] font-mono text-[10px]">
+                          {new Date(b.createdAt).toLocaleString("vi-VN")}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+        )}
+
+        {/* TAB: TÁC PHẨM & ẢNH (POSTS) */}
         {activeTab === "posts" && (
           <section className="rounded-3xl bg-[#102A43]/30 border border-white/10 overflow-hidden shadow-xl">
             <div className="overflow-x-auto">
@@ -668,213 +821,7 @@ export default function AdminPage() {
           </section>
         )}
 
-        {/* TAB 2: DỰ ÁN (PROJECTS CRUD) */}
-        {activeTab === "projects" && (
-          <section className="rounded-3xl bg-[#102A43]/30 border border-white/10 overflow-hidden shadow-xl">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-[#07111F]/80 text-[#AEBCC5] uppercase text-[10px] tracking-wider border-b border-white/10">
-                  <tr>
-                    <th className="py-3 px-4">Tên Dự Án</th>
-                    <th className="py-3 px-3">Phân Loại</th>
-                    <th className="py-3 px-3">Loại Thẻ</th>
-                    <th className="py-3 px-4">Mô Tả</th>
-                    <th className="py-3 px-3">Liên Kết</th>
-                    <th className="py-3 px-4 text-right">Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {projects.map((proj) => (
-                    <tr key={proj.id} className="hover:bg-white/5 transition">
-                      <td className="py-3 px-4 font-bold text-white text-xs">
-                        {proj.title}
-                      </td>
-
-                      <td className="py-3 px-3">
-                        <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-[#A8F238]/20 text-[#A8F238] border border-[#A8F238]/30">
-                          {proj.type}
-                        </span>
-                      </td>
-
-                      <td className="py-3 px-3">
-                        {proj.sample ? (
-                          <span className="text-[10px] text-[#AEBCC5]">Nội dung mẫu</span>
-                        ) : (
-                          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#C9AA72]/20 text-[#C9AA72]">
-                            Chạy thật
-                          </span>
-                        )}
-                      </td>
-
-                      <td className="py-3 px-4 text-[#AEBCC5] max-w-sm truncate">
-                        {proj.body}
-                      </td>
-
-                      <td className="py-3 px-3 text-[#C9AA72] font-mono text-[10px] max-w-[120px] truncate">
-                        {proj.href || "-"}
-                      </td>
-
-                      <td className="py-3 px-4 text-right">
-                        <div className="inline-flex items-center gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => setCmsModal({ isOpen: true, section: "projects", item: proj })}
-                            className="p-2 rounded-lg bg-[#C9AA72]/20 hover:bg-[#C9AA72]/30 text-[#C9AA72] border border-[#C9AA72]/40 transition"
-                            title="Sửa dự án"
-                          >
-                            <Edit3 className="w-3.5 h-3.5" />
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteCmsItem("projects", proj.id, proj.title)}
-                            className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition"
-                            title="Xóa dự án"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        )}
-
-        {/* TAB 3: SẢN PHẨM R&D (PRODUCTS CRUD) */}
-        {activeTab === "products" && (
-          <section className="rounded-3xl bg-[#102A43]/30 border border-white/10 overflow-hidden shadow-xl">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-[#07111F]/80 text-[#AEBCC5] uppercase text-[10px] tracking-wider border-b border-white/10">
-                  <tr>
-                    <th className="py-3 px-4">Mã Code</th>
-                    <th className="py-3 px-4">Tên Sản Phẩm</th>
-                    <th className="py-3 px-3">Nhóm</th>
-                    <th className="py-3 px-3">Trạng Thái</th>
-                    <th className="py-3 px-3">Vật Liệu</th>
-                    <th className="py-3 px-3">Phiên Bản</th>
-                    <th className="py-3 px-4 text-right">Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {products.map((prod) => (
-                    <tr key={prod.id} className="hover:bg-white/5 transition">
-                      <td className="py-3 px-4 font-mono font-black text-[#A8F238] text-xs">
-                        {prod.code}
-                      </td>
-
-                      <td className="py-3 px-4 font-bold text-white text-xs">
-                        {prod.name}
-                      </td>
-
-                      <td className="py-3 px-3">
-                        <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-[#C9AA72]/20 text-[#C9AA72] border border-[#C9AA72]/30">
-                          {prod.groupKey}
-                        </span>
-                      </td>
-
-                      <td className="py-3 px-3 text-[#AEBCC5]">
-                        {prod.status}
-                      </td>
-
-                      <td className="py-3 px-3 text-[#AEBCC5]">
-                        {prod.material}
-                      </td>
-
-                      <td className="py-3 px-3 font-mono text-[11px] text-white">
-                        {prod.version}
-                      </td>
-
-                      <td className="py-3 px-4 text-right">
-                        <div className="inline-flex items-center gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => setCmsModal({ isOpen: true, section: "products", item: prod })}
-                            className="p-2 rounded-lg bg-[#C9AA72]/20 hover:bg-[#C9AA72]/30 text-[#C9AA72] border border-[#C9AA72]/40 transition"
-                            title="Sửa sản phẩm"
-                          >
-                            <Edit3 className="w-3.5 h-3.5" />
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteCmsItem("products", prod.id, prod.name)}
-                            className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition"
-                            title="Xóa sản phẩm"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        )}
-
-        {/* TAB 4: DỊCH VỤ SỐ (SERVICES CRUD) */}
-        {activeTab === "services" && (
-          <section className="rounded-3xl bg-[#102A43]/30 border border-white/10 overflow-hidden shadow-xl">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-[#07111F]/80 text-[#AEBCC5] uppercase text-[10px] tracking-wider border-b border-white/10">
-                  <tr>
-                    <th className="py-3 px-4">Tên Dịch Vụ</th>
-                    <th className="py-3 px-4">Mô Tả Năng Lực</th>
-                    <th className="py-3 px-3">Quy Trình Thực Hiện</th>
-                    <th className="py-3 px-4 text-right">Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {services.map((srv) => (
-                    <tr key={srv.id} className="hover:bg-white/5 transition">
-                      <td className="py-3 px-4 font-bold text-white text-xs">
-                        {srv.name}
-                      </td>
-
-                      <td className="py-3 px-4 text-[#AEBCC5] max-w-sm truncate">
-                        {srv.body}
-                      </td>
-
-                      <td className="py-3 px-3 text-[#C9AA72]">
-                        {srv.steps?.length || 0} bước quy trình
-                      </td>
-
-                      <td className="py-3 px-4 text-right">
-                        <div className="inline-flex items-center gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => setCmsModal({ isOpen: true, section: "services", item: srv })}
-                            className="p-2 rounded-lg bg-[#C9AA72]/20 hover:bg-[#C9AA72]/30 text-[#C9AA72] border border-[#C9AA72]/40 transition"
-                            title="Sửa dịch vụ"
-                          >
-                            <Edit3 className="w-3.5 h-3.5" />
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteCmsItem("services", srv.id, srv.name)}
-                            className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition"
-                            title="Xóa dịch vụ"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        )}
-
-        {/* TAB 5: HỒ SƠ ADMIN & CÀI ĐẶT VIETQR */}
+        {/* TAB: HỒ SƠ ADMIN & CÀI ĐẶT VIETQR */}
         {activeTab === "profile" && (
           <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Form Edit */}
@@ -1042,16 +989,6 @@ export default function AdminPage() {
         )}
       </div>
 
-      {/* CREATE POST MODAL */}
-      <CreatePostModal
-        isOpen={isCreatePostOpen}
-        onClose={() => setIsCreatePostOpen(false)}
-        onCreated={() => {
-          loadAllData();
-          setIsCreatePostOpen(false);
-        }}
-      />
-
       {/* EDIT POST MODAL */}
       <EditPostModal
         post={editingPost}
@@ -1061,15 +998,6 @@ export default function AdminPage() {
           loadAllData();
           setEditingPost(null);
         }}
-      />
-
-      {/* CMS ITEM MODAL (PROJECTS, PRODUCTS, SERVICES) */}
-      <CmsItemModal
-        isOpen={cmsModal.isOpen}
-        onClose={() => setCmsModal((prev) => ({ ...prev, isOpen: false }))}
-        section={cmsModal.section}
-        item={cmsModal.item}
-        onSaved={loadAllData}
       />
     </main>
   );

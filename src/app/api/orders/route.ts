@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { emitOwnerEvent } from "@/lib/socket";
 import { sendPushNotificationToOwners } from "@/lib/push";
+import { sendTelegramNotification } from "@/lib/telegram";
 
 // CardOrder: ghi nhận đơn "Mua ngay" (package) / "Giữ chỗ" (reservation) /
 // "Đăng ký thành viên" (membership) sau khi khách bấm "Tôi đã chuyển khoản" ở
@@ -42,6 +43,7 @@ export async function POST(request: NextRequest) {
       body: notificationText,
       url: `/admin`,
     }).catch((err) => console.error("Push failed:", err));
+    sendTelegramNotification(notificationText).catch((err) => console.error("Telegram failed:", err));
 
     return NextResponse.json({ success: true, order });
   } catch (error: any) {

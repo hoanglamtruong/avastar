@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { emitOwnerEvent } from "@/lib/socket";
 import { sendPushNotificationToOwners } from "@/lib/push";
+import { sendTelegramNotification } from "@/lib/telegram";
 
 // Lead: form "Yêu cầu / Báo giá" và nút "Tham gia" câu lạc bộ — lưu bền vững,
 // không còn phụ thuộc owner đang online mới nhận được (khác /api/subpage-actions cũ).
@@ -34,6 +35,7 @@ export async function POST(request: NextRequest) {
       body: notificationText,
       url: `/admin`,
     }).catch((err) => console.error("Push failed:", err));
+    sendTelegramNotification(notificationText).catch((err) => console.error("Telegram failed:", err));
 
     return NextResponse.json({ success: true, lead });
   } catch (error: any) {

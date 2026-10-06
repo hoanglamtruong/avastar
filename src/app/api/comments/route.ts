@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { emitOwnerEvent } from "@/lib/socket";
 import { sendPushNotificationToOwners } from "@/lib/push";
+import { sendTelegramNotification } from "@/lib/telegram";
 
 export async function GET(request: NextRequest) {
   try {
@@ -136,11 +137,13 @@ export async function POST(request: NextRequest) {
     }
 
     emitOwnerEvent("new_comment", { comment, postId });
+    const commentNotificationText = `💬 [BÌNH LUẬN]: ${comment.member?.fullName || "Thành viên"}: "${comment.content.substring(0, 80)}"`;
     sendPushNotificationToOwners({
       title: "Bình luận 1-1 mới 💬",
-      body: `${comment.member?.fullName || "Thành viên"}: "${comment.content.substring(0, 80)}"`,
+      body: commentNotificationText,
       url: `/?postId=${postId}`,
     }).catch((err) => console.error("Push failed:", err));
+    sendTelegramNotification(commentNotificationText).catch((err) => console.error("Telegram failed:", err));
 
     return NextResponse.json({ comment });
   } catch (error: any) {

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { emitOwnerEvent } from "@/lib/socket";
 import { sendPushNotificationToOwners } from "@/lib/push";
+import { sendTelegramNotification } from "@/lib/telegram";
 
 export async function GET(request: NextRequest) {
   try {
@@ -159,11 +160,13 @@ export async function POST(request: NextRequest) {
 
     emitOwnerEvent("new_chat_message", { message, memberId });
     if (currentUser.role !== "owner" && currentUser.role !== "admin") {
+      const chatNotificationText = `✉️ [NHẮN TIN]: ${currentUser.fullName}: "${content.trim().substring(0, 80)}"`;
       sendPushNotificationToOwners({
         title: "Tin nhắn 1-1 mới 💬",
-        body: `${currentUser.fullName}: "${content.trim().substring(0, 80)}"`,
+        body: chatNotificationText,
         url: `/`,
       }).catch((err) => console.error("Push failed:", err));
+      sendTelegramNotification(chatNotificationText).catch((err) => console.error("Telegram failed:", err));
     }
 
     return NextResponse.json({ message });

@@ -12,34 +12,41 @@ export async function GET() {
       );
     }
 
-    const [postsCount, viewsCount, commentsCount, conversationsCount, gifts] = await Promise.all([
+    const [
+      postsCount,
+      viewsCount,
+      commentsCount,
+      conversationsCount,
+      gifts,
+      orders,
+      leads,
+      bids,
+      cardTypeGroups,
+    ] = await Promise.all([
       prisma.post.count(),
       prisma.postView.count(),
       prisma.comment.count(),
       prisma.chatConversation.count(),
       prisma.gift.findMany({
         include: {
-          sender: {
-            select: {
-              id: true,
-              fullName: true,
-              email: true,
-              avatarUrl: true,
-            },
-          },
-          post: {
-            select: {
-              id: true,
-              caption: true,
-            },
-          },
+          sender: { select: { id: true, fullName: true, email: true, avatarUrl: true } },
+          post: { select: { id: true, caption: true } },
         },
         orderBy: { createdAt: "desc" },
         take: 20,
       }),
+      prisma.cardOrder.findMany({ orderBy: { createdAt: "desc" }, take: 30 }),
+      prisma.lead.findMany({ orderBy: { createdAt: "desc" }, take: 30 }),
+      prisma.bid.findMany({ orderBy: { createdAt: "desc" }, take: 20 }),
+      prisma.postCard.groupBy({ by: ["cardType"], _count: { cardType: true } }),
     ]);
 
     const totalGiftSum = gifts.reduce((acc, g) => acc + Number(g.giftValue || 0), 0);
+    const totalOrderSum = orders.reduce((acc, o) => acc + Number(o.amount || 0), 0);
+
+    const cardTypeBreakdown = cardTypeGroups
+      .map((g) => ({ cardType: g.cardType, count: g._count.cardType }))
+      .sort((a, b) => b.count - a.count);
 
     return NextResponse.json({
       success: true,
@@ -49,8 +56,16 @@ export async function GET() {
         commentsCount,
         conversationsCount,
         totalGiftSum,
+        ordersCount: orders.length,
+        leadsCount: leads.length,
+        bidsCount: bids.length,
+        totalOrderSum,
       },
+      cardTypeBreakdown,
       recentGifts: gifts,
+      recentOrders: orders,
+      recentLeads: leads,
+      recentBids: bids,
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

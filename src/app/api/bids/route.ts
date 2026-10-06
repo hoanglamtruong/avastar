@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { emitOwnerEvent } from "@/lib/socket";
 import { sendPushNotificationToOwners } from "@/lib/push";
+import { sendTelegramNotification } from "@/lib/telegram";
 
 // Đấu giá: Bid là bảng riêng (không nằm trong cardMetadata) vì cần đọc/ghi
 // đồng thời an toàn khi nhiều người trả giá cùng lúc. Giá hiện tại = bid cao
@@ -60,6 +61,7 @@ export async function POST(request: NextRequest) {
       body: notificationText,
       url: `/admin`,
     }).catch((err) => console.error("Push failed:", err));
+    sendTelegramNotification(notificationText).catch((err) => console.error("Telegram failed:", err));
 
     return NextResponse.json({ success: true, bid });
   } catch (error: any) {
