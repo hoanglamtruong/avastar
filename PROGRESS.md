@@ -103,3 +103,18 @@ CHUA LAM (ngoai pham vi vong nay, de xuat lam sau neu CEO can):
 - Tab quan ly Lead/CardOrder/Bid tren /admin (hien chi co API, CEO xem qua DB truc tiep hoac goi API thu cong — can UI danh sach giong tab Posts da co)
 - Xac dinh "nguoi thang dau gia" tu dong gui thong bao rieng khi het gio (hien chi hien trang thai "Da ket thuc" khi ai do mo lai modal, khong co canh bao chu dong)
 - CHUA DEPLOY domain that (zangx.io.vn) — dang cho CEO duyet tren ban thu nghiem truoc.
+
+[13:45] [Ccode] [VONG 14 · XOA 4 TRANG CON + DOCK 3 NUT] PASS✅ — Theo anh chup CEO danh dau X tren bottom bar (Ve Zangx/Dich vu/San pham/Du an) va chi dan: "xoa het tat ca cac trang con", "bottom bar tao lai 3 nut: loc - home - dang nhap/dang ky", "donate khong tao nut rieng ma gan tren card phu hop", "khi click vao card thao tac tren popup khong dan sang trang khac".
+
+DA LAM:
+1. XOA HAN 4 route (portfolio): /gioi-thieu /dich-vu /san-pham /du-an + layout.tsx + portfolio.css rieng cua nhom nay. Xoa them 5 component chi phuc vu rieng 4 trang nay (da xac nhan khong con ai import): ProductsList.tsx, ProjectGrid.tsx, ServicesList.tsx, ZxCta.tsx, PortfolioActionRail.tsx, va ActionRail.tsx (cot doc cu da bi AtelierDock thay the tu Vong 8, gio moi don dep). GIU LAI ZxStar.tsx (logo dung chung cho Hub + admin).
+2. AtelierDock.tsx viet lai hoan toan con dung 3 nut: Loc (mo popup loc/tim kiem) - Home (nut giua noi bat, ve dau trang + bo loc) - Dang Nhap/Dang Ky (mo AuthModal, hien avatar+ten neu da dang nhap). Bo hin nut Donate rieng va nut Chat rieng khoi dock — Donate gio chi la hanh dong gan voi THE co cardType=donate (da dung tu Vong 13), khong con la 1 nut co dinh noi chung cho moi trang.
+3. ShowroomPinterest.tsx: chuyen thanh tim kiem + 7 chip loc tu hien THUONG TRUC o dau trang thanh 1 POPUP (mo tu nut "Loc" tren dock), dong lai qua nut X/backdrop/nut "Xem N Ket Qua". Them resetSignal prop de nut Home tren dock reset bo loc + cuon len dau. XOA 4 "the bien tap" (Manifesto/Physical R&D/AI & Automation/Client Work) vi 4 the nay chi de dieu huong sang 4 trang vua xoa — dung tinh than "khong dan sang trang khac".
+4. page.tsx: logo header khong con la Link sang /gioi-thieu (da xoa) — chuyen thanh the trang tri khong dieu huong. Xoa luon SubpageActionModal + state actionModal mo coi tu lau (khong con noi nao goi setActionModal, phat hien khi don dep lan nay).
+
+VERIFIED: tsc --noEmit sach toan bo sau khi xoa 10 file + sua 3 file. Quet rieng link text (khong bi tsc bat) toi 4 route da xoa — sach, khong con cho nao tro toi. Build + deploy container avastar-review, xac nhan /gioi-thieu /dich-vu /san-pham /du-an deu tra ve 404 dung nhu mong doi, / va /admin van 200. Test tay qua trinh duyet: dock hien dung 3 nut, bam "Loc" mo dung popup voi 7 chip + o tim kiem, dong popup dung. Ra soat code xac nhan KHONG CON <Link>/router.push/window.location trong PostDetailModal, VietQRPaymentModal, RequestLeadModal, AuctionBidModal, PinCard — moi thao tac tren the (mua/dat gia/gui yeu cau/dang ky) deu o popup, dung yeu cau "khong dan sang trang khac".
+
+⚠️ CAN CEO XAC NHAN THEM (phat sinh khi xoa 4 trang):
+- Tab Du An / San Pham / Dich Vu tren /admin (CRUD du lieu cho 4 trang cu) VAN CON, nhung du lieu do GIO KHONG CON NOI NAO HIEN RA CONG KHAI nua (trang da xoa). Chua dong cham gi toi /admin vi khong trong pham vi lenh lan nay — bao lai de CEO quyet dinh co don luon may tab nay khong, hay giu de dung sau nay.
+- Nut "Giam Nhap Nhanh OWNER" demo van con trong /admin (chi bat o ban duyet, da tat o ban that tu Vong 12) — khong doi gi them o day.
+- CHUA DEPLOY domain that — dang cho CEO xem ban duyet truoc.

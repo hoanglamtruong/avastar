@@ -10,7 +10,6 @@ import { AtelierDock } from "@/components/AtelierDock";
 import { ShowroomPinterest } from "@/components/ShowroomPinterest";
 import { ZxLogoLockup } from "@/components/portfolio/ZxStar";
 import { ChatDrawer } from "@/components/modals/ChatDrawer";
-import { SubpageActionModal } from "@/components/modals/SubpageActionModal";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/components/ui/Toast";
 import { Info, User, ShieldCheck } from "lucide-react";
@@ -32,11 +31,8 @@ export default function FeedPage() {
   const [isChatDrawerOpen, setIsChatDrawerOpen] = useState(false);
   const [selectedPostIdForGift, setSelectedPostIdForGift] = useState<string | null>(null);
   const [selectedPostForDetail, setSelectedPostForDetail] = useState<PostData | null>(null);
-  const [actionModal, setActionModal] = useState<{ isOpen: boolean; actionType: string; payload: any }>({
-    isOpen: false,
-    actionType: "",
-    payload: null,
-  });
+  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
+  const [resetSignal, setResetSignal] = useState(0);
 
   // Fetch Posts
   const fetchPosts = useCallback(async () => {
@@ -215,6 +211,9 @@ export default function FeedPage() {
           setIsGiftModalOpen(true);
         }}
         onSharePost={handleSharePost}
+        filterSheetOpen={isFilterSheetOpen}
+        onCloseFilterSheet={() => setIsFilterSheetOpen(false)}
+        resetSignal={resetSignal}
       />
 
       <PushNotificationPrompt />
@@ -222,16 +221,15 @@ export default function FeedPage() {
       {/* TOP FLOATING NAVIGATION BAR */}
       <header className="fixed top-0 left-0 right-0 z-50 px-4 py-3 flex items-center justify-between pointer-events-none">
         {/* Brand Logo */}
-        <Link
-          href="/gioi-thieu"
-          className="pointer-events-auto flex items-center gap-2.5 glass-pill px-3 py-1.5 rounded-full shadow-lg hover:border-[#C9AA72]/50 transition-colors"
+        <div
+          className="pointer-events-auto flex items-center gap-2.5 glass-pill px-3 py-1.5 rounded-full shadow-lg"
           title="ZANGX · The Digital Atelier"
         >
           <ZxLogoLockup size="sm" showTagline={false} />
           <span className="max-[440px]:hidden text-[9px] px-1.5 py-0.5 rounded bg-[#C9AA72]/20 text-[#C9AA72] font-extrabold border border-[#C9AA72]/30">
             ATELIER
           </span>
-        </Link>
+        </div>
 
         {/* Action Controls & Profile */}
         <div className="pointer-events-auto flex items-center gap-2">
@@ -280,13 +278,12 @@ export default function FeedPage() {
         </div>
       </header>
 
-      {/* FLOATING ATELIER DYNAMIC DOCK (C2O/C2C) */}
+      {/* FLOATING ATELIER DYNAMIC DOCK: Lọc · Home · Đăng nhập/Đăng ký */}
       <AtelierDock
-        onDonate={() => {
-          setSelectedPostIdForGift(posts[0]?.id || "");
-          setIsGiftModalOpen(true);
-        }}
-        onChat={() => setIsChatDrawerOpen(true)}
+        onOpenFilter={() => setIsFilterSheetOpen(true)}
+        onGoHome={() => setResetSignal((n) => n + 1)}
+        onOpenAuth={() => setIsAuthModalOpen(true)}
+        currentUser={user}
       />
 
       {/* POST DETAIL LIGHTBOX MODAL */}
@@ -332,13 +329,6 @@ export default function FeedPage() {
         }}
       />
 
-      <SubpageActionModal
-        isOpen={actionModal.isOpen}
-        onClose={() => setActionModal({ isOpen: false, actionType: "", payload: null })}
-        actionType={actionModal.actionType}
-        payload={actionModal.payload}
-        postId={selectedPostForDetail?.id || posts[0]?.id}
-      />
     </main>
   );
 }

@@ -1,28 +1,18 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import Link from "next/link";
 import { PostData } from "@/lib/types";
 import { PinCard } from "@/components/pins/PinCard";
-import {
-  Sparkles,
-  Search,
-  X,
-  ArrowUpRight,
-  Bot,
-  Wrench,
-  Palette,
-  Briefcase,
-  Layers,
-  Filter,
-} from "lucide-react";
-import { ZxStar } from "@/components/portfolio/ZxStar";
+import { Sparkles, Search, X } from "lucide-react";
 
 interface ShowroomPinterestProps {
   posts: PostData[];
   onOpenPostDetail: (post: PostData) => void;
   onOpenGift: (postId: string) => void;
   onSharePost: (post: PostData) => void;
+  filterSheetOpen: boolean;
+  onCloseFilterSheet: () => void;
+  resetSignal: number;
 }
 
 export function ShowroomPinterest({
@@ -30,9 +20,21 @@ export function ShowroomPinterest({
   onOpenPostDetail,
   onOpenGift,
   onSharePost,
+  filterSheetOpen,
+  onCloseFilterSheet,
+  resetSignal,
 }: ShowroomPinterestProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("all");
+
+  // Nút "Home" trên AtelierDock bắn tín hiệu reset bộ lọc + cuộn lên đầu
+  React.useEffect(() => {
+    if (resetSignal === 0) return;
+    setSearchQuery("");
+    setSelectedFilter("all");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resetSignal]);
 
   const filterTabs = [
     { id: "all", label: "Tất cả ý tưởng" },
@@ -109,75 +111,89 @@ export function ShowroomPinterest({
         </p>
       </section>
 
-      {/* 3. PINTEREST SEARCH & TOPIC BAR (STICKY/FLOATING) */}
-      <section className="relative z-20 max-w-4xl mx-auto mb-8 space-y-4">
-        {/* Search Input Bar */}
-        <div className="relative group">
-          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[#AEBCC5] group-focus-within:text-[#C9AA72] transition-colors">
-            <Search className="w-4 h-4 sm:w-5 sm:h-5" />
-          </div>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Tìm kiếm ý tưởng, dự án, phong cách, hashtag..."
-            className="w-full pl-11 pr-11 py-3 sm:py-3.5 rounded-full bg-[#102A43]/60 hover:bg-[#102A43]/80 focus:bg-[#102A43]/90 border border-white/15 focus:border-[#C9AA72] text-sm sm:text-base text-[#F4F0E8] placeholder:text-[#AEBCC5]/60 outline-none backdrop-blur-xl shadow-xl transition-all"
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => setSearchQuery("")}
-              className="absolute inset-y-0 right-0 pr-4 flex items-center text-[#AEBCC5] hover:text-[#F4F0E8] transition-colors"
-              title="Xóa tìm kiếm"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-
-        {/* Category Pills (Horizontal Scroll) */}
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
-          {filterTabs.map((tab) => {
-            const isActive = selectedFilter === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setSelectedFilter(tab.id)}
-                className={`whitespace-nowrap px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition-all duration-200 border ${
-                  isActive
-                    ? "bg-[#C9AA72] text-[#07111F] border-[#C9AA72] shadow-[0_0_15px_rgba(201,170,114,0.4)] scale-105"
-                    : "bg-[#102A43]/50 text-[#AEBCC5] hover:text-[#F4F0E8] hover:bg-[#102A43]/80 border-white/10"
-                }`}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Results indicator */}
-        <div className="flex items-center justify-between px-2 text-xs text-[#AEBCC5]">
+      {/* 3. KẾT QUẢ (gọn, luôn hiện) + KHUNG LỌC DẠNG POPUP (mở từ nút "Lọc" trên AtelierDock) */}
+      <section className="relative z-20 max-w-4xl mx-auto mb-8">
+        <div className="flex items-center justify-center px-2 text-xs text-[#AEBCC5]">
           <span>
-            Hiển thị{" "}
-            <strong className="text-[#C9AA72] font-bold">
-              {filteredPosts.length}
-            </strong>{" "}
-            ý tưởng sáng tạo
+            Hiển thị <strong className="text-[#C9AA72] font-bold">{filteredPosts.length}</strong> ý tưởng sáng tạo
+            {(searchQuery || selectedFilter !== "all") && (
+              <>
+                {" "}
+                ·{" "}
+                <button
+                  onClick={() => {
+                    setSearchQuery("");
+                    setSelectedFilter("all");
+                  }}
+                  className="text-[#C9AA72] hover:underline font-semibold"
+                >
+                  Xóa bộ lọc
+                </button>
+              </>
+            )}
           </span>
-          {(searchQuery || selectedFilter !== "all") && (
-            <button
-              onClick={() => {
-                setSearchQuery("");
-                setSelectedFilter("all");
-              }}
-              className="text-[#C9AA72] hover:underline flex items-center gap-1 font-semibold"
-            >
-              <span>Xóa bộ lọc</span>
-              <X className="w-3 h-3" />
-            </button>
-          )}
         </div>
       </section>
+
+      {filterSheetOpen && (
+        <div className="fixed inset-0 z-[1000] bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={onCloseFilterSheet}>
+          <div
+            className="w-full sm:max-w-lg max-h-[80vh] rounded-t-[24px] sm:rounded-[24px] bg-[#07111F]/98 border border-[#C9AA72]/30 p-5 shadow-2xl overflow-y-auto custom-slim-scroll"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-extrabold text-white">Lọc & Tìm Kiếm</h3>
+              <button onClick={onCloseFilterSheet} className="p-1.5 rounded-full hover:bg-white/10 text-white/70 hover:text-white transition">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="relative group mb-4">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[#AEBCC5] group-focus-within:text-[#C9AA72] transition-colors">
+                <Search className="w-4 h-4 sm:w-5 sm:h-5" />
+              </div>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Tìm kiếm ý tưởng, dự án, phong cách, hashtag..."
+                className="w-full pl-11 pr-11 py-3 rounded-full bg-[#102A43]/60 focus:bg-[#102A43]/90 border border-white/15 focus:border-[#C9AA72] text-sm text-[#F4F0E8] placeholder:text-[#AEBCC5]/60 outline-none transition-all"
+              />
+              {searchQuery && (
+                <button type="button" onClick={() => setSearchQuery("")} className="absolute inset-y-0 right-0 pr-4 flex items-center text-[#AEBCC5] hover:text-[#F4F0E8] transition-colors" title="Xóa tìm kiếm">
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {filterTabs.map((tab) => {
+                const isActive = selectedFilter === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setSelectedFilter(tab.id)}
+                    className={`whitespace-nowrap px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition-all duration-200 border ${
+                      isActive
+                        ? "bg-[#C9AA72] text-[#07111F] border-[#C9AA72] shadow-[0_0_15px_rgba(201,170,114,0.4)]"
+                        : "bg-[#102A43]/50 text-[#AEBCC5] hover:text-[#F4F0E8] hover:bg-[#102A43]/80 border-white/10"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              onClick={onCloseFilterSheet}
+              className="w-full mt-5 py-3 rounded-xl font-extrabold text-sm text-[#07111F] bg-gradient-to-r from-[#C9AA72] to-[#8B6F3F] hover:opacity-95 shadow-lg transition transform active:scale-95"
+            >
+              Xem {filteredPosts.length} Kết Quả
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 4. PINTEREST MASONRY GRID FEED */}
       {filteredPosts.length === 0 ? (
@@ -199,68 +215,6 @@ export function ShowroomPinterest({
         </div>
       ) : (
         <section className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-4 space-y-4">
-          {/* EDITORIAL PIN 1: ZANGX Atelier Philosophy */}
-          {selectedFilter === "all" && (
-            <article className="break-inside-avoid mb-4 inline-block w-full">
-              <div className="rounded-2xl sm:rounded-3xl border border-[#C9AA72]/40 bg-gradient-to-b from-[#102A43] via-[#07111F] to-[#102A43] p-5 sm:p-6 backdrop-blur-xl shadow-xl flex flex-col justify-between group hover:border-[#C9AA72] transition-all duration-300">
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#C9AA72]/20 border border-[#C9AA72]/40 text-[10px] font-black uppercase tracking-wider text-[#C9AA72]">
-                      Manifesto
-                    </span>
-                    <ZxStar className="w-5 h-5 text-[#C9AA72]" />
-                  </div>
-                  <h3 className="zx-serif text-lg sm:text-xl font-bold text-[#F4F0E8] group-hover:text-[#C9AA72] transition-colors leading-snug">
-                    Thiết Kế Định Hình Giá Trị
-                  </h3>
-                  <p className="mt-3 text-xs leading-relaxed text-[#AEBCC5]">
-                    Mỗi tác phẩm là sự kết hợp giữa tư duy cơ khí chính xác, mã nguồn hệ thống và mỹ cảm độc bản.
-                  </p>
-                </div>
-                <div className="mt-5 pt-3 border-t border-white/10 flex items-center justify-between">
-                  <Link
-                    href="/gioi-thieu"
-                    className="inline-flex items-center gap-1 text-xs font-bold text-[#C9AA72] hover:text-white transition"
-                  >
-                    <span>Về ZANGX</span>
-                    <ArrowUpRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-              </div>
-            </article>
-          )}
-
-          {/* EDITORIAL PIN 2: Physical R&D Showcase */}
-          {(selectedFilter === "all" || selectedFilter === "rnd") && (
-            <article className="break-inside-avoid mb-4 inline-block w-full">
-              <div className="rounded-2xl sm:rounded-3xl border border-white/10 bg-[#102A43]/50 hover:border-[#C9AA72]/40 p-5 sm:p-6 backdrop-blur-xl shadow-xl flex flex-col justify-between group transition-all duration-300">
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#C9AA72]/20 border border-[#C9AA72]/40 text-[10px] font-black uppercase tracking-wider text-[#C9AA72]">
-                      Physical R&amp;D
-                    </span>
-                    <Wrench className="w-5 h-5 text-[#AEBCC5] group-hover:text-[#C9AA72] transition" />
-                  </div>
-                  <h3 className="zx-serif text-lg sm:text-xl font-bold text-[#F4F0E8] leading-snug group-hover:text-[#C9AA72] transition-colors">
-                    Phòng Thí Nghiệm Vật Lý
-                  </h3>
-                  <p className="mt-3 text-xs leading-relaxed text-[#AEBCC5]">
-                    Kệ decor mô-đun, chậu bonsai xoay nhôm gốm, đồ gá cơ khí chính xác kết hợp gia công CNC.
-                  </p>
-                </div>
-                <div className="mt-5 pt-3 border-t border-white/10 flex items-center justify-between">
-                  <Link
-                    href="/san-pham"
-                    className="inline-flex items-center gap-1 text-xs font-bold text-[#C9AA72] hover:text-white transition"
-                  >
-                    <span>Xem sản phẩm</span>
-                    <ArrowUpRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-              </div>
-            </article>
-          )}
-
           {/* FEED POSTS AS PINTEREST PINS */}
           {filteredPosts.map((post, postIndex) => (
             <PinCard
@@ -273,67 +227,6 @@ export function ShowroomPinterest({
             />
           ))}
 
-          {/* EDITORIAL PIN 3: AI & Digital Services */}
-          {(selectedFilter === "all" || selectedFilter === "ai") && (
-            <article className="break-inside-avoid mb-4 inline-block w-full">
-              <div className="rounded-2xl sm:rounded-3xl border border-white/10 bg-[#102A43]/50 hover:border-[#A8F238]/40 p-5 sm:p-6 backdrop-blur-xl shadow-xl flex flex-col justify-between group transition-all duration-300">
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#A8F238]/20 border border-[#A8F238]/40 text-[10px] font-black uppercase tracking-wider text-[#A8F238]">
-                      AI &amp; Automation
-                    </span>
-                    <Bot className="w-5 h-5 text-[#AEBCC5] group-hover:text-[#A8F238] transition" />
-                  </div>
-                  <h3 className="zx-serif text-lg sm:text-xl font-bold text-[#F4F0E8] leading-snug group-hover:text-[#A8F238] transition-colors">
-                    Dịch Vụ Số &amp; AI Agents
-                  </h3>
-                  <p className="mt-3 text-xs leading-relaxed text-[#AEBCC5]">
-                    Tự động hóa tiếp thị, xây dựng trợ lý AI độc bản, kiến tạo giải pháp số thông minh cho doanh nghiệp.
-                  </p>
-                </div>
-                <div className="mt-5 pt-3 border-t border-white/10 flex items-center justify-between">
-                  <Link
-                    href="/dich-vu"
-                    className="inline-flex items-center gap-1 text-xs font-bold text-[#A8F238] hover:text-white transition"
-                  >
-                    <span>Xem quy trình</span>
-                    <ArrowUpRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-              </div>
-            </article>
-          )}
-
-          {/* EDITORIAL PIN 4: Client Projects Showcase */}
-          {(selectedFilter === "all" || selectedFilter === "job") && (
-            <article className="break-inside-avoid mb-4 inline-block w-full">
-              <div className="rounded-2xl sm:rounded-3xl border border-white/10 bg-[#102A43]/50 hover:border-[#38BDF8]/40 p-5 sm:p-6 backdrop-blur-xl shadow-xl flex flex-col justify-between group transition-all duration-300">
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#38BDF8]/20 border border-[#38BDF8]/40 text-[10px] font-black uppercase tracking-wider text-[#38BDF8]">
-                      Client Work
-                    </span>
-                    <Briefcase className="w-5 h-5 text-[#AEBCC5] group-hover:text-[#38BDF8] transition" />
-                  </div>
-                  <h3 className="zx-serif text-lg sm:text-xl font-bold text-[#F4F0E8] leading-snug group-hover:text-[#38BDF8] transition-colors">
-                    Dự Án Đã Thực Thi
-                  </h3>
-                  <p className="mt-3 text-xs leading-relaxed text-[#AEBCC5]">
-                    Khám phá các dự án phần mềm, kiến trúc giải pháp và chuyển đổi số đã bàn giao cho đối tác.
-                  </p>
-                </div>
-                <div className="mt-5 pt-3 border-t border-white/10 flex items-center justify-between">
-                  <Link
-                    href="/du-an"
-                    className="inline-flex items-center gap-1 text-xs font-bold text-[#38BDF8] hover:text-white transition"
-                  >
-                    <span>Xem portfolio</span>
-                    <ArrowUpRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-              </div>
-            </article>
-          )}
         </section>
       )}
     </div>
