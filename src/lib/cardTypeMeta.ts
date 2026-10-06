@@ -8,6 +8,7 @@ import {
   Gavel,
   Gift,
   Briefcase,
+  Link2,
 } from "lucide-react";
 import type { ComponentType } from "react";
 import type { CardType } from "@/lib/types";
@@ -31,6 +32,7 @@ export const COMMERCE_CARD_META: Partial<Record<CardType, CardTypeMeta>> = {
   auction: { label: "Đấu Giá", ctaLabel: "Đặt Giá Ngay", icon: Gavel, color: "text-[#E879F9] border-[#E879F9]/30" },
   claim: { label: "Thu Nạp", ctaLabel: "Nhận Miễn Phí", icon: Gift, color: "text-[#A8F238] border-[#A8F238]/30" },
   apply: { label: "Ứng Tuyển", ctaLabel: "Ứng Tuyển Ngay", icon: Briefcase, color: "text-[#38BDF8] border-[#38BDF8]/30" },
+  link: { label: "Liên Kết Ngoài", ctaLabel: "Xem Thêm", icon: Link2, color: "text-[#AEBCC5] border-white/20" },
 };
 
 // Danh sách hình thái dùng ở màn tạo bài — "content" = bài thường, không có
@@ -54,9 +56,10 @@ export const CARD_KIND_META: Record<"content" | CardType, { label: string; hint:
   auction: { label: "Đấu Giá", hint: "Khách bấm để trả giá, cao nhất khi hết giờ thắng." },
   claim: { label: "Thu Nạp", hint: "Khách bấm để NHẬN một thứ miễn phí (quà/ưu đãi/tài liệu) — khác Ủng Hộ ở chỗ khách là người NHẬN." },
   apply: { label: "Ứng Tuyển", hint: "Dành cho bài tuyển dụng — khách bấm để gửi hồ sơ ứng tuyển vị trí." },
+  link: { label: "Liên Kết Ngoài", hint: "Khách bấm để mở 1 trang bên ngoài (Shopee, Facebook, Zalo, website khác...)." },
 };
 
-const COMMERCE_TYPES: CardType[] = ["package", "request", "reservation", "membership", "donate", "auction", "claim", "apply"];
+const COMMERCE_TYPES: CardType[] = ["package", "request", "reservation", "membership", "donate", "auction", "claim", "apply", "link"];
 
 export function isCommerceCardType(t: CardType): boolean {
   return COMMERCE_TYPES.includes(t);
@@ -70,6 +73,7 @@ export function findCommerceCard<T extends { cardType: CardType }>(cards: T[] | 
 // Nhãn nút thật theo giá: package/reservation/membership có giá = 0 thì hiện
 // nút "miễn phí" thay vì nhãn mua/đăng ký mặc định.
 export function getCtaLabel(cardType: CardType, meta: any): string {
+  if (cardType === "link") return meta?.label || "Xem Thêm";
   const base = COMMERCE_CARD_META[cardType]?.ctaLabel || "Xem Thêm";
   if (cardType === "package" && !meta?.price) return "Nhận Miễn Phí";
   if (cardType === "reservation" && !meta?.depositAmount) return "Đăng Ký Miễn Phí";

@@ -32,16 +32,10 @@ export type CardType =
   | 'donate'       // Ủng Hộ: khách TỰ NGUYỆN cho qua VietQR
   | 'auction'      // Đấu Giá realtime
   | 'claim'        // Thu Nạp: khách NHẬN một thứ miễn phí (ngược hướng với donate)
-  | 'apply';       // Ứng Tuyển: dành cho bài tuyển dụng
+  | 'apply'        // Ứng Tuyển: dành cho bài tuyển dụng
+  | 'link';        // Liên Kết Ngoài: nút riêng mở 1 trang bên ngoài (Shopee, Facebook, Zalo...)
 
-// Trường mở rộng dùng chung cho mọi loại thẻ thương mại: nút liên kết ra
-// ngoài (vd Shopee, Facebook, Zalo OA...). Mã QR không còn là tùy chọn bật/tắt
-// riêng ở đây nữa — mọi bài đều có thể tải QR qua nút Chia Sẻ (dùng chung).
-export interface CommerceCardExtras {
-  externalLink?: { label: string; url: string };
-}
-
-export interface PackageCardMeta extends CommerceCardExtras {
+export interface PackageCardMeta {
   productName: string;
   price: number;
   originalPrice?: number;
@@ -50,14 +44,14 @@ export interface PackageCardMeta extends CommerceCardExtras {
   contentCategory: string;
 }
 
-export interface RequestCardMeta extends CommerceCardExtras {
+export interface RequestCardMeta {
   title: string;
   scopeDescription: string;
   contentCategory: string;
   estimatedRange?: string;
 }
 
-export interface ReservationCardMeta extends CommerceCardExtras {
+export interface ReservationCardMeta {
   title: string;
   dateTime?: string;
   location?: string;
@@ -67,7 +61,7 @@ export interface ReservationCardMeta extends CommerceCardExtras {
   contentCategory: string;
 }
 
-export interface MembershipCardMeta extends CommerceCardExtras {
+export interface MembershipCardMeta {
   planName: string;
   price: number;
   billingPeriod: 'month' | 'year' | 'lifetime';
@@ -75,11 +69,11 @@ export interface MembershipCardMeta extends CommerceCardExtras {
   contentCategory: string;
 }
 
-export interface DonateCardMeta extends CommerceCardExtras {
+export interface DonateCardMeta {
   goalMessage?: string;
 }
 
-export interface AuctionCardMeta extends CommerceCardExtras {
+export interface AuctionCardMeta {
   itemName: string;
   startingPrice: number;
   minIncrement: number;
@@ -87,18 +81,23 @@ export interface AuctionCardMeta extends CommerceCardExtras {
   contentCategory: string;
 }
 
-export interface ClaimCardMeta extends CommerceCardExtras {
+export interface ClaimCardMeta {
   itemName: string;
   stock?: number;
   description?: string;
   contentCategory: string;
 }
 
-export interface ApplyCardMeta extends CommerceCardExtras {
+export interface ApplyCardMeta {
   title: string;
   scopeDescription: string;
   estimatedRange?: string;
   contentCategory: string;
+}
+
+export interface LinkCardMeta {
+  label: string;
+  url: string;
 }
 
 export interface PostCardData {

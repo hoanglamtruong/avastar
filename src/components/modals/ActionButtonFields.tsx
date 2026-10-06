@@ -5,7 +5,7 @@ import { Trash2 } from "lucide-react";
 import { ActionDraft, ActionKind } from "@/lib/actionDraft";
 import { CARD_KIND_META } from "@/lib/cardTypeMeta";
 
-const ACTION_KIND_ORDER: ActionKind[] = ["package", "request", "reservation", "membership", "apply", "claim", "donate", "auction"];
+const ACTION_KIND_ORDER: ActionKind[] = ["package", "request", "reservation", "membership", "apply", "claim", "donate", "auction", "link"];
 
 interface ActionButtonFieldsProps {
   action: ActionDraft;
@@ -206,18 +206,18 @@ export function ActionButtonFields({ action, index, onChange, onRemove }: Action
         </>
       )}
 
-      <div className="pt-1.5 border-t border-[#F4F0E8]/10">
-        <label className="flex items-center gap-2 text-xs font-semibold text-[#F4F0E8]/80 cursor-pointer">
-          <input type="checkbox" checked={action.extLinkEnabled} onChange={(e) => onChange({ extLinkEnabled: e.target.checked })} className="w-4 h-4 accent-[#C9AA72]" />
-          Thêm nút liên kết ra ngoài (Shopee, Facebook, Zalo...)
-        </label>
-        {action.extLinkEnabled && (
-          <div className="grid grid-cols-2 gap-2 pl-6 mt-2">
-            <input value={action.extLinkLabel} onChange={(e) => onChange({ extLinkLabel: e.target.value })} className={inputCls} placeholder="Nhãn nút: Mua trên Shopee" />
-            <input value={action.extLinkUrl} onChange={(e) => onChange({ extLinkUrl: e.target.value })} className={inputCls} placeholder="https://..." />
+      {action.kind === "link" && (
+        <>
+          <div>
+            <label className={labelCls}>Nhãn nút *</label>
+            <input value={action.linkLabel} onChange={(e) => onChange({ linkLabel: e.target.value })} className={inputCls} placeholder="Mua trên Shopee" />
           </div>
-        )}
-      </div>
+          <div>
+            <label className={labelCls}>Đường dẫn *</label>
+            <input value={action.linkUrl} onChange={(e) => onChange({ linkUrl: e.target.value })} className={inputCls} placeholder="https://..." />
+          </div>
+        </>
+      )}
     </div>
   );
 }

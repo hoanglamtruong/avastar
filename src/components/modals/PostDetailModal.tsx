@@ -11,7 +11,6 @@ import {
   FileText,
   Layers,
   ArrowRight,
-  ExternalLink,
   Link2,
   QrCode,
 } from "lucide-react";
@@ -114,7 +113,7 @@ export function PostDetailModal({
   };
 
   const renderCommerceSummary = () => {
-    if (!commerceMeta || currentCard.cardType === "donate") return null;
+    if (!commerceMeta || currentCard.cardType === "donate" || currentCard.cardType === "link") return null;
     const Icon = commerceMeta.icon;
     return (
       <div className="p-3 rounded-2xl bg-[#102A43]/60 border border-[#F4F0E8]/10 space-y-1.5 text-xs">
@@ -217,6 +216,8 @@ export function PostDetailModal({
         onOpenGift(post.id);
       } else if (currentCard.cardType === "auction") {
         setAuctionModalOpen(true);
+      } else if (currentCard.cardType === "link") {
+        window.open(meta.url, "_blank", "noopener,noreferrer");
       } else if (leadFlow) {
         setLeadModalOpen(true);
       } else if (isPricedCommerce) {
@@ -422,18 +423,6 @@ export function PostDetailModal({
             </div>
 
             {renderActionButton()}
-
-            {meta.externalLink?.url && (
-              <a
-                href={meta.externalLink.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full py-2.5 rounded-2xl bg-[#102A43] border border-[#F4F0E8]/20 text-[#F4F0E8] hover:border-[#C9AA72] hover:text-[#C9AA72] font-bold text-sm flex items-center justify-center gap-2 transition"
-              >
-                <ExternalLink className="w-4 h-4" />
-                <span>{meta.externalLink.label}</span>
-              </a>
-            )}
           </div>
         </div>
       </div>

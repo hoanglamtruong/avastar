@@ -2,13 +2,15 @@ import { CardType } from "@/lib/types";
 
 // "Nút hành động" mà khách sẽ bấm trên 1 bài viết — tối đa 3 nút/bài. Mỗi nút
 // ứng với 1 card thương mại (cardType) riêng, Owner cấu hình ĐỘC LẬP từng nút
-// thay vì chọn 1 "hình thái" duy nhất cho cả bài như trước.
-export type ActionKind = "package" | "request" | "reservation" | "membership" | "donate" | "auction" | "claim" | "apply";
+// thay vì chọn 1 "hình thái" duy nhất cho cả bài như trước. "Liên Kết Ngoài"
+// (link) là 1 lựa chọn NGANG HÀNG trong cùng danh sách này — không còn là
+// checkbox gắn thêm vào mỗi nút khác như trước.
+export type ActionKind = "package" | "request" | "reservation" | "membership" | "donate" | "auction" | "claim" | "apply" | "link";
 
 export const MAX_ACTIONS = 3;
 
 // Dùng chung 1 bộ field "phẳng" cho mọi loại nút — mỗi kind chỉ đọc/ghi đúng
-// các field liên quan đến nó, tránh phải tạo 8 state-shape riêng biệt.
+// các field liên quan đến nó, tránh phải tạo 9 state-shape riêng biệt.
 export interface ActionDraft {
   id: string;
   kind: ActionKind;
@@ -30,9 +32,8 @@ export interface ActionDraft {
   startingPrice: string;
   minIncrement: string;
   endsAt: string;
-  extLinkEnabled: boolean;
-  extLinkLabel: string;
-  extLinkUrl: string;
+  linkLabel: string; // chỉ dùng khi kind === "link"
+  linkUrl: string;
 }
 
 export function newActionDraft(kind: ActionKind = "package"): ActionDraft {
@@ -57,9 +58,8 @@ export function newActionDraft(kind: ActionKind = "package"): ActionDraft {
     startingPrice: "",
     minIncrement: "",
     endsAt: "",
-    extLinkEnabled: false,
-    extLinkLabel: "",
-    extLinkUrl: "",
+    linkLabel: "",
+    linkUrl: "",
   };
 }
 
@@ -117,10 +117,11 @@ export function actionDraftFromCard(card: { cardType: CardType; cardMetadata?: a
       draft.stock = meta.stock !== undefined ? String(meta.stock) : "";
       draft.scopeDescription = meta.description || "";
       break;
+    case "link":
+      draft.linkLabel = meta.label || "";
+      draft.linkUrl = meta.url || "";
+      break;
   }
-  draft.extLinkEnabled = !!meta.externalLink;
-  draft.extLinkLabel = meta.externalLink?.label || "";
-  draft.extLinkUrl = meta.externalLink?.url || "";
   return draft;
 }
 
@@ -131,10 +132,6 @@ export function buildCardFromAction(
   selectedCategory: string,
   showToast: (msg: string, type: "error") => void
 ): { cardType: CardType; cardMetadata: any } | null {
-  const extras = {
-    externalLink: action.extLinkEnabled && action.extLinkUrl.trim() ? { label: action.extLinkLabel.trim() || "Xem thêm", url: action.extLinkUrl.trim() } : undefined,
-  };
-
   switch (action.kind) {
     case "package": {
       if (!action.title.trim()) {
@@ -150,7 +147,6 @@ export function buildCardFromAction(
           stock: action.stock ? toNum(action.stock) : undefined,
           features: toList(action.features),
           contentCategory: selectedCategory,
-          ...extras,
         },
       };
     }
@@ -166,7 +162,6 @@ export function buildCardFromAction(
           scopeDescription: action.scopeDescription.trim(),
           estimatedRange: action.estimatedRange.trim() || undefined,
           contentCategory: selectedCategory,
-          ...extras,
         },
       };
     }
@@ -182,7 +177,6 @@ export function buildCardFromAction(
           scopeDescription: action.scopeDescription.trim(),
           estimatedRange: action.estimatedRange.trim() || undefined,
           contentCategory: selectedCategory,
-          ...extras,
         },
       };
     }
@@ -201,7 +195,6 @@ export function buildCardFromAction(
           slotsTaken: action.slotsTaken ? toNum(action.slotsTaken) : 0,
           depositAmount: action.depositAmount ? toNum(action.depositAmount) : 0,
           contentCategory: selectedCategory,
-          ...extras,
         },
       };
     }
@@ -218,14 +211,13 @@ export function buildCardFromAction(
           billingPeriod: action.billingPeriod,
           benefits: toList(action.benefits),
           contentCategory: selectedCategory,
-          ...extras,
         },
       };
     }
     case "donate": {
       return {
         cardType: "donate",
-        cardMetadata: { goalMessage: action.goalMessage.trim() || undefined, ...extras },
+        cardMetadata: { goalMessage: action.goalMessage.trim() || undefined },
       };
     }
     case "auction": {
@@ -241,7 +233,6 @@ export function buildCardFromAction(
           minIncrement: toNum(action.minIncrement) || 10000,
           endsAt: new Date(action.endsAt).toISOString(),
           contentCategory: selectedCategory,
-          ...extras,
         },
       };
     }
@@ -257,7 +248,19 @@ export function buildCardFromAction(
           stock: action.stock ? toNum(action.stock) : undefined,
           description: action.scopeDescription.trim() || undefined,
           contentCategory: selectedCategory,
-          ...extras,
+        },
+      };
+    }
+    case "link": {
+      if (!action.linkUrl.trim()) {
+        showToast("Nhập đường dẫn cho nút Liên Kết Ngoài", "error");
+        return null;
+      }
+      return {
+        cardType: "link",
+        cardMetadata: {
+          label: action.linkLabel.trim() || "Xem thêm",
+          url: action.linkUrl.trim(),
         },
       };
     }
