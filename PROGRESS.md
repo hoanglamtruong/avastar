@@ -238,3 +238,21 @@ VERIFIED: Build Docker sach hoan toan. Deploy container avastar-review, test tay
 ⚠️ Su co nho trong luc test: do dung lai 1 tham chieu (ref) cu tu lan do trang truoc, 1 cu nhap chuot vo tinh trung vao nut XOA danh muc "Dịch Vụ" thay vi nut banh rang, kich hoat hop thoai xac nhan xoa — hop thoai nay BI TRINH DUYET TU DONG TU CHOI (tra ve false, khong thuc thi) theo co che an toan cua cong cu trinh duyet dang dung, nen KHONG CO DANH MUC NAO BI XOA — da kiem tra lai truc tiep CSDL xac nhan van du 12 danh muc. Khong anh huong gi toi du lieu that.
 
 Container avastar (8107) khong bi dung. Chua deploy domain that — dang cho CEO xem ban duyet (http://100.117.42.100:8137) truoc khi quyet dinh "duyet"/deploy production.
+
+[20:32] [Ccode] [VONG 22 · Dropdown tao bai dong khung theo NUT HANH DONG, khong con theo "Hinh Thai" ky thuat] PASS✅ — Theo phan hoi CEO (kem anh chup dropdown dau tien tren man "Tao Bai Viet Moi"): "nang cap tai chuc tao cac bai viet. Tao danh sach dropdown cac nut: nhu 'mua ngay - tu van - dang ky - thu nap' van van de xuat them hop ly. Vi vay khi chon nut ta cau hinh bai viet theo nut khong phai theo hinh thai".
+
+DA LAM:
+Day la 1 viec DOI KHUNG NHIN (relabel), KHONG doi du lieu/logic ben duoi — dropdown dau tien van la bien cardKind ki thuat cu (content/package/request/reservation/membership/donate/auction), van quyet dinh dung cac truong form hien ra va luong xu ly nhu truoc (khong dong cham schema/API). Chi doi NHAN HIEN THI cua tung lua chon tu ten ky thuat ("Hinh Thai": Dong Goi/Yeu Cau/Giu Cho/Thanh Vien/Ung Ho/Dau Gia) sang dung TEN NUT khach se bam, dung 4 vi du CEO neu + de xuat them hop ly cho 3 loai con lai:
+- Nhan truong tu "Hinh thai" -> "Nut Hanh Dong" (CreatePostModal.tsx + EditPostModal.tsx).
+- package: "Dong Goi (san pham)" -> "Mua Ngay" (dung voi vi du CEO).
+- request: "Yeu Cau / Bao Gia" -> "Tu Van / Bao Gia" (dung voi vi du CEO "tu van").
+- reservation: "Giu Cho (su kien/lop hoc)" -> "Dang Ky / Giu Cho" (dung voi vi du CEO "dang ky").
+- donate: "Ung Ho (Donate)" -> "Thu Nap / Ung Ho" (dung voi vi du CEO "thu nap" — gan voi dong gop/gay quy, hop ly vi donate da co san truong "muc tieu gay quy" goalMessage).
+- membership: "Thanh Vien / Cau Lac Bo" -> "Tham Gia Thanh Vien" (de xuat them, dong bo huong "nut hanh dong").
+- auction: "Dau Gia" giu nguyen (da la dang nut hanh dong san).
+- content: "Noi Dung" -> "Chia Se Noi Dung (khong co nut ban)" (de xuat them, lam ro day la lua chon KHONG co nut thuong mai, phan biet voi 6 lua chon con lai deu la nut that).
+Hint duoi moi lua chon cung sua lai van phong theo huong "khach bam..." cho khop khung nhin moi, noi dung ky thuat ben trong (gia/coc/dieu kien mien phi) giu nguyen khong doi.
+
+VERIFIED: Build Docker sach hoan toan (khong dong cham API/schema nen rui ro rat thap). Deploy container avastar-review, test tay qua trinh duyet: (1) mo "Tao Bai Viet Moi" -> dropdown dau tien gio ghi "Nut Hanh Dong", 7 lua chon hien DUNG: Chia Se Noi Dung / Mua Ngay / Tu Van-Bao Gia / Dang Ky-Giu Cho / Tham Gia Thanh Vien / Thu Nap-Ung Ho / Dau Gia; (2) chon "Mua Ngay" -> form tu dong hien DUNG cac truong san pham (Ten san pham/Gia ban/Gia goc/Ton kho/Tinh nang + 2 checkbox lien ket ngoai/QR) y het truoc day — xac nhan "chon nut la cau hinh dung bai viet theo nut" dung yeu cau, khong lam vo logic cu.
+
+Container avastar (8107) khong bi dung. Chua deploy domain that — dang cho CEO xem ban duyet (http://100.117.42.100:8137) truoc khi quyet dinh "duyet"/deploy production.

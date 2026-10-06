@@ -321,7 +321,7 @@ export function EditPostModal({ post, isOpen, onClose, onUpdated }: EditPostModa
 
         <div className="flex-1 overflow-y-auto custom-slim-scroll py-3 space-y-4">
           <div>
-            <label className={labelCls}>Hình thái</label>
+            <label className={labelCls}>Nút Hành Động</label>
             <select value={cardKind} onChange={(e) => setCardKind(e.target.value as CardKind)} className={inputCls}>
               {CARD_KINDS.map((k) => (
                 <option key={k} value={k}>

@@ -32,17 +32,22 @@ export const COMMERCE_CARD_META: Partial<Record<CardType, CardTypeMeta>> = {
 // Danh sách hình thái dùng ở màn tạo bài — "content" = bài thường, không có
 // thẻ nghiệp vụ (ảnh/video/tài liệu thuần, mặc định miễn phí vì chỉ là chia
 // sẻ nội dung, không có giao dịch).
+// Danh sách chọn ở màn tạo bài — đóng khung theo NÚT HÀNH ĐỘNG khách sẽ bấm
+// (Mua Ngay/Tư Vấn/Đăng Ký/Thu Nạp...) thay vì theo tên kỹ thuật "hình
+// thái" như trước — chọn đúng nút cần, hệ thống tự cấu hình đúng trường và
+// luồng xử lý phía sau (dữ liệu/logic bên dưới không đổi, chỉ đổi khung
+// nhìn cho Owner).
 export const CARD_KIND_META: Record<"content" | CardType, { label: string; hint: string }> = {
-  content: { label: "Nội Dung", hint: "Bài chia sẻ thường — ảnh/video/tài liệu, không bán gì." },
+  content: { label: "Chia Sẻ Nội Dung (không có nút bán)", hint: "Bài chia sẻ thường — ảnh/video/tài liệu, không bán gì." },
   image: { label: "Ảnh", hint: "" },
   video: { label: "Video", hint: "" },
   doc: { label: "Tài liệu", hint: "" },
-  package: { label: "Đóng Gói (sản phẩm)", hint: "Có giá cố định. Để giá 0 = miễn phí, nút tự đổi thành \"Nhận Miễn Phí\"." },
-  request: { label: "Yêu Cầu / Báo Giá", hint: "Không có giá cố định — khách gửi yêu cầu, bạn báo giá sau." },
-  reservation: { label: "Giữ Chỗ (sự kiện/lớp học)", hint: "Có thể miễn phí hoặc cần cọc. Để cọc 0 = đăng ký miễn phí." },
-  membership: { label: "Thành Viên / Câu Lạc Bộ", hint: "Có thể miễn phí (câu lạc bộ) hoặc thu phí định kỳ." },
-  donate: { label: "Ủng Hộ (Donate)", hint: "Khách tặng tiền cho bạn qua VietQR." },
-  auction: { label: "Đấu Giá", hint: "Khách trả giá, cao nhất khi hết giờ thắng." },
+  package: { label: "Mua Ngay", hint: "Khách bấm là mua luôn. Có giá cố định — để giá 0 = nút tự đổi thành \"Nhận Miễn Phí\"." },
+  request: { label: "Tư Vấn / Báo Giá", hint: "Khách bấm để gửi yêu cầu — không chốt giá sẵn, bạn báo giá sau." },
+  reservation: { label: "Đăng Ký / Giữ Chỗ", hint: "Khách bấm để đăng ký sự kiện/lớp học. Có thể miễn phí hoặc cần cọc — để cọc 0 = đăng ký miễn phí." },
+  membership: { label: "Tham Gia Thành Viên", hint: "Khách bấm để đăng ký làm thành viên/câu lạc bộ. Có thể miễn phí hoặc thu phí định kỳ." },
+  donate: { label: "Thu Nạp / Ủng Hộ", hint: "Khách bấm để ủng hộ, đóng góp cho bạn qua VietQR." },
+  auction: { label: "Đấu Giá", hint: "Khách bấm để trả giá, cao nhất khi hết giờ thắng." },
 };
 
 const COMMERCE_TYPES: CardType[] = ["package", "request", "reservation", "membership", "donate", "auction"];
