@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="appBgLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#F4F0E8" />
+    </linearGradient>
+    <linearGradient id="goldAccLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D9BC82" />
+      <stop offset="50%" stop-color="#C9AA72" />
+      <stop offset="100%" stop-color="#9C7B42" />
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="114" fill="url(#appBgLight)" />
+  <rect width="510" height="510" x="1" y="1" rx="113" stroke="#E2DACB" stroke-width="2" />
+
+  <!-- Ensō Circle -->
+  <path d="M 256 68 
+           A 188 188 0 1 1 84 322 
+           A 182 182 0 0 1 228 72" 
+        stroke="#102A43" 
+        stroke-width="5" 
+        stroke-linecap="round" 
+        stroke-opacity="0.25" />
+
+  <!-- Hexagon -->
+  <polygon points="256,122 374,189 374,323 256,390 138,323 138,189" 
+           stroke="#07111F" 
+           stroke-width="4.5" 
+           stroke-linejoin="round" 
+           fill="#102A43" 
+           fill-opacity="0.06" />
+
+  <circle cx="256" cy="122" r="6" fill="url(#goldAccLight)" />
+  <circle cx="374" cy="189" r="6" fill="url(#goldAccLight)" />
+  <circle cx="374" cy="323" r="6" fill="url(#goldAccLight)" />
+  <circle cx="256" cy="390" r="6" fill="url(#goldAccLight)" />
+  <circle cx="138" cy="323" r="6" fill="url(#goldAccLight)" />
+  <circle cx="138" cy="189" r="6" fill="url(#goldAccLight)" />
+
+  <!-- Spark -->
+  <g transform="translate(256, 256)">
+    <path d="M 0 -22 
+             Q 5 -5, 68 -68 
+             Q 5 5, 22 0 
+             Q 5 -5, 68 68 
+             Q -5 5, 0 22 
+             Q 5 -5, -68 68 
+             Q -5 -5, -22 0 
+             Q -5 5, -68 -68 
+             Q -5 -5, 0 -22 Z" 
+          fill="url(#goldAccLight)" />
+    
+    <circle cx="0" cy="0" r="7" fill="#07111F" />
+  </g>
+
+  <circle cx="396" cy="116" r="8" fill="#A8F238" />
+  <circle cx="396" cy="116" r="16" stroke="#A8F238" stroke-width="2" stroke-opacity="0.6" />
+</svg>

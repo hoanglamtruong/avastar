@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 140" fill="none">
+  <defs>
+    <linearGradient id="sparkGoldLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D4B67D" />
+      <stop offset="50%" stop-color="#B89454" />
+      <stop offset="100%" stop-color="#876832" />
+    </linearGradient>
+  </defs>
+
+  <style>
+    .brand-title-light {
+      font-family: 'Manrope', 'Montserrat', 'Inter', -apple-system, sans-serif;
+      font-weight: 800;
+      font-size: 58px;
+      letter-spacing: 0.12em;
+      fill: #07111F;
+    }
+    .brand-sub-light {
+      font-family: 'Manrope', 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 13.5px;
+      letter-spacing: 0.38em;
+      fill: #102A43;
+      opacity: 0.85;
+    }
+  </style>
+
+  <!-- Z A N G -->
+  <text x="35" y="72" class="brand-title-light">ZANG</text>
+
+  <!-- 45-degree Signature Spark X -->
+  <g transform="translate(268, 52)">
+    <path d="M 0 -8 
+             Q 2 -2, 26 -26 
+             Q 2 2, 8 0 
+             Q 2 -2, 26 26 
+             Q -2 2, 0 8 
+             Q 2 -2, -26 26 
+             Q -2 -2, -8 0 
+             Q -2 2, -26 -26 
+             Q -2 -2, 0 -8 Z" 
+          fill="url(#sparkGoldLight)" />
+    
+    <path d="M 0 -15 L 2.5 -3 L 3.5 0 L 2.5 3 L 0 15 L -2.5 3 L -3.5 0 L -2.5 -3 Z" 
+          fill="#FFE8B5" opacity="0.9" />
+    <path d="M -15 0 L -3 2.5 L 0 3.5 L 3 2.5 L 15 0 L 3 -2.5 L 0 -3.5 L -3 -2.5 Z" 
+          fill="#FFE8B5" opacity="0.9" />
+    <circle cx="0" cy="0" r="2.8" fill="#5E471F" />
+  </g>
+
+  <!-- Divider hair-line -->
+  <line x1="35" y1="92" x2="310" y2="92" stroke="#102A43" stroke-width="0.8" stroke-opacity="0.25" />
+  <circle cx="310" cy="92" r="1.5" fill="#B89454" />
+
+  <!-- Subtitle: THE DIGITAL ATELIER -->
+  <text x="36" y="112" class="brand-sub-light">THE DIGITAL ATELIER</text>
+</svg>

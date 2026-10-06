@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { X, Plus, Trash2, Save, Image as ImageIcon, Video, FileText } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import { PostData, PostCategory, CardType } from "@/lib/types";
+import { MediaPicker } from "@/components/ui/MediaPicker";
 
 interface EditPostModalProps {
   post: PostData | null;
@@ -238,15 +239,11 @@ export function EditPostModal({ post, isOpen, onClose, onUpdated }: EditPostModa
                     </div>
 
                     <div className="sm:col-span-2">
-                      <label className="block text-[10px] text-[#AEBCC5] mb-1">
-                        URL hình ảnh / Video (Link trực tiếp):
-                      </label>
-                      <input
-                        type="url"
+                      <MediaPicker
+                        label="Hình ảnh / Video:"
                         value={card.mediaUrl}
-                        onChange={(e) => handleCardChange(idx, "mediaUrl", e.target.value)}
-                        placeholder="https://images.unsplash.com/..."
-                        className="w-full px-2.5 py-1.5 rounded-lg bg-[#07111F] border border-white/15 text-white placeholder:text-white/30"
+                        onChange={(url) => handleCardChange(idx, "mediaUrl", url)}
+                        placeholder="https://... hoặc tải từ máy / kho lưu trữ"
                       />
                     </div>
                   </div>

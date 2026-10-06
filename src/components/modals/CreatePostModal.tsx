@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { X, Plus, Trash2, Send } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import { PostCategory, CardType } from "@/lib/types";
+import { MediaPicker } from "@/components/ui/MediaPicker";
 
 interface CreatePostModalProps {
   isOpen: boolean;
@@ -149,12 +150,11 @@ export function CreatePostModal({ isOpen, onClose, onCreated }: CreatePostModalP
                   )}
                 </div>
                 {(card.cardType === "image" || card.cardType === "video") && (
-                  <input
-                    type="text"
+                  <MediaPicker
+                    label="Hình ảnh / Video:"
                     value={card.mediaUrl}
-                    onChange={(e) => updateCard(idx, { mediaUrl: e.target.value })}
-                    placeholder="URL ảnh/video..."
-                    className="w-full px-2.5 py-2 rounded-lg bg-[#07111F] border border-[#F4F0E8]/20 text-xs text-white placeholder:text-[#F4F0E8]/40 focus:outline-none focus:border-[#C9AA72]"
+                    onChange={(url) => updateCard(idx, { mediaUrl: url })}
+                    placeholder="URL ảnh/video hoặc tải từ máy / kho lưu trữ..."
                   />
                 )}
 

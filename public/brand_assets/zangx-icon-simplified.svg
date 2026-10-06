@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <defs>
+    <linearGradient id="goldSimp" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F2DFB8" />
+      <stop offset="50%" stop-color="#C9AA72" />
+      <stop offset="100%" stop-color="#9C7B42" />
+    </linearGradient>
+  </defs>
+  <!-- Hexagon -->
+  <polygon points="50,12 83,31 83,69 50,88 17,69 17,31" 
+           stroke="#07111F" 
+           stroke-width="3.5" 
+           stroke-linejoin="round" />
+  <!-- Central Spark -->
+  <g transform="translate(50, 50)">
+    <path d="M 0 -4 Q 1 -1, 15 -15 Q 1 1, 4 0 Q 1 -1, 15 15 Q -1 1, 0 4 Q 1 -1, -15 15 Q -1 -1, -4 0 Q -1 1, -15 -15 Q -1 -1, 0 -4 Z" 
+          fill="url(#goldSimp)" />
+    <circle cx="0" cy="0" r="1.8" fill="#07111F" />
+  </g>
+</svg>

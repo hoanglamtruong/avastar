@@ -8,6 +8,7 @@ import { formatCurrency } from "@/lib/utils";
 import { PostData } from "@/lib/types";
 import { CreatePostModal } from "@/components/modals/CreatePostModal";
 import { EditPostModal } from "@/components/modals/EditPostModal";
+import { MediaPicker } from "@/components/ui/MediaPicker";
 import { CmsItemModal, CmsSectionType } from "@/components/modals/CmsItemModal";
 import { ZxLogoLockup } from "@/components/portfolio/ZxStar";
 import {
@@ -911,16 +912,12 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              <div>
-                <label className="block font-bold text-[#AEBCC5] mb-1">URL Ảnh Đại Diện (Avatar):</label>
-                <input
-                  type="url"
-                  value={adminAvatarUrl}
-                  onChange={(e) => setAdminAvatarUrl(e.target.value)}
-                  placeholder="https://..."
-                  className="w-full px-3 py-2 rounded-xl bg-[#07111F] border border-white/15 text-white focus:outline-none focus:border-[#C9AA72]"
-                />
-              </div>
+              <MediaPicker
+                label="Ảnh Đại Diện (Avatar):"
+                value={adminAvatarUrl}
+                onChange={(url) => setAdminAvatarUrl(url)}
+                placeholder="https://... hoặc tải từ máy / chọn từ kho lưu trữ"
+              />
 
               {/* Bank VietQR Settings */}
               <div className="pt-4 border-t border-white/10 space-y-4">
