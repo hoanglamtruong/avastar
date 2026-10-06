@@ -6,13 +6,18 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  Heart,
   Share2,
   Eye,
   FileText,
   Layers,
+  ArrowRight,
 } from "lucide-react";
 import { ZxStar } from "@/components/portfolio/ZxStar";
+import { formatCurrency } from "@/lib/utils";
+import { COMMERCE_CARD_META, CONTENT_CATEGORY_LABEL } from "@/lib/cardTypeMeta";
+import { VietQRPaymentModal } from "@/components/modals/VietQRPaymentModal";
+import { RequestLeadModal } from "@/components/modals/RequestLeadModal";
+import { AuctionBidModal } from "@/components/modals/AuctionBidModal";
 
 interface PostDetailModalProps {
   post: PostData | null;
@@ -30,6 +35,9 @@ export function PostDetailModal({
   onSharePost,
 }: PostDetailModalProps) {
   const [activeCardIndex, setActiveCardIndex] = useState(0);
+  const [payModalOpen, setPayModalOpen] = useState(false);
+  const [leadModalOpen, setLeadModalOpen] = useState(false);
+  const [auctionModalOpen, setAuctionModalOpen] = useState(false);
 
   useEffect(() => {
     setActiveCardIndex(0);
@@ -59,6 +67,138 @@ export function PostDetailModal({
   const currentCard = cards[activeCardIndex] || cards[0];
   const isVideo = currentCard?.cardType === "video";
   const isDoc = currentCard?.cardType === "doc";
+  const commerceMeta = COMMERCE_CARD_META[currentCard?.cardType];
+  const meta = currentCard?.cardMetadata || {};
+
+  const handlePackageOrConfirm = async (contact: { name: string; phone: string }) => {
+    await fetch("/api/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        postId: post.id,
+        postCardId: currentCard.id,
+        orderKind: currentCard.cardType === "package" ? "package" : currentCard.cardType === "reservation" ? "reservation" : "membership",
+        itemName: meta.productName || meta.title || meta.planName || "Sản phẩm",
+        amount: meta.price ?? meta.depositAmount ?? 0,
+        customerName: contact.name,
+        customerPhone: contact.phone,
+      }),
+    });
+  };
+
+  const renderCommerceSummary = () => {
+    if (!commerceMeta || currentCard.cardType === "donate") return null;
+    const Icon = commerceMeta.icon;
+    return (
+      <div className="p-3 rounded-2xl bg-[#102A43]/60 border border-[#F4F0E8]/10 space-y-1.5 text-xs">
+        <div className="flex items-center gap-1.5 text-[#C9AA72] font-extrabold uppercase text-[10px] tracking-wider">
+          <Icon className="w-3.5 h-3.5" />
+          <span>{commerceMeta.label}</span>
+          {meta.contentCategory && (
+            <span className="ml-auto px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[9px] font-bold text-[#AEBCC5] normal-case tracking-normal">
+              {CONTENT_CATEGORY_LABEL[meta.contentCategory as keyof typeof CONTENT_CATEGORY_LABEL]}
+            </span>
+          )}
+        </div>
+
+        {currentCard.cardType === "package" && (
+          <>
+            <p className="text-white font-bold text-sm">{meta.productName}</p>
+            <div className="flex items-baseline gap-2">
+              <span className="text-[#C9AA72] font-black">{formatCurrency(meta.price || 0)}</span>
+              {meta.originalPrice && <span className="text-[#F4F0E8]/50 line-through text-[11px]">{formatCurrency(meta.originalPrice)}</span>}
+            </div>
+            {meta.stock !== undefined && <p className="text-[#F4F0E8]/70">Còn {meta.stock} suất</p>}
+          </>
+        )}
+        {currentCard.cardType === "request" && (
+          <>
+            <p className="text-white font-bold text-sm">{meta.title}</p>
+            <p className="text-[#F4F0E8]/80">{meta.scopeDescription}</p>
+            {meta.estimatedRange && <p className="text-[#C9AA72]">Khoảng giá tham khảo: {meta.estimatedRange}</p>}
+          </>
+        )}
+        {currentCard.cardType === "reservation" && (
+          <>
+            <p className="text-white font-bold text-sm">{meta.title}</p>
+            {meta.dateTime && <p className="text-[#F4F0E8]/80">🗓️ {new Date(meta.dateTime).toLocaleString("vi-VN")}</p>}
+            {meta.location && <p className="text-[#F4F0E8]/80">📍 {meta.location}</p>}
+            {meta.slotsTotal !== undefined && (
+              <p className="text-[#F4F0E8]/80">
+                Còn {Math.max(0, (meta.slotsTotal || 0) - (meta.slotsTaken || 0))}/{meta.slotsTotal} suất
+              </p>
+            )}
+            <p className="text-[#C9AA72] font-bold">{meta.depositAmount ? `Cọc trước: ${formatCurrency(meta.depositAmount)}` : "Không cần đặt cọc"}</p>
+          </>
+        )}
+        {currentCard.cardType === "membership" && (
+          <>
+            <p className="text-white font-bold text-sm">{meta.planName}</p>
+            <p className="text-[#C9AA72] font-black">
+              {formatCurrency(meta.price || 0)} / {meta.billingPeriod === "month" ? "tháng" : meta.billingPeriod === "year" ? "năm" : "trọn đời"}
+            </p>
+            {meta.benefits?.length > 0 && (
+              <ul className="space-y-0.5 pt-1">
+                {meta.benefits.map((b: string, i: number) => (
+                  <li key={i} className="text-[#F4F0E8]/80">• {b}</li>
+                ))}
+              </ul>
+            )}
+          </>
+        )}
+        {currentCard.cardType === "auction" && (
+          <>
+            <p className="text-white font-bold text-sm">{meta.itemName}</p>
+            <p className="text-[#F4F0E8]/80">Giá khởi điểm: {formatCurrency(meta.startingPrice || 0)}</p>
+            <p className="text-[#F4F0E8]/80">Kết thúc: {meta.endsAt ? new Date(meta.endsAt).toLocaleString("vi-VN") : ""}</p>
+          </>
+        )}
+      </div>
+    );
+  };
+
+  const renderActionButton = () => {
+    if (post.category === "club" && !commerceMeta) {
+      return (
+        <button
+          type="button"
+          onClick={() => setLeadModalOpen(true)}
+          className="w-full py-3 rounded-2xl bg-[#102A43] border border-[#C9AA72]/40 text-[#C9AA72] font-black text-sm flex items-center justify-center gap-2 hover:bg-[#C9AA72]/10 transition transform active:scale-98"
+        >
+          <span>Tham Gia Câu Lạc Bộ</span>
+        </button>
+      );
+    }
+    if (!currentCard || !commerceMeta) return null;
+    const Icon = commerceMeta.icon;
+    const handleClick = () => {
+      if (currentCard.cardType === "donate") {
+        onOpenGift(post.id);
+      } else if (currentCard.cardType === "package" || currentCard.cardType === "reservation" || currentCard.cardType === "membership") {
+        setPayModalOpen(true);
+      } else if (currentCard.cardType === "request") {
+        setLeadModalOpen(true);
+      } else if (currentCard.cardType === "auction") {
+        setAuctionModalOpen(true);
+      }
+    };
+    return (
+      <button
+        type="button"
+        onClick={handleClick}
+        className="w-full py-3 rounded-2xl bg-gradient-to-r from-[#C9AA72] to-[#8B6F3F] text-[#07111F] font-black text-sm flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(201,170,114,0.3)] hover:opacity-95 active:scale-98 transition transform"
+      >
+        <Icon className="w-4 h-4" />
+        <span>{commerceMeta.ctaLabel}</span>
+        <ArrowRight className="w-4 h-4" />
+      </button>
+    );
+  };
+
+  const payAmount = currentCard?.cardType === "package" ? meta.price || 0 : currentCard?.cardType === "reservation" ? meta.depositAmount || 0 : meta.price || 0;
+  const payTitle =
+    currentCard?.cardType === "package" ? "Mua Ngay" : currentCard?.cardType === "reservation" ? "Giữ Chỗ" : "Đăng Ký Thành Viên";
+  const payItemLabel = meta.productName || meta.title || meta.planName || "";
 
   return (
     <div
@@ -69,7 +209,6 @@ export function PostDetailModal({
         className="relative w-full max-w-4xl max-h-[92vh] bg-[#07111F]/95 rounded-3xl border border-[#C9AA72]/40 shadow-[0_20px_60px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col md:flex-row text-white"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Close Button */}
         <button
           onClick={onClose}
           className="absolute top-4 right-4 z-30 p-2 rounded-full bg-[#07111F]/80 text-[#F4F0E8]/70 hover:text-white hover:bg-white/10 border border-white/10 transition backdrop-blur-md"
@@ -78,32 +217,24 @@ export function PostDetailModal({
           <X className="w-5 h-5" />
         </button>
 
-        {/* MEDIA SECTION (LEFT / TOP) */}
         <div className="relative w-full md:w-3/5 bg-black/60 flex items-center justify-center min-h-[260px] md:min-h-[500px] overflow-hidden">
           {currentCard?.mediaUrl ? (
             isVideo ? (
-              <video
-                src={currentCard.mediaUrl}
-                controls
-                autoPlay
-                playsInline
-                className="w-full h-full max-h-[70vh] object-contain"
-              />
+              <video src={currentCard.mediaUrl} controls autoPlay playsInline className="w-full h-full max-h-[70vh] object-contain" />
             ) : isDoc ? (
               <div className="p-8 text-left max-w-md">
                 <FileText className="w-12 h-12 text-[#C9AA72] mb-4" />
                 <h4 className="text-xl font-bold text-white mb-2">{post.caption}</h4>
-                <p className="text-sm text-[#AEBCC5] leading-relaxed whitespace-pre-line">
-                  {currentCard.docContent || "Tài liệu kỹ thuật số ZANGX"}
-                </p>
+                <p className="text-sm text-[#AEBCC5] leading-relaxed whitespace-pre-line">{currentCard.docContent || "Tài liệu kỹ thuật số ZANGX"}</p>
               </div>
             ) : (
-              <img
-                src={currentCard.mediaUrl}
-                alt={post.caption || "Tác phẩm ZANGX"}
-                className="w-full h-full max-h-[70vh] object-contain select-none"
-              />
+              <img src={currentCard.mediaUrl} alt={post.caption || "Tác phẩm ZANGX"} className="w-full h-full max-h-[70vh] object-contain select-none" />
             )
+          ) : commerceMeta ? (
+            <div className="p-8 text-center text-[#AEBCC5]">
+              <commerceMeta.icon className="w-14 h-14 text-[#C9AA72] mx-auto mb-3 opacity-80" />
+              <p className="text-sm">{commerceMeta.label}</p>
+            </div>
           ) : (
             <div className="p-8 text-center text-[#AEBCC5]">
               <FileText className="w-12 h-12 text-[#C9AA72] mx-auto mb-3 opacity-80" />
@@ -111,7 +242,6 @@ export function PostDetailModal({
             </div>
           )}
 
-          {/* Carousel Arrows */}
           {cards.length > 1 && (
             <>
               {activeCardIndex > 0 && (
@@ -132,34 +262,25 @@ export function PostDetailModal({
                   <ChevronRight className="w-5 h-5" />
                 </button>
               )}
-
-              {/* Card Indicator Dots */}
               <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 z-20">
                 {cards.map((_, idx) => (
                   <button
                     key={idx}
                     onClick={() => setActiveCardIndex(idx)}
-                    className={`w-2 h-2 rounded-full transition-all ${
-                      idx === activeCardIndex
-                        ? "w-6 bg-[#C9AA72] shadow-[0_0_8px_#C9AA72]"
-                        : "bg-white/40 hover:bg-white/70"
-                    }`}
+                    className={`w-2 h-2 rounded-full transition-all ${idx === activeCardIndex ? "w-6 bg-[#C9AA72] shadow-[0_0_8px_#C9AA72]" : "bg-white/40 hover:bg-white/70"}`}
                   />
                 ))}
               </div>
             </>
           )}
 
-          {/* Category Badge */}
           <span className="absolute top-4 left-4 px-3 py-1 rounded-full bg-[#07111F]/85 border border-[#C9AA72]/40 text-xs font-black uppercase text-[#C9AA72] backdrop-blur-md z-20">
             {post.category}
           </span>
         </div>
 
-        {/* INFO & ACTIONS SECTION (RIGHT / BOTTOM) */}
         <div className="w-full md:w-2/5 p-5 sm:p-6 flex flex-col justify-between border-t md:border-t-0 md:border-l border-white/10 bg-[#07111F]/60">
           <div>
-            {/* Author Lockup */}
             <div className="flex items-center gap-3 pb-4 border-b border-white/10 mb-4">
               <img
                 src={post.owner?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100"}
@@ -168,20 +289,15 @@ export function PostDetailModal({
               />
               <div>
                 <div className="flex items-center gap-1.5">
-                  <h4 className="text-sm font-black text-white">
-                    {post.owner?.fullName || "Trương Hoàng Lam"}
-                  </h4>
+                  <h4 className="text-sm font-black text-white">{post.owner?.fullName || "Trương Hoàng Lam"}</h4>
                   <ZxStar className="w-3.5 h-3.5 text-[#C9AA72]" />
                 </div>
                 <p className="text-[11px] text-[#AEBCC5]">Sáng lập & Trưởng xưởng ZANGX</p>
               </div>
             </div>
 
-            {/* Caption */}
-            <div className="space-y-2 mb-6">
-              <h3 className="zx-serif text-lg sm:text-xl font-bold text-[#F4F0E8] leading-snug">
-                {post.caption || "Tác phẩm sáng tạo số"}
-              </h3>
+            <div className="space-y-2 mb-4">
+              <h3 className="zx-serif text-lg sm:text-xl font-bold text-[#F4F0E8] leading-snug">{post.caption || "Tác phẩm sáng tạo số"}</h3>
               {cards.length > 1 && (
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-[#AEBCC5]">
                   <Layers className="w-3.5 h-3.5 text-[#A8F238]" />
@@ -191,9 +307,10 @@ export function PostDetailModal({
                 </div>
               )}
             </div>
+
+            {renderCommerceSummary()}
           </div>
 
-          {/* Action Row */}
           <div className="pt-4 border-t border-white/10 space-y-3">
             <div className="flex items-center justify-between text-xs text-[#AEBCC5]">
               <span className="flex items-center gap-1.5">
@@ -211,20 +328,49 @@ export function PostDetailModal({
               </button>
             </div>
 
-            {/* Donate QR Button */}
-            <button
-              type="button"
-              onClick={() => {
-                onOpenGift(post.id);
-              }}
-              className="w-full py-3 rounded-2xl bg-gradient-to-r from-[#C9AA72] to-[#8B6F3F] text-[#07111F] font-black text-sm flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(201,170,114,0.3)] hover:opacity-95 active:scale-98 transition transform"
-            >
-              <Heart className="w-4 h-4 fill-current text-[#07111F]" />
-              <span>Ủng Hộ Qua QR Ngân Hàng</span>
-            </button>
+            {renderActionButton()}
           </div>
         </div>
       </div>
+
+      {currentCard?.cardType === "request" && (
+        <RequestLeadModal
+          isOpen={leadModalOpen}
+          onClose={() => setLeadModalOpen(false)}
+          title={meta.title || "Gửi Yêu Cầu / Báo Giá"}
+          subtitle={meta.scopeDescription}
+          postId={post.id}
+          postCardId={currentCard.id}
+          leadType="request"
+        />
+      )}
+
+      {post.category === "club" && (
+        <RequestLeadModal
+          isOpen={leadModalOpen}
+          onClose={() => setLeadModalOpen(false)}
+          title="Tham Gia Câu Lạc Bộ"
+          subtitle={post.caption || undefined}
+          postId={post.id}
+          leadType="club_join"
+        />
+      )}
+
+      {(currentCard?.cardType === "package" || currentCard?.cardType === "reservation" || currentCard?.cardType === "membership") && (
+        <VietQRPaymentModal
+          isOpen={payModalOpen}
+          onClose={() => setPayModalOpen(false)}
+          title={payTitle}
+          itemLabel={payItemLabel}
+          amount={payAmount}
+          transferMessageSeed={`ZANGX ${payItemLabel}`.slice(0, 40)}
+          onConfirm={handlePackageOrConfirm}
+        />
+      )}
+
+      {currentCard?.cardType === "auction" && (
+        <AuctionBidModal isOpen={auctionModalOpen} onClose={() => setAuctionModalOpen(false)} postCardId={currentCard.id} meta={meta} />
+      )}
     </div>
   );
 }

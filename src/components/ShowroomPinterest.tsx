@@ -36,31 +36,29 @@ export function ShowroomPinterest({
 
   const filterTabs = [
     { id: "all", label: "Tất cả ý tưởng" },
-    { id: "webapp", label: "Webapp & Code" },
-    { id: "ai", label: "AI & Tự Động Hóa" },
-    { id: "rnd", label: "Sản Phẩm R&D" },
+    { id: "free", label: "Miễn Phí" },
+    { id: "package", label: "Mua Ngay" },
+    { id: "reservation", label: "Giữ Chỗ" },
+    { id: "membership", label: "Thành Viên" },
+    { id: "auction", label: "Đấu Giá" },
     { id: "media", label: "Ảnh & Video" },
-    { id: "job", label: "Dự Án Khách Hàng" },
-    { id: "doc", label: "Tài Liệu & SOP" },
   ];
+
+  const FREE_TAGS = ["knowledge", "vblog", "giveaway", "club"];
 
   // Lọc tác phẩm dựa trên tab và từ khóa tìm kiếm
   const filteredPosts = useMemo(() => {
     return posts.filter((post) => {
       // 1. Lọc theo chuyên mục / tab
-      if (selectedFilter === "webapp" && post.category !== "work") return false;
-      if (selectedFilter === "ai" && post.category !== "training" && !post.caption?.toLowerCase().includes("ai")) return false;
-      if (selectedFilter === "rnd" && post.category !== "store") return false;
-      if (selectedFilter === "job" && post.category !== "job") return false;
+      if (selectedFilter === "free" && !FREE_TAGS.includes(post.category)) return false;
       if (
-        selectedFilter === "media" &&
-        !post.cards.some((c) => c.cardType === "video" || c.cardType === "image")
+        ["package", "reservation", "membership", "auction"].includes(selectedFilter) &&
+        !post.cards.some((c) => c.cardType === selectedFilter)
       )
         return false;
       if (
-        selectedFilter === "doc" &&
-        post.category !== "sop" &&
-        !post.cards.some((c) => c.cardType === "doc" || c.cardType === "sop")
+        selectedFilter === "media" &&
+        !post.cards.some((c) => c.cardType === "video" || c.cardType === "image")
       )
         return false;
 

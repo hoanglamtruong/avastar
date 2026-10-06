@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from "react";
 import { PostData } from "@/lib/types";
+import { FREE_ACTIVITY_META, COMMERCE_CARD_META, findCommerceCard } from "@/lib/cardTypeMeta";
 import {
   Heart,
   Share2,
@@ -33,7 +34,8 @@ export function PinCard({
 
   const firstCard = post.cards?.[0];
   const isVideo = firstCard?.cardType === "video";
-  const isDoc = firstCard?.cardType === "doc" || firstCard?.cardType === "sop";
+  const isDoc = firstCard?.cardType === "doc";
+  const commerceCard = findCommerceCard(post.cards);
   const cardCount = post.cards?.length || 1;
 
   const handleMouseEnter = () => {
@@ -51,20 +53,12 @@ export function PinCard({
     }
   };
 
-  const categoryConfig: Record<string, { label: string; color: string }> = {
-    work: { label: "Webapp & AI", color: "text-[#A8F238] border-[#A8F238]/30" },
-    store: { label: "Sản Phẩm R&D", color: "text-[#C9AA72] border-[#C9AA72]/30" },
-    job: { label: "Dự Án Khách Hàng", color: "text-[#38BDF8] border-[#38BDF8]/30" },
-    training: { label: "AI Workshop", color: "text-[#E879F9] border-[#E879F9]/30" },
-    sop: { label: "Quy Trình SOP", color: "text-[#FCD34D] border-[#FCD34D]/30" },
-    diary: { label: "Nhật Ký Atelier", color: "text-[#F4F0E8] border-white/20" },
-    general: { label: "Sáng Tạo Mở", color: "text-[#C9AA72] border-[#C9AA72]/30" },
-  };
-
-  const catInfo = categoryConfig[post.category] || {
-    label: post.category.toUpperCase(),
-    color: "text-[#C9AA72] border-[#C9AA72]/30",
-  };
+  const freeMeta = FREE_ACTIVITY_META[post.category as keyof typeof FREE_ACTIVITY_META];
+  const catInfo = freeMeta
+    ? { label: freeMeta.label, color: "text-[#F4F0E8] border-white/20" }
+    : commerceCard
+    ? { label: COMMERCE_CARD_META[commerceCard.cardType]?.label || post.category, color: COMMERCE_CARD_META[commerceCard.cardType]?.color || "text-[#C9AA72] border-[#C9AA72]/30" }
+    : { label: "Sáng Tạo Mở", color: "text-[#C9AA72] border-[#C9AA72]/30" };
 
   return (
     <article
@@ -142,18 +136,32 @@ export function PinCard({
           <div className="absolute inset-0 bg-gradient-to-t from-[#07111F]/80 via-transparent to-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none flex flex-col justify-between p-3">
             {/* Top action row */}
             <div className="flex justify-end pointer-events-auto">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onOpenGift(post.id);
-                }}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#C9AA72] hover:bg-[#dfc48c] text-[#07111F] font-bold text-xs shadow-xl hover:scale-105 active:scale-95 transition-all"
-                title="Ủng hộ tác phẩm (VietQR)"
-              >
-                <Heart className="w-3.5 h-3.5 fill-[#07111F]" />
-                <span>Donate</span>
-              </button>
+              {commerceCard?.cardType === "donate" ? (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenGift(post.id);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#C9AA72] hover:bg-[#dfc48c] text-[#07111F] font-bold text-xs shadow-xl hover:scale-105 active:scale-95 transition-all"
+                  title="Ủng hộ tác phẩm (VietQR)"
+                >
+                  <Heart className="w-3.5 h-3.5 fill-[#07111F]" />
+                  <span>Donate</span>
+                </button>
+              ) : commerceCard ? (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenDetail(post);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#C9AA72] hover:bg-[#dfc48c] text-[#07111F] font-bold text-xs shadow-xl hover:scale-105 active:scale-95 transition-all"
+                  title={COMMERCE_CARD_META[commerceCard.cardType]?.ctaLabel}
+                >
+                  <span>{COMMERCE_CARD_META[commerceCard.cardType]?.ctaLabel}</span>
+                </button>
+              ) : null}
             </div>
 
             {/* Bottom action row */}

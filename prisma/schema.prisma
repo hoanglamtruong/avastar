@@ -54,6 +54,8 @@ model Post {
   comments  Comment[]   @relation("PostComments")
   gifts     Gift[]      @relation("PostGifts")
   views     PostView[]  @relation("PostViews")
+  leads     Lead[]      @relation("PostLeads")
+  orders    CardOrder[] @relation("PostOrders")
 
   @@index([ownerId])
   @@map("posts")
@@ -168,3 +170,53 @@ model PushSubscription {
   @@map("push_subscriptions")
 }
 
+
+model Lead {
+  id          String   @id @default(uuid()) @db.Uuid
+  postId      String   @map("post_id") @db.Uuid
+  postCardId  String?  @map("post_card_id") @db.Uuid
+  leadType    String   @map("lead_type") @db.VarChar(20) // 'request' | 'club_join'
+  name        String   @db.VarChar(150)
+  phone       String   @db.VarChar(20)
+  email       String?  @db.VarChar(255)
+  note        String?  @db.Text
+  status      String   @default("new") @db.VarChar(20) // 'new' | 'contacted' | 'done'
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  post        Post     @relation("PostLeads", fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@map("leads")
+}
+
+model CardOrder {
+  id            String   @id @default(uuid()) @db.Uuid
+  postId        String   @map("post_id") @db.Uuid
+  postCardId    String   @map("post_card_id") @db.Uuid
+  orderKind     String   @map("order_kind") @db.VarChar(20) // 'package' | 'reservation' | 'membership'
+  itemName      String   @map("item_name") @db.VarChar(200)
+  amount        Decimal  @default(0) @db.Decimal(12, 2)
+  customerName  String   @map("customer_name") @db.VarChar(150)
+  customerPhone String   @map("customer_phone") @db.VarChar(20)
+  note          String?  @db.Text
+  status        String   @default("pending") @db.VarChar(20) // 'pending' | 'confirmed' | 'cancelled'
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  post          Post     @relation("PostOrders", fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@index([postCardId])
+  @@map("card_orders")
+}
+
+model Bid {
+  id          String   @id @default(uuid()) @db.Uuid
+  postCardId  String   @map("post_card_id") @db.Uuid
+  bidderName  String   @map("bidder_name") @db.VarChar(150)
+  bidderPhone String   @map("bidder_phone") @db.VarChar(20)
+  amount      Decimal  @db.Decimal(12, 2)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([postCardId, amount])
+  @@map("bids")
+}

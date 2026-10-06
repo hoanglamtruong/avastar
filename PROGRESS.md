@@ -74,3 +74,32 @@ KET QUA: zangx.io.vn hien chay dung ban moi nhat (Showroom Bento, AtelierDock, V
 - So tai khoan nhan donate qua VietQR hien la du lieu mau (MBBank/TRUONG HOANG LAM/0901234567) -- can vao /admin > Profile nhap dung STK that truoc khi cong bo rong rai, neu khong khach donate that se chuyen nham.
 - O / con 7.3GB (7% trong, duoi nguong an toan) sau deploy -- phan lon la 3 anh avastar hop le (latest/review/rollback ~4.4GB) + anh cac du an khac. Chua xoa the rollback-pre-20261006 (de giu duong lui) -- de xuat: sau khi theo doi domain that on dinh vai ngay, co the xoa the nay de lay lai ~1.46GB.
 - Nhanh local Dell dang vuot 15 commit so voi GitHub, van chua day len duoc (gh auth hong).
+
+[13:20] [Ccode] [VONG 13 · NANG CAP He thong card theo chuc nang kinh doanh] PASS✅ — Theo de xuat CEO: "card tren home co chuc nang khac nhau theo goc nhin Owner (mien phi/donate/thuong mai ban vat ly-ky thuat so-dich vu, dong goi/yeu cau/giu cho/thanh vien/dau gia), form tao va hanh dong khach xem phai khac nhau theo tung loai, bo cac phan thua". Da trao doi va chot thiet ke qua 2 vong hoi dap voi CEO truoc khi lam.
+
+PHAT HIEN QUAN TRONG khi rà soat: he thong the "nghiep vu" cu (SubpageCard.tsx — store/event/job/work/dating/training/sop) da MO COI hoan toan tu dot lam lai giao dien Showroom Bento/Pinterest cua agent khac — PostDetailModal/PinCard hien tai chi phan biet image/video/doc, moi bai dang chi co dung 1 nut "Ung Ho Qua QR" bat ke noi dung gi. Xac nhan dung van de CEO neu — khong phai sua tiep he thong cu, ma dung lai tu dau tren nen Showroom hien tai.
+
+THIET KE CHOT (2 nhom):
+- Nhom MIEN PHI (Post.category): Chia Se Kien Thuc / Vblog / Qua Tang Mien Phi (giveaway, khac Donate — chu tang khach, khong phai khach tang chu) / Cau Lac Bo (co nut nhe "Tham Gia")
+- Nhom THUONG MAI (PostCard.cardType, 6 "hinh thai giao dich" quyet dinh form + hanh dong khach xem; "noi dung" vat ly/ky thuat so/dich vu/kien thuc chi la nhan phu):
+  package (Dong Goi, gia co dinh) · request (Yeu Cau/Bao Gia, khong gia co dinh) ·
+  reservation (Giu Cho, co the coc) · membership (Dang Ky Thanh Vien, theo ky han) ·
+  donate (Ung Ho, dung chung VietQR da co) · auction (Dau Gia realtime)
+
+DA LAM:
+1. prisma/schema.prisma: them 3 model moi Lead (yeu cau/bao gia/tham gia CLB — BEN VUNG, khac /api/subpage-actions cu chi ban thong bao realtime, mat lead neu Owner khong online luc do), CardOrder (don Mua ngay/Giu cho/Thanh vien), Bid (dau gia). prisma db push an toan (chi them bang, khong dung du lieu cu).
+2. src/lib/types.ts: thay CardType/PostCategory cu (store/event/job/work/dating/training/sop) bang taxonomy moi + interface metadata rieng tung loai (PackageCardMeta, RequestCardMeta, ReservationCardMeta, MembershipCardMeta, DonateCardMeta, AuctionCardMeta).
+3. src/lib/cardTypeMeta.ts (moi): nhan/icon/mau dung chung cho moi loai the, dung o nhieu noi tranh lap code.
+4. CreatePostModal.tsx + EditPostModal.tsx: viet lai hoan toan — BO O JSON THO, thay bang form that theo tung loai (chon Nhom -> chon loai cu the -> dien dung truong). EditPostModal tu nhan dien loai hien tai cua bai de dien san khi sua.
+5. XOA 2 FILE MO COI: SubpageCard.tsx, ShowroomBento.tsx (khong con ai import, thuoc he thong cu da bi thay the).
+6. ShowroomPinterest.tsx + PinCard.tsx: cap nhat bo loc + nhan/badge theo taxonomy moi (truoc day loc theo "work"/"store"/"job" cu, se loc sai/rong neu khong sua).
+7. PostDetailModal.tsx: khu vuc hanh dong dong theo loai the dang xem (thay vi 1 nut Donate cung cho moi bai) — hien dung gia/thong tin + dung nut (Mua Ngay/Gui Yeu Cau/Giu Cho Ngay/Dang Ky Thanh Vien/Ung Ho Qua QR/Dat Gia Ngay).
+8. 3 modal moi: VietQRPaymentModal.tsx (dung chung cho package/reservation/membership — tai su dung dung UI VietQR da chay tot o Donate, co them truong ho ten/SDT vi cac don nay can lien he that bat ke dang nhap), RequestLeadModal.tsx (form lead ben vung, dung cho ca request va club_join), AuctionBidModal.tsx (dau gia realtime: dem nguoc, gia hien tai, lich su tra gia, dung lai Socket.IO emitOwnerEvent da co san de broadcast "new_bid" toi moi nguoi xem, khong can ha tang moi).
+9. 3 API route moi: /api/leads (POST+GET), /api/orders (POST+GET), /api/bids (GET theo postCardId + POST co kiem tra het gio/duoi gia toi thieu).
+
+VERIFIED: tsc --noEmit sach toan bo, prisma validate + generate + db push thanh cong, build container avastar-review OK, 6 route chinh 200. Test tay qua trinh duyet: (1) Tao bai "Dong Goi" that qua UI -> hien dung the "DONG GOI" tren feed -> mo PostDetailModal hien dung gia/ten SP -> bam "Mua Ngay" -> VietQRPaymentModal hien dung QR + thong tin ngan hang tu admin -> dien ten/SDT -> xac nhan -> ghi dung vao bang card_orders (kiem tra truc tiep DB). (2) Tao bai "Dau Gia" that qua UI -> mo AuctionBidModal -> dat gia -> cap nhat realtime KHONG CAN TAI LAI TRANG (qua Socket.IO) -> lich su tra gia hien dung -> gia toi thieu lan sau tu dong tang dung buoc gia. CLEANUP: da xoa sach toan bo du lieu test (2 bai dang, 1 order, 1 bid) ngay sau khi test xong, dua ve dung 8 bai goc ban dau — dung nguyen tac "ban duyet dung chung DB that, lo ghi thi xoa sach ngay" cua REQ goc.
+
+CHUA LAM (ngoai pham vi vong nay, de xuat lam sau neu CEO can):
+- Tab quan ly Lead/CardOrder/Bid tren /admin (hien chi co API, CEO xem qua DB truc tiep hoac goi API thu cong — can UI danh sach giong tab Posts da co)
+- Xac dinh "nguoi thang dau gia" tu dong gui thong bao rieng khi het gio (hien chi hien trang thai "Da ket thuc" khi ai do mo lai modal, khong co canh bao chu dong)
+- CHUA DEPLOY domain that (zangx.io.vn) — dang cho CEO duyet tren ban thu nghiem truoc.

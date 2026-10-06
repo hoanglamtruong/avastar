@@ -9,28 +9,72 @@ export interface UserSession {
   phoneNumber?: string | null;
 }
 
-export type PostCategory =
-  | 'store'
-  | 'event'
-  | 'diary'
-  | 'job'
-  | 'work'
-  | 'dating'
-  | 'training'
-  | 'sop'
-  | 'general';
+// Nhóm MIỄN PHÍ: nhãn hoạt động ở cấp bài viết (không giao dịch)
+export type FreeActivityTag = 'knowledge' | 'vblog' | 'giveaway' | 'club';
 
+// Nhãn phân loại nội dung dùng chung cho mọi thẻ thương mại (chỉ để hiện icon/nhãn,
+// KHÔNG quyết định form hay hành động — hình thái giao dịch (cardType) mới quyết định)
+export type ContentCategory = 'physical' | 'digital' | 'service' | 'knowledge';
+
+export type PostCategory = FreeActivityTag | ContentCategory | 'general';
+
+// Hình thái giao dịch — quyết định form tạo + hành động của khách xem
 export type CardType =
   | 'image'
   | 'video'
   | 'doc'
-  | 'store'
-  | 'event'
-  | 'job'
-  | 'work'
-  | 'dating'
-  | 'training'
-  | 'sop';
+  | 'package'      // Đóng gói: giá cố định, mua ngay
+  | 'request'      // Yêu cầu / báo giá: không giá cố định
+  | 'reservation'  // Giữ chỗ: số suất có hạn, có thể đặt cọc
+  | 'membership'   // Đăng ký thành viên: gói theo kỳ hạn
+  | 'donate'       // Ủng hộ qua VietQR (dùng chung cấu hình ngân hàng ở admin)
+  | 'auction';     // Đấu giá realtime
+
+export interface PackageCardMeta {
+  productName: string;
+  price: number;
+  originalPrice?: number;
+  stock?: number;
+  features?: string[];
+  contentCategory: ContentCategory;
+}
+
+export interface RequestCardMeta {
+  title: string;
+  scopeDescription: string;
+  contentCategory: ContentCategory;
+  estimatedRange?: string;
+}
+
+export interface ReservationCardMeta {
+  title: string;
+  dateTime?: string;
+  location?: string;
+  slotsTotal?: number;
+  slotsTaken?: number;
+  depositAmount?: number;
+  contentCategory: ContentCategory;
+}
+
+export interface MembershipCardMeta {
+  planName: string;
+  price: number;
+  billingPeriod: 'month' | 'year' | 'lifetime';
+  benefits?: string[];
+  contentCategory: ContentCategory;
+}
+
+export interface DonateCardMeta {
+  goalMessage?: string;
+}
+
+export interface AuctionCardMeta {
+  itemName: string;
+  startingPrice: number;
+  minIncrement: number;
+  endsAt: string;
+  contentCategory: ContentCategory;
+}
 
 export interface PostCardData {
   id: string;
