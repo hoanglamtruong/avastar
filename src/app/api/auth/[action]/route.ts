@@ -104,6 +104,12 @@ export async function POST(
   }
 
   if (action === "switch") {
+    // Chuyển vai trò không mật khẩu — CHỈ cho phép khi build với
+    // NEXT_PUBLIC_ALLOW_DEMO_LOGIN=true (review/nội bộ). Chặn ở tầng API,
+    // không chỉ ẩn nút UI, vì endpoint này tự nó là lối vào không cần xác thực.
+    if (process.env.NEXT_PUBLIC_ALLOW_DEMO_LOGIN !== "true") {
+      return NextResponse.json({ error: "Chức năng demo đã tắt trên bản deploy này" }, { status: 403 });
+    }
     const { role } = await request.json();
     let targetUser = await prisma.user.findFirst({ where: { role } });
     if (!targetUser) {
