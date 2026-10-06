@@ -11,6 +11,8 @@ import {
   FileText,
   Layers,
   ArrowRight,
+  ExternalLink,
+  QrCode,
 } from "lucide-react";
 import { ZxStar } from "@/components/portfolio/ZxStar";
 import { formatCurrency } from "@/lib/utils";
@@ -38,6 +40,7 @@ export function PostDetailModal({
   const [payModalOpen, setPayModalOpen] = useState(false);
   const [leadModalOpen, setLeadModalOpen] = useState(false);
   const [auctionModalOpen, setAuctionModalOpen] = useState(false);
+  const [showCardQr, setShowCardQr] = useState(false);
 
   useEffect(() => {
     setActiveCardIndex(0);
@@ -329,6 +332,43 @@ export function PostDetailModal({
             </div>
 
             {renderActionButton()}
+
+            {meta.externalLink?.url && (
+              <a
+                href={meta.externalLink.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-2.5 rounded-2xl bg-[#102A43] border border-[#F4F0E8]/20 text-[#F4F0E8] hover:border-[#C9AA72] hover:text-[#C9AA72] font-bold text-sm flex items-center justify-center gap-2 transition"
+              >
+                <ExternalLink className="w-4 h-4" />
+                <span>{meta.externalLink.label}</span>
+              </a>
+            )}
+
+            {meta.qrEnabled && currentCard && (
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setShowCardQr((v) => !v)}
+                  className="w-full py-2 rounded-2xl bg-transparent border border-white/10 text-[#AEBCC5] hover:text-[#C9AA72] hover:border-[#C9AA72]/40 font-bold text-xs flex items-center justify-center gap-2 transition"
+                >
+                  <QrCode className="w-3.5 h-3.5" />
+                  <span>{showCardQr ? "Ẩn mã QR" : "Xem mã QR cho thẻ này"}</span>
+                </button>
+                {showCardQr && (
+                  <div className="flex flex-col items-center gap-1.5 p-3 mt-2 rounded-2xl bg-white">
+                    <img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
+                        `${typeof window !== "undefined" ? window.location.origin : ""}/?post=${post.id}`
+                      )}`}
+                      alt="Mã QR tới bài viết này"
+                      className="w-32 h-32"
+                    />
+                    <p className="text-[10px] text-[#07111F]/70 text-center">Quét để mở đúng bài viết này</p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -41,12 +41,20 @@ export interface ProjectItem {
   href?: string;
 }
 
+export interface HeroSlide {
+  id: string;
+  mediaUrl: string;
+  mediaType: "image" | "video";
+}
+
 export interface CmsData {
   bankInfo: BankConfig;
   services: ServiceItem[];
   productGroups: ProductGroup[];
   products: ProductItem[];
   projects: ProjectItem[];
+  heroSlides: HeroSlide[];
+  heroIntro: string;
 }
 
 const DATA_DIR = path.join(process.cwd(), "data");
@@ -101,6 +109,9 @@ function getDefaultData(): CmsData {
     productGroups: initialGroups,
     products: initialProducts,
     projects: initialProjects,
+    heroSlides: [],
+    heroIntro:
+      "Personal Hub là không gian số cá nhân — nơi tôi chia sẻ kiến thức, tác phẩm và sản phẩm/dịch vụ do chính mình thực hiện. Mọi bài viết ở đây đều từ một người.",
   };
 }
 
@@ -115,7 +126,15 @@ export function getCmsData(): CmsData {
       return def;
     }
     const raw = fs.readFileSync(DATA_FILE, "utf-8");
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    // Vá tương thích ngược cho file cms-data.json cũ chưa có 2 trường mới
+    const defaults = getDefaultData();
+    return {
+      ...defaults,
+      ...parsed,
+      heroSlides: parsed.heroSlides ?? defaults.heroSlides,
+      heroIntro: parsed.heroIntro ?? defaults.heroIntro,
+    };
   } catch (error) {
     console.error("Error reading cms data:", error);
     return getDefaultData();

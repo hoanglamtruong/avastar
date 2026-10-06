@@ -79,6 +79,12 @@ export function CreatePostModal({ isOpen, onClose, onCreated }: CreatePostModalP
   // Donate fields
   const [goalMessage, setGoalMessage] = useState("");
 
+  // Trường mở rộng dùng chung mọi loại thẻ thương mại
+  const [extLinkEnabled, setExtLinkEnabled] = useState(false);
+  const [extLinkLabel, setExtLinkLabel] = useState("");
+  const [extLinkUrl, setExtLinkUrl] = useState("");
+  const [qrEnabled, setQrEnabled] = useState(false);
+
   // Auction fields
   const [itemName, setItemName] = useState("");
   const [startingPrice, setStartingPrice] = useState("");
@@ -103,7 +109,18 @@ export function CreatePostModal({ isOpen, onClose, onCreated }: CreatePostModalP
       .map((s) => s.trim())
       .filter(Boolean);
 
+  const buildExtras = () => ({
+    externalLink: extLinkEnabled && extLinkUrl.trim() ? { label: extLinkLabel.trim() || "Xem thêm", url: extLinkUrl.trim() } : undefined,
+    qrEnabled: qrEnabled || undefined,
+  });
+
   const buildCommerceCard = (): { cardType: CardType; cardMetadata: any } | null => {
+    const built = buildCommerceCardBase();
+    if (!built) return null;
+    return { ...built, cardMetadata: { ...built.cardMetadata, ...buildExtras() } };
+  };
+
+  const buildCommerceCardBase = (): { cardType: CardType; cardMetadata: any } | null => {
     switch (commerceType) {
       case "package":
         if (!productName.trim()) {
@@ -460,6 +477,24 @@ export function CreatePostModal({ isOpen, onClose, onCreated }: CreatePostModalP
                   </div>
                 </div>
               )}
+
+              {/* Mở rộng dùng chung: liên kết ngoài + mã QR riêng cho thẻ */}
+              <div className="space-y-2.5 p-3 rounded-xl bg-[#102A43]/40 border border-[#F4F0E8]/10">
+                <label className="flex items-center gap-2 text-xs font-semibold text-[#F4F0E8]/80 cursor-pointer">
+                  <input type="checkbox" checked={extLinkEnabled} onChange={(e) => setExtLinkEnabled(e.target.checked)} className="w-4 h-4 accent-[#C9AA72]" />
+                  Thêm nút liên kết ra ngoài (Shopee, Facebook, Zalo...)
+                </label>
+                {extLinkEnabled && (
+                  <div className="grid grid-cols-2 gap-2 pl-6">
+                    <input value={extLinkLabel} onChange={(e) => setExtLinkLabel(e.target.value)} className={inputCls} placeholder="Nhãn nút: Mua trên Shopee" />
+                    <input value={extLinkUrl} onChange={(e) => setExtLinkUrl(e.target.value)} className={inputCls} placeholder="https://..." />
+                  </div>
+                )}
+                <label className="flex items-center gap-2 text-xs font-semibold text-[#F4F0E8]/80 cursor-pointer">
+                  <input type="checkbox" checked={qrEnabled} onChange={(e) => setQrEnabled(e.target.checked)} className="w-4 h-4 accent-[#C9AA72]" />
+                  Tạo mã QR dẫn thẳng về thẻ này
+                </label>
+              </div>
             </>
           )}
 

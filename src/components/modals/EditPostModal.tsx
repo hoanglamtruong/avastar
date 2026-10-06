@@ -72,6 +72,11 @@ export function EditPostModal({ post, isOpen, onClose, onUpdated }: EditPostModa
 
   const [goalMessage, setGoalMessage] = useState("");
 
+  const [extLinkEnabled, setExtLinkEnabled] = useState(false);
+  const [extLinkLabel, setExtLinkLabel] = useState("");
+  const [extLinkUrl, setExtLinkUrl] = useState("");
+  const [qrEnabled, setQrEnabled] = useState(false);
+
   const [itemName, setItemName] = useState("");
   const [startingPrice, setStartingPrice] = useState("");
   const [minIncrement, setMinIncrement] = useState("");
@@ -131,6 +136,10 @@ export function EditPostModal({ post, isOpen, onClose, onUpdated }: EditPostModa
         setMinIncrement(String(meta.minIncrement || ""));
         setEndsAt(meta.endsAt ? meta.endsAt.slice(0, 16) : "");
       }
+      setExtLinkEnabled(!!meta.externalLink);
+      setExtLinkLabel(meta.externalLink?.label || "");
+      setExtLinkUrl(meta.externalLink?.url || "");
+      setQrEnabled(!!meta.qrEnabled);
     } else {
       setGroup("free");
       setFreeTag(FREE_TAGS.includes(post.category as FreeActivityTag) ? (post.category as FreeActivityTag) : "knowledge");
@@ -153,7 +162,18 @@ export function EditPostModal({ post, isOpen, onClose, onUpdated }: EditPostModa
       .map((s) => s.trim())
       .filter(Boolean);
 
+  const buildExtras = () => ({
+    externalLink: extLinkEnabled && extLinkUrl.trim() ? { label: extLinkLabel.trim() || "Xem thêm", url: extLinkUrl.trim() } : undefined,
+    qrEnabled: qrEnabled || undefined,
+  });
+
   const buildCommerceCard = (): { cardType: CardType; cardMetadata: any } | null => {
+    const built = buildCommerceCardBase();
+    if (!built) return null;
+    return { ...built, cardMetadata: { ...built.cardMetadata, ...buildExtras() } };
+  };
+
+  const buildCommerceCardBase = (): { cardType: CardType; cardMetadata: any } | null => {
     switch (commerceType) {
       case "package":
         if (!productName.trim()) {
@@ -499,6 +519,23 @@ export function EditPostModal({ post, isOpen, onClose, onUpdated }: EditPostModa
                   <p className="text-[11px] text-amber-400">Lưu ý: sửa lại giá khởi điểm/thời gian sau khi đã có người đặt giá có thể gây nhầm lẫn.</p>
                 </div>
               )}
+
+              <div className="space-y-2.5 p-3 rounded-xl bg-[#102A43]/40 border border-[#F4F0E8]/10">
+                <label className="flex items-center gap-2 text-xs font-semibold text-[#F4F0E8]/80 cursor-pointer">
+                  <input type="checkbox" checked={extLinkEnabled} onChange={(e) => setExtLinkEnabled(e.target.checked)} className="w-4 h-4 accent-[#C9AA72]" />
+                  Thêm nút liên kết ra ngoài (Shopee, Facebook, Zalo...)
+                </label>
+                {extLinkEnabled && (
+                  <div className="grid grid-cols-2 gap-2 pl-6">
+                    <input value={extLinkLabel} onChange={(e) => setExtLinkLabel(e.target.value)} className={inputCls} placeholder="Nhãn nút: Mua trên Shopee" />
+                    <input value={extLinkUrl} onChange={(e) => setExtLinkUrl(e.target.value)} className={inputCls} placeholder="https://..." />
+                  </div>
+                )}
+                <label className="flex items-center gap-2 text-xs font-semibold text-[#F4F0E8]/80 cursor-pointer">
+                  <input type="checkbox" checked={qrEnabled} onChange={(e) => setQrEnabled(e.target.checked)} className="w-4 h-4 accent-[#C9AA72]" />
+                  Tạo mã QR dẫn thẳng về thẻ này
+                </label>
+              </div>
             </>
           )}
 

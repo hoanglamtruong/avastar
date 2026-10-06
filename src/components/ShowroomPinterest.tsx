@@ -3,7 +3,8 @@
 import React, { useState, useMemo } from "react";
 import { PostData } from "@/lib/types";
 import { PinCard } from "@/components/pins/PinCard";
-import { Sparkles, Search, X } from "lucide-react";
+import { Search, X } from "lucide-react";
+import { HeroProfile } from "@/components/HeroProfile";
 
 interface ShowroomPinterestProps {
   posts: PostData[];
@@ -13,6 +14,7 @@ interface ShowroomPinterestProps {
   filterSheetOpen: boolean;
   onCloseFilterSheet: () => void;
   resetSignal: number;
+  isOwner: boolean;
 }
 
 export function ShowroomPinterest({
@@ -23,6 +25,7 @@ export function ShowroomPinterest({
   filterSheetOpen,
   onCloseFilterSheet,
   resetSignal,
+  isOwner,
 }: ShowroomPinterestProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("all");
@@ -90,26 +93,9 @@ export function ShowroomPinterest({
       <div className="pointer-events-none absolute top-1/3 -left-40 w-96 h-96 bg-[#A8F238]/10 blur-[130px] rounded-full" />
       <div className="pointer-events-none absolute top-2/3 -right-40 w-96 h-96 bg-[#C9AA72]/10 blur-[130px] rounded-full" />
 
-      {/* 2. ATELIER HERO & INSPIRATION BANNER */}
-      <section className="relative z-10 text-center max-w-3xl mx-auto pt-6 pb-6">
-        {/* Badge */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#102A43]/70 border border-[#C9AA72]/30 text-xs font-extrabold tracking-[0.25em] text-[#C9AA72] uppercase shadow-lg backdrop-blur">
-          <Sparkles className="w-3.5 h-3.5 text-[#A8F238]" />
-          <span>The Digital Atelier · Creative Canvas</span>
-        </div>
-
-        {/* Headline */}
-        <h1 className="zx-serif mt-5 text-3xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.14] text-[#F4F0E8]">
-          Ý Tưởng Sáng Tạo{" "}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#C9AA72] via-[#F4F0E8] to-[#C9AA72]">
-            Hội Tụ &amp; Phát Triển
-          </span>
-        </h1>
-
-        <p className="mt-3 text-xs sm:text-sm font-semibold uppercase tracking-[0.25em] text-[#AEBCC5]">
-          Creative Thinking · Intelligent Execution · Real Products
-        </p>
-      </section>
+      {/* 2. HERO HỒ SƠ CÁ NHÂN: avatar + slide ảnh/video — thay tiêu đề marketing chung,
+          vì Personal Hub mặc định chỉ có 1 chủ */}
+      <HeroProfile isOwner={isOwner} />
 
       {/* 3. KẾT QUẢ (gọn, luôn hiện) + KHUNG LỌC DẠNG POPUP (mở từ nút "Lọc" trên AtelierDock) */}
       <section className="relative z-20 max-w-4xl mx-auto mb-8">

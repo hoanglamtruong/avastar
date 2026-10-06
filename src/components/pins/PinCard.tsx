@@ -10,7 +10,6 @@ import {
   Eye,
   Video,
   FileText,
-  CheckCircle2,
   Sparkles,
 } from "lucide-react";
 
@@ -190,27 +189,8 @@ export function PinCard({
             </h4>
           )}
 
-          {/* Author info & metrics */}
-          <div className="flex items-center justify-between pt-1">
-            {/* Author */}
-            <div className="flex items-center gap-1.5 min-w-0">
-              <img
-                src={
-                  post.owner?.avatarUrl ||
-                  "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100"
-                }
-                alt={post.owner?.fullName || "ZANGX Atelier"}
-                className="w-5 h-5 rounded-full object-cover border border-[#C9AA72]/40 shrink-0"
-              />
-              <div className="flex items-center gap-1 min-w-0">
-                <span className="text-[11px] font-medium text-[#AEBCC5] truncate max-w-[90px] sm:max-w-[110px]">
-                  {post.owner?.fullName || "ZANGX"}
-                </span>
-                <CheckCircle2 className="w-3 h-3 text-[#C9AA72] shrink-0" />
-              </div>
-            </div>
-
-            {/* Metrics */}
+          {/* Metrics (không hiện tác giả — Personal Hub mặc định mọi bài đều của 1 người) */}
+          <div className="flex items-center justify-end pt-1">
             <div className="flex items-center gap-2 text-[11px] text-[#AEBCC5]/90 shrink-0 font-medium">
               <span className="flex items-center gap-0.5" title="Lượt xem">
                 <Eye className="w-3 h-3 text-[#C9AA72]" />

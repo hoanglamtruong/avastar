@@ -30,7 +30,14 @@ export type CardType =
   | 'donate'       // Ủng hộ qua VietQR (dùng chung cấu hình ngân hàng ở admin)
   | 'auction';     // Đấu giá realtime
 
-export interface PackageCardMeta {
+// Trường mở rộng dùng chung cho mọi loại thẻ thương mại: nút liên kết ra
+// ngoài (vd Shopee, Facebook, Zalo OA...) và mã QR dẫn thẳng về thẻ này.
+export interface CommerceCardExtras {
+  externalLink?: { label: string; url: string };
+  qrEnabled?: boolean;
+}
+
+export interface PackageCardMeta extends CommerceCardExtras {
   productName: string;
   price: number;
   originalPrice?: number;
@@ -39,14 +46,14 @@ export interface PackageCardMeta {
   contentCategory: ContentCategory;
 }
 
-export interface RequestCardMeta {
+export interface RequestCardMeta extends CommerceCardExtras {
   title: string;
   scopeDescription: string;
   contentCategory: ContentCategory;
   estimatedRange?: string;
 }
 
-export interface ReservationCardMeta {
+export interface ReservationCardMeta extends CommerceCardExtras {
   title: string;
   dateTime?: string;
   location?: string;
@@ -56,7 +63,7 @@ export interface ReservationCardMeta {
   contentCategory: ContentCategory;
 }
 
-export interface MembershipCardMeta {
+export interface MembershipCardMeta extends CommerceCardExtras {
   planName: string;
   price: number;
   billingPeriod: 'month' | 'year' | 'lifetime';
@@ -64,11 +71,11 @@ export interface MembershipCardMeta {
   contentCategory: ContentCategory;
 }
 
-export interface DonateCardMeta {
+export interface DonateCardMeta extends CommerceCardExtras {
   goalMessage?: string;
 }
 
-export interface AuctionCardMeta {
+export interface AuctionCardMeta extends CommerceCardExtras {
   itemName: string;
   startingPrice: number;
   minIncrement: number;
