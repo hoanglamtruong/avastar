@@ -7,7 +7,7 @@ import { PostDetailModal } from "@/components/modals/PostDetailModal";
 import { ViewAnalyticsModal } from "@/components/modals/ViewAnalyticsModal";
 import { AuthModal } from "@/components/modals/AuthModal";
 import { AtelierDock } from "@/components/AtelierDock";
-import { ShowroomBento } from "@/components/ShowroomBento";
+import { ShowroomPinterest } from "@/components/ShowroomPinterest";
 import { ZxLogoLockup } from "@/components/portfolio/ZxStar";
 import { ChatDrawer } from "@/components/modals/ChatDrawer";
 import { SubpageActionModal } from "@/components/modals/SubpageActionModal";
@@ -206,8 +206,8 @@ export default function FeedPage() {
 
   return (
     <main className="relative w-screen bg-[#07111F] min-h-[100dvh] overflow-x-hidden">
-      {/* SHOWROOM BENTO VIEW */}
-      <ShowroomBento
+      {/* SHOWROOM PINTEREST MASONRY VIEW */}
+      <ShowroomPinterest
         posts={posts}
         onOpenPostDetail={(post) => setSelectedPostForDetail(post)}
         onOpenGift={(id) => {
