@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { X, Plus, Trash2, Save } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
-import { PostData, FreeActivityTag, ContentCategory, CardType } from "@/lib/types";
-import { FREE_ACTIVITY_META, COMMERCE_CARD_META, isCommerceCardType } from "@/lib/cardTypeMeta";
+import { PostData, ContentCategory, CardType } from "@/lib/types";
+import { CARD_KIND_META, isCommerceCardType } from "@/lib/cardTypeMeta";
 import { MediaPicker } from "@/components/ui/MediaPicker";
 
 interface EditPostModalProps {
@@ -14,8 +14,8 @@ interface EditPostModalProps {
   onUpdated: () => void;
 }
 
-type Group = "free" | "commerce";
 type CommerceType = "package" | "request" | "reservation" | "membership" | "donate" | "auction";
+type CardKind = "content" | CommerceType;
 
 interface MediaDraft {
   cardType: "image" | "video" | "doc";
@@ -23,7 +23,6 @@ interface MediaDraft {
   docContent: string;
 }
 
-const FREE_TAGS: FreeActivityTag[] = ["knowledge", "vblog", "giveaway", "club"];
 const CONTENT_CATEGORIES: ContentCategory[] = ["physical", "digital", "service", "knowledge"];
 const CONTENT_CATEGORY_LABEL: Record<ContentCategory, string> = {
   physical: "Vật lý",
@@ -31,7 +30,7 @@ const CONTENT_CATEGORY_LABEL: Record<ContentCategory, string> = {
   service: "Dịch vụ",
   knowledge: "Kiến thức",
 };
-const COMMERCE_TYPES: CommerceType[] = ["package", "request", "reservation", "membership", "donate", "auction"];
+const CARD_KINDS: CardKind[] = ["content", "package", "request", "reservation", "membership", "donate", "auction"];
 
 function emptyMedia(): MediaDraft {
   return { cardType: "image", mediaUrl: "", docContent: "" };
@@ -40,9 +39,7 @@ function emptyMedia(): MediaDraft {
 export function EditPostModal({ post, isOpen, onClose, onUpdated }: EditPostModalProps) {
   const { showToast } = useToast();
 
-  const [group, setGroup] = useState<Group>("free");
-  const [freeTag, setFreeTag] = useState<FreeActivityTag>("knowledge");
-  const [commerceType, setCommerceType] = useState<CommerceType>("package");
+  const [cardKind, setCardKind] = useState<CardKind>("content");
   const [contentCategory, setContentCategory] = useState<ContentCategory>("physical");
 
   const [caption, setCaption] = useState("");
@@ -101,9 +98,8 @@ export function EditPostModal({ post, isOpen, onClose, onUpdated }: EditPostModa
 
     const commerceCard = (post.cards || []).find((c) => isCommerceCardType(c.cardType));
     if (commerceCard) {
-      setGroup("commerce");
       const t = commerceCard.cardType as CommerceType;
-      setCommerceType(t);
+      setCardKind(t);
       const meta = commerceCard.cardMetadata || {};
       setContentCategory(meta.contentCategory || "physical");
       if (t === "package") {
@@ -141,8 +137,7 @@ export function EditPostModal({ post, isOpen, onClose, onUpdated }: EditPostModa
       setExtLinkUrl(meta.externalLink?.url || "");
       setQrEnabled(!!meta.qrEnabled);
     } else {
-      setGroup("free");
-      setFreeTag(FREE_TAGS.includes(post.category as FreeActivityTag) ? (post.category as FreeActivityTag) : "knowledge");
+      setCardKind("content");
     }
   }, [post]);
 
@@ -174,7 +169,7 @@ export function EditPostModal({ post, isOpen, onClose, onUpdated }: EditPostModa
   };
 
   const buildCommerceCardBase = (): { cardType: CardType; cardMetadata: any } | null => {
-    switch (commerceType) {
+    switch (cardKind as CommerceType) {
       case "package":
         if (!productName.trim()) {
           showToast("Nhập tên sản phẩm", "error");
@@ -271,9 +266,9 @@ export function EditPostModal({ post, isOpen, onClose, onUpdated }: EditPostModa
       }));
 
     let cards: any[] = mediaCards;
-    let category: string = freeTag;
+    let category: string = "content";
 
-    if (group === "commerce") {
+    if (cardKind !== "content") {
       const commerceCard = buildCommerceCard();
       if (!commerceCard) return;
       cards = [...mediaCards, commerceCard];
@@ -281,7 +276,7 @@ export function EditPostModal({ post, isOpen, onClose, onUpdated }: EditPostModa
     }
 
     if (cards.length === 0) {
-      showToast("Cần ít nhất 1 ảnh/video/tài liệu, hoặc điền đủ thông tin thẻ thương mại", "error");
+      showToast("Cần ít nhất 1 ảnh/video/tài liệu, hoặc điền đủ thông tin thẻ", "error");
       return;
     }
 
@@ -310,6 +305,7 @@ export function EditPostModal({ post, isOpen, onClose, onUpdated }: EditPostModa
   const inputCls =
     "w-full px-3 py-2 rounded-xl bg-[#07111F] border border-[#F4F0E8]/20 text-sm text-white placeholder:text-[#F4F0E8]/40 focus:outline-none focus:border-[#C9AA72]";
   const labelCls = "block text-xs font-semibold text-[#F4F0E8]/80 mb-1.5";
+  const hintCls = "text-[11px] text-[#A8F238]/90 mt-1";
 
   return (
     <div className="fixed inset-0 z-[1000] bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -323,220 +319,187 @@ export function EditPostModal({ post, isOpen, onClose, onUpdated }: EditPostModa
 
         <div className="flex-1 overflow-y-auto custom-slim-scroll py-3 space-y-4">
           <div>
-            <label className={labelCls}>Nhóm hoạt động</label>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setGroup("free")}
-                className={`py-2.5 rounded-xl text-sm font-bold border transition ${
-                  group === "free" ? "bg-[#C9AA72] text-[#07111F] border-[#C9AA72]" : "bg-[#102A43] text-white border-[#F4F0E8]/20"
-                }`}
-              >
-                Miễn phí
-              </button>
-              <button
-                type="button"
-                onClick={() => setGroup("commerce")}
-                className={`py-2.5 rounded-xl text-sm font-bold border transition ${
-                  group === "commerce" ? "bg-[#C9AA72] text-[#07111F] border-[#C9AA72]" : "bg-[#102A43] text-white border-[#F4F0E8]/20"
-                }`}
-              >
-                Thương mại
-              </button>
-            </div>
+            <label className={labelCls}>Hình thái</label>
+            <select value={cardKind} onChange={(e) => setCardKind(e.target.value as CardKind)} className={inputCls}>
+              {CARD_KINDS.map((k) => (
+                <option key={k} value={k}>
+                  {CARD_KIND_META[k].label}
+                </option>
+              ))}
+            </select>
+            <p className="text-[11px] text-[#F4F0E8]/50 mt-1">{CARD_KIND_META[cardKind].hint}</p>
           </div>
 
-          {group === "free" ? (
+          {cardKind !== "content" && cardKind !== "donate" && (
             <div>
-              <label className={labelCls}>Hoạt động</label>
-              <select value={freeTag} onChange={(e) => setFreeTag(e.target.value as FreeActivityTag)} className={inputCls}>
-                {FREE_TAGS.map((t) => (
-                  <option key={t} value={t}>
-                    {FREE_ACTIVITY_META[t].label}
+              <label className={labelCls}>Phân loại nội dung</label>
+              <select value={contentCategory} onChange={(e) => setContentCategory(e.target.value as ContentCategory)} className={inputCls}>
+                {CONTENT_CATEGORIES.map((c) => (
+                  <option key={c} value={c}>
+                    {CONTENT_CATEGORY_LABEL[c]}
                   </option>
                 ))}
               </select>
             </div>
-          ) : (
-            <>
-              <div>
-                <label className={labelCls}>Hình thái giao dịch</label>
-                <select value={commerceType} onChange={(e) => setCommerceType(e.target.value as CommerceType)} className={inputCls}>
-                  {COMMERCE_TYPES.map((t) => (
-                    <option key={t} value={t}>
-                      {COMMERCE_CARD_META[t]?.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+          )}
 
-              {commerceType !== "donate" && (
+          {cardKind === "package" && (
+            <div className="space-y-2 p-3 rounded-xl bg-[#102A43]/60 border border-[#F4F0E8]/15">
+              <div>
+                <label className={labelCls}>Tên sản phẩm *</label>
+                <input value={productName} onChange={(e) => setProductName(e.target.value)} className={inputCls} />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className={labelCls}>Phân loại nội dung</label>
-                  <select value={contentCategory} onChange={(e) => setContentCategory(e.target.value as ContentCategory)} className={inputCls}>
-                    {CONTENT_CATEGORIES.map((c) => (
-                      <option key={c} value={c}>
-                        {CONTENT_CATEGORY_LABEL[c]}
-                      </option>
-                    ))}
+                  <label className={labelCls}>Giá bán (đ)</label>
+                  <input value={price} onChange={(e) => setPrice(e.target.value)} className={inputCls} inputMode="numeric" />
+                </div>
+                <div>
+                  <label className={labelCls}>Giá gốc (đ)</label>
+                  <input value={originalPrice} onChange={(e) => setOriginalPrice(e.target.value)} className={inputCls} inputMode="numeric" />
+                </div>
+              </div>
+              <p className={hintCls}>Để trống hoặc nhập 0 = sản phẩm miễn phí.</p>
+              <div>
+                <label className={labelCls}>Tồn kho</label>
+                <input value={stock} onChange={(e) => setStock(e.target.value)} className={inputCls} inputMode="numeric" />
+              </div>
+              <div>
+                <label className={labelCls}>Tính năng (mỗi dòng 1 ý)</label>
+                <textarea value={features} onChange={(e) => setFeatures(e.target.value)} rows={3} className={inputCls} />
+              </div>
+            </div>
+          )}
+
+          {cardKind === "request" && (
+            <div className="space-y-2 p-3 rounded-xl bg-[#102A43]/60 border border-[#F4F0E8]/15">
+              <div>
+                <label className={labelCls}>Tiêu đề yêu cầu *</label>
+                <input value={reqTitle} onChange={(e) => setReqTitle(e.target.value)} className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Mô tả phạm vi công việc</label>
+                <textarea value={scopeDescription} onChange={(e) => setScopeDescription(e.target.value)} rows={3} className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Khoảng giá tham khảo</label>
+                <input value={estimatedRange} onChange={(e) => setEstimatedRange(e.target.value)} className={inputCls} />
+              </div>
+            </div>
+          )}
+
+          {cardKind === "reservation" && (
+            <div className="space-y-2 p-3 rounded-xl bg-[#102A43]/60 border border-[#F4F0E8]/15">
+              <div>
+                <label className={labelCls}>Tên sự kiện / suất giữ chỗ *</label>
+                <input value={resTitle} onChange={(e) => setResTitle(e.target.value)} className={inputCls} />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className={labelCls}>Thời điểm</label>
+                  <input type="datetime-local" value={dateTime} onChange={(e) => setDateTime(e.target.value)} className={inputCls} />
+                </div>
+                <div>
+                  <label className={labelCls}>Địa điểm</label>
+                  <input value={location} onChange={(e) => setLocation(e.target.value)} className={inputCls} />
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className={labelCls}>Tổng số suất</label>
+                  <input value={slotsTotal} onChange={(e) => setSlotsTotal(e.target.value)} className={inputCls} inputMode="numeric" />
+                </div>
+                <div>
+                  <label className={labelCls}>Đã giữ</label>
+                  <input value={slotsTaken} onChange={(e) => setSlotsTaken(e.target.value)} className={inputCls} inputMode="numeric" />
+                </div>
+                <div>
+                  <label className={labelCls}>Cọc (đ)</label>
+                  <input value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} className={inputCls} inputMode="numeric" />
+                </div>
+              </div>
+              <p className={hintCls}>Để trống hoặc nhập 0 = giữ chỗ miễn phí.</p>
+            </div>
+          )}
+
+          {cardKind === "membership" && (
+            <div className="space-y-2 p-3 rounded-xl bg-[#102A43]/60 border border-[#F4F0E8]/15">
+              <div>
+                <label className={labelCls}>Tên gói *</label>
+                <input value={planName} onChange={(e) => setPlanName(e.target.value)} className={inputCls} />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className={labelCls}>Giá (đ)</label>
+                  <input value={planPrice} onChange={(e) => setPlanPrice(e.target.value)} className={inputCls} inputMode="numeric" />
+                </div>
+                <div>
+                  <label className={labelCls}>Kỳ hạn</label>
+                  <select value={billingPeriod} onChange={(e) => setBillingPeriod(e.target.value as any)} className={inputCls}>
+                    <option value="month">Theo tháng</option>
+                    <option value="year">Theo năm</option>
+                    <option value="lifetime">Trọn đời</option>
                   </select>
                 </div>
-              )}
-
-              {commerceType === "package" && (
-                <div className="space-y-2 p-3 rounded-xl bg-[#102A43]/60 border border-[#F4F0E8]/15">
-                  <div>
-                    <label className={labelCls}>Tên sản phẩm *</label>
-                    <input value={productName} onChange={(e) => setProductName(e.target.value)} className={inputCls} />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className={labelCls}>Giá bán (đ)</label>
-                      <input value={price} onChange={(e) => setPrice(e.target.value)} className={inputCls} inputMode="numeric" />
-                    </div>
-                    <div>
-                      <label className={labelCls}>Giá gốc (đ)</label>
-                      <input value={originalPrice} onChange={(e) => setOriginalPrice(e.target.value)} className={inputCls} inputMode="numeric" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className={labelCls}>Tồn kho</label>
-                    <input value={stock} onChange={(e) => setStock(e.target.value)} className={inputCls} inputMode="numeric" />
-                  </div>
-                  <div>
-                    <label className={labelCls}>Tính năng (mỗi dòng 1 ý)</label>
-                    <textarea value={features} onChange={(e) => setFeatures(e.target.value)} rows={3} className={inputCls} />
-                  </div>
-                </div>
-              )}
-
-              {commerceType === "request" && (
-                <div className="space-y-2 p-3 rounded-xl bg-[#102A43]/60 border border-[#F4F0E8]/15">
-                  <div>
-                    <label className={labelCls}>Tiêu đề yêu cầu *</label>
-                    <input value={reqTitle} onChange={(e) => setReqTitle(e.target.value)} className={inputCls} />
-                  </div>
-                  <div>
-                    <label className={labelCls}>Mô tả phạm vi công việc</label>
-                    <textarea value={scopeDescription} onChange={(e) => setScopeDescription(e.target.value)} rows={3} className={inputCls} />
-                  </div>
-                  <div>
-                    <label className={labelCls}>Khoảng giá tham khảo</label>
-                    <input value={estimatedRange} onChange={(e) => setEstimatedRange(e.target.value)} className={inputCls} />
-                  </div>
-                </div>
-              )}
-
-              {commerceType === "reservation" && (
-                <div className="space-y-2 p-3 rounded-xl bg-[#102A43]/60 border border-[#F4F0E8]/15">
-                  <div>
-                    <label className={labelCls}>Tên sự kiện / suất giữ chỗ *</label>
-                    <input value={resTitle} onChange={(e) => setResTitle(e.target.value)} className={inputCls} />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className={labelCls}>Thời điểm</label>
-                      <input type="datetime-local" value={dateTime} onChange={(e) => setDateTime(e.target.value)} className={inputCls} />
-                    </div>
-                    <div>
-                      <label className={labelCls}>Địa điểm</label>
-                      <input value={location} onChange={(e) => setLocation(e.target.value)} className={inputCls} />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div>
-                      <label className={labelCls}>Tổng số suất</label>
-                      <input value={slotsTotal} onChange={(e) => setSlotsTotal(e.target.value)} className={inputCls} inputMode="numeric" />
-                    </div>
-                    <div>
-                      <label className={labelCls}>Đã giữ</label>
-                      <input value={slotsTaken} onChange={(e) => setSlotsTaken(e.target.value)} className={inputCls} inputMode="numeric" />
-                    </div>
-                    <div>
-                      <label className={labelCls}>Cọc (đ)</label>
-                      <input value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} className={inputCls} inputMode="numeric" />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {commerceType === "membership" && (
-                <div className="space-y-2 p-3 rounded-xl bg-[#102A43]/60 border border-[#F4F0E8]/15">
-                  <div>
-                    <label className={labelCls}>Tên gói *</label>
-                    <input value={planName} onChange={(e) => setPlanName(e.target.value)} className={inputCls} />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className={labelCls}>Giá (đ)</label>
-                      <input value={planPrice} onChange={(e) => setPlanPrice(e.target.value)} className={inputCls} inputMode="numeric" />
-                    </div>
-                    <div>
-                      <label className={labelCls}>Kỳ hạn</label>
-                      <select value={billingPeriod} onChange={(e) => setBillingPeriod(e.target.value as any)} className={inputCls}>
-                        <option value="month">Theo tháng</option>
-                        <option value="year">Theo năm</option>
-                        <option value="lifetime">Trọn đời</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div>
-                    <label className={labelCls}>Quyền lợi (mỗi dòng 1 ý)</label>
-                    <textarea value={benefits} onChange={(e) => setBenefits(e.target.value)} rows={3} className={inputCls} />
-                  </div>
-                </div>
-              )}
-
-              {commerceType === "donate" && (
-                <div className="space-y-2 p-3 rounded-xl bg-[#102A43]/60 border border-[#F4F0E8]/15">
-                  <div>
-                    <label className={labelCls}>Lời nhắn mục tiêu ủng hộ</label>
-                    <textarea value={goalMessage} onChange={(e) => setGoalMessage(e.target.value)} rows={2} className={inputCls} />
-                  </div>
-                </div>
-              )}
-
-              {commerceType === "auction" && (
-                <div className="space-y-2 p-3 rounded-xl bg-[#102A43]/60 border border-[#F4F0E8]/15">
-                  <div>
-                    <label className={labelCls}>Tên vật phẩm đấu giá *</label>
-                    <input value={itemName} onChange={(e) => setItemName(e.target.value)} className={inputCls} />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className={labelCls}>Giá khởi điểm (đ)</label>
-                      <input value={startingPrice} onChange={(e) => setStartingPrice(e.target.value)} className={inputCls} inputMode="numeric" />
-                    </div>
-                    <div>
-                      <label className={labelCls}>Bước giá tối thiểu (đ)</label>
-                      <input value={minIncrement} onChange={(e) => setMinIncrement(e.target.value)} className={inputCls} inputMode="numeric" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className={labelCls}>Thời điểm kết thúc *</label>
-                    <input type="datetime-local" value={endsAt} onChange={(e) => setEndsAt(e.target.value)} className={inputCls} />
-                  </div>
-                  <p className="text-[11px] text-amber-400">Lưu ý: sửa lại giá khởi điểm/thời gian sau khi đã có người đặt giá có thể gây nhầm lẫn.</p>
-                </div>
-              )}
-
-              <div className="space-y-2.5 p-3 rounded-xl bg-[#102A43]/40 border border-[#F4F0E8]/10">
-                <label className="flex items-center gap-2 text-xs font-semibold text-[#F4F0E8]/80 cursor-pointer">
-                  <input type="checkbox" checked={extLinkEnabled} onChange={(e) => setExtLinkEnabled(e.target.checked)} className="w-4 h-4 accent-[#C9AA72]" />
-                  Thêm nút liên kết ra ngoài (Shopee, Facebook, Zalo...)
-                </label>
-                {extLinkEnabled && (
-                  <div className="grid grid-cols-2 gap-2 pl-6">
-                    <input value={extLinkLabel} onChange={(e) => setExtLinkLabel(e.target.value)} className={inputCls} placeholder="Nhãn nút: Mua trên Shopee" />
-                    <input value={extLinkUrl} onChange={(e) => setExtLinkUrl(e.target.value)} className={inputCls} placeholder="https://..." />
-                  </div>
-                )}
-                <label className="flex items-center gap-2 text-xs font-semibold text-[#F4F0E8]/80 cursor-pointer">
-                  <input type="checkbox" checked={qrEnabled} onChange={(e) => setQrEnabled(e.target.checked)} className="w-4 h-4 accent-[#C9AA72]" />
-                  Tạo mã QR dẫn thẳng về thẻ này
-                </label>
               </div>
-            </>
+              <p className={hintCls}>Để trống hoặc nhập 0 = thành viên miễn phí.</p>
+              <div>
+                <label className={labelCls}>Quyền lợi (mỗi dòng 1 ý)</label>
+                <textarea value={benefits} onChange={(e) => setBenefits(e.target.value)} rows={3} className={inputCls} />
+              </div>
+            </div>
+          )}
+
+          {cardKind === "donate" && (
+            <div className="space-y-2 p-3 rounded-xl bg-[#102A43]/60 border border-[#F4F0E8]/15">
+              <div>
+                <label className={labelCls}>Lời nhắn mục tiêu ủng hộ</label>
+                <textarea value={goalMessage} onChange={(e) => setGoalMessage(e.target.value)} rows={2} className={inputCls} />
+              </div>
+            </div>
+          )}
+
+          {cardKind === "auction" && (
+            <div className="space-y-2 p-3 rounded-xl bg-[#102A43]/60 border border-[#F4F0E8]/15">
+              <div>
+                <label className={labelCls}>Tên vật phẩm đấu giá *</label>
+                <input value={itemName} onChange={(e) => setItemName(e.target.value)} className={inputCls} />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className={labelCls}>Giá khởi điểm (đ)</label>
+                  <input value={startingPrice} onChange={(e) => setStartingPrice(e.target.value)} className={inputCls} inputMode="numeric" />
+                </div>
+                <div>
+                  <label className={labelCls}>Bước giá tối thiểu (đ)</label>
+                  <input value={minIncrement} onChange={(e) => setMinIncrement(e.target.value)} className={inputCls} inputMode="numeric" />
+                </div>
+              </div>
+              <div>
+                <label className={labelCls}>Thời điểm kết thúc *</label>
+                <input type="datetime-local" value={endsAt} onChange={(e) => setEndsAt(e.target.value)} className={inputCls} />
+              </div>
+              <p className="text-[11px] text-amber-400">Lưu ý: sửa lại giá khởi điểm/thời gian sau khi đã có người đặt giá có thể gây nhầm lẫn.</p>
+            </div>
+          )}
+
+          {cardKind !== "content" && (
+            <div className="space-y-2.5 p-3 rounded-xl bg-[#102A43]/40 border border-[#F4F0E8]/10">
+              <label className="flex items-center gap-2 text-xs font-semibold text-[#F4F0E8]/80 cursor-pointer">
+                <input type="checkbox" checked={extLinkEnabled} onChange={(e) => setExtLinkEnabled(e.target.checked)} className="w-4 h-4 accent-[#C9AA72]" />
+                Thêm nút liên kết ra ngoài (Shopee, Facebook, Zalo...)
+              </label>
+              {extLinkEnabled && (
+                <div className="grid grid-cols-2 gap-2 pl-6">
+                  <input value={extLinkLabel} onChange={(e) => setExtLinkLabel(e.target.value)} className={inputCls} placeholder="Nhãn nút: Mua trên Shopee" />
+                  <input value={extLinkUrl} onChange={(e) => setExtLinkUrl(e.target.value)} className={inputCls} placeholder="https://..." />
+                </div>
+              )}
+              <label className="flex items-center gap-2 text-xs font-semibold text-[#F4F0E8]/80 cursor-pointer">
+                <input type="checkbox" checked={qrEnabled} onChange={(e) => setQrEnabled(e.target.checked)} className="w-4 h-4 accent-[#C9AA72]" />
+                Tạo mã QR dẫn thẳng về thẻ này
+              </label>
+            </div>
           )}
 
           <div>

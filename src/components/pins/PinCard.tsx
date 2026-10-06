@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from "react";
 import { PostData } from "@/lib/types";
-import { FREE_ACTIVITY_META, COMMERCE_CARD_META, findCommerceCard } from "@/lib/cardTypeMeta";
+import { COMMERCE_CARD_META, findCommerceCard, getCtaLabel } from "@/lib/cardTypeMeta";
 import {
   Heart,
   Share2,
@@ -52,12 +52,9 @@ export function PinCard({
     }
   };
 
-  const freeMeta = FREE_ACTIVITY_META[post.category as keyof typeof FREE_ACTIVITY_META];
-  const catInfo = freeMeta
-    ? { label: freeMeta.label, color: "text-[#F4F0E8] border-white/20" }
-    : commerceCard
+  const catInfo = commerceCard
     ? { label: COMMERCE_CARD_META[commerceCard.cardType]?.label || post.category, color: COMMERCE_CARD_META[commerceCard.cardType]?.color || "text-[#C9AA72] border-[#C9AA72]/30" }
-    : { label: "Sáng Tạo Mở", color: "text-[#C9AA72] border-[#C9AA72]/30" };
+    : { label: "Nội Dung", color: "text-[#F4F0E8] border-white/20" };
 
   return (
     <article
@@ -156,9 +153,9 @@ export function PinCard({
                     onOpenDetail(post);
                   }}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#C9AA72] hover:bg-[#dfc48c] text-[#07111F] font-bold text-xs shadow-xl hover:scale-105 active:scale-95 transition-all"
-                  title={COMMERCE_CARD_META[commerceCard.cardType]?.ctaLabel}
+                  title={getCtaLabel(commerceCard.cardType, commerceCard.cardMetadata)}
                 >
-                  <span>{COMMERCE_CARD_META[commerceCard.cardType]?.ctaLabel}</span>
+                  <span>{getCtaLabel(commerceCard.cardType, commerceCard.cardMetadata)}</span>
                 </button>
               ) : null}
             </div>

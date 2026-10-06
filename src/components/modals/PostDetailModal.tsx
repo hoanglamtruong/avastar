@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { ZxStar } from "@/components/portfolio/ZxStar";
 import { formatCurrency } from "@/lib/utils";
-import { COMMERCE_CARD_META, CONTENT_CATEGORY_LABEL } from "@/lib/cardTypeMeta";
+import { COMMERCE_CARD_META, CONTENT_CATEGORY_LABEL, getCtaLabel, isFreeCommerceCard } from "@/lib/cardTypeMeta";
 import { VietQRPaymentModal } from "@/components/modals/VietQRPaymentModal";
 import { RequestLeadModal } from "@/components/modals/RequestLeadModal";
 import { AuctionBidModal } from "@/components/modals/AuctionBidModal";
@@ -160,25 +160,18 @@ export function PostDetailModal({
     );
   };
 
+  const isPricedCommerce = currentCard && ["package", "reservation", "membership"].includes(currentCard.cardType);
+  const isFree = isPricedCommerce ? isFreeCommerceCard(currentCard.cardType, meta) : false;
+
   const renderActionButton = () => {
-    if (post.category === "club" && !commerceMeta) {
-      return (
-        <button
-          type="button"
-          onClick={() => setLeadModalOpen(true)}
-          className="w-full py-3 rounded-2xl bg-[#102A43] border border-[#C9AA72]/40 text-[#C9AA72] font-black text-sm flex items-center justify-center gap-2 hover:bg-[#C9AA72]/10 transition transform active:scale-98"
-        >
-          <span>Tham Gia Câu Lạc Bộ</span>
-        </button>
-      );
-    }
     if (!currentCard || !commerceMeta) return null;
     const Icon = commerceMeta.icon;
     const handleClick = () => {
       if (currentCard.cardType === "donate") {
         onOpenGift(post.id);
-      } else if (currentCard.cardType === "package" || currentCard.cardType === "reservation" || currentCard.cardType === "membership") {
-        setPayModalOpen(true);
+      } else if (isPricedCommerce) {
+        if (isFree) setLeadModalOpen(true);
+        else setPayModalOpen(true);
       } else if (currentCard.cardType === "request") {
         setLeadModalOpen(true);
       } else if (currentCard.cardType === "auction") {
@@ -192,7 +185,7 @@ export function PostDetailModal({
         className="w-full py-3 rounded-2xl bg-gradient-to-r from-[#C9AA72] to-[#8B6F3F] text-[#07111F] font-black text-sm flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(201,170,114,0.3)] hover:opacity-95 active:scale-98 transition transform"
       >
         <Icon className="w-4 h-4" />
-        <span>{commerceMeta.ctaLabel}</span>
+        <span>{getCtaLabel(currentCard.cardType, meta)}</span>
         <ArrowRight className="w-4 h-4" />
       </button>
     );
@@ -202,6 +195,15 @@ export function PostDetailModal({
   const payTitle =
     currentCard?.cardType === "package" ? "Mua Ngay" : currentCard?.cardType === "reservation" ? "Giữ Chỗ" : "Đăng Ký Thành Viên";
   const payItemLabel = meta.productName || meta.title || meta.planName || "";
+
+  // Tiêu đề cho form thu lead khi là trường hợp "miễn phí" (package/reservation/
+  // membership giá 0) — khác với "request" (yêu cầu/báo giá vốn không có giá)
+  const freeLeadTitle =
+    currentCard?.cardType === "package"
+      ? `Nhận Miễn Phí: ${meta.productName || ""}`
+      : currentCard?.cardType === "reservation"
+      ? `Đăng Ký Miễn Phí: ${meta.title || ""}`
+      : `Tham Gia Miễn Phí: ${meta.planName || ""}`;
 
   return (
     <div
@@ -385,18 +387,19 @@ export function PostDetailModal({
         />
       )}
 
-      {post.category === "club" && (
+      {isPricedCommerce && isFree && currentCard && (
         <RequestLeadModal
           isOpen={leadModalOpen}
           onClose={() => setLeadModalOpen(false)}
-          title="Tham Gia Câu Lạc Bộ"
-          subtitle={post.caption || undefined}
+          title={freeLeadTitle}
+          subtitle="Để lại thông tin, ZANGX sẽ liên hệ xác nhận miễn phí cho bạn."
           postId={post.id}
-          leadType="club_join"
+          postCardId={currentCard.id}
+          leadType="free_claim"
         />
       )}
 
-      {(currentCard?.cardType === "package" || currentCard?.cardType === "reservation" || currentCard?.cardType === "membership") && (
+      {isPricedCommerce && !isFree && (
         <VietQRPaymentModal
           isOpen={payModalOpen}
           onClose={() => setPayModalOpen(false)}

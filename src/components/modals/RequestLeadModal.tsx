@@ -11,14 +11,14 @@ interface RequestLeadModalProps {
   subtitle?: string;
   postId: string;
   postCardId?: string;
-  leadType: "request" | "club_join";
+  leadType: "request" | "free_claim";
 }
 
 /**
- * Form thu lead cho 2 trường hợp không có giá cố định: Yêu cầu/Báo giá
- * (request) và Tham gia Câu Lạc Bộ (club_join). Ghi bền vững qua /api/leads
- * — khác /api/subpage-actions cũ chỉ bắn thông báo realtime, mất lead nếu
- * Owner không online lúc đó.
+ * Form thu lead: Yêu cầu/Báo giá (request) và nhận MIỄN PHÍ cho thẻ
+ * package/reservation/membership có giá 0 (free_claim). Ghi bền vững qua
+ * /api/leads — khác /api/subpage-actions cũ chỉ bắn thông báo realtime, mất
+ * lead nếu Owner không online lúc đó.
  */
 export function RequestLeadModal({ isOpen, onClose, title, subtitle, postId, postCardId, leadType }: RequestLeadModalProps) {
   const { showToast } = useToast();

@@ -6,14 +6,13 @@ import { GiftModal } from "@/components/modals/GiftModal";
 import { PostDetailModal } from "@/components/modals/PostDetailModal";
 import { ViewAnalyticsModal } from "@/components/modals/ViewAnalyticsModal";
 import { AuthModal } from "@/components/modals/AuthModal";
-import { IntroModal } from "@/components/modals/IntroModal";
 import { AtelierDock } from "@/components/AtelierDock";
 import { ShowroomPinterest } from "@/components/ShowroomPinterest";
 import { ZxLogoLockup } from "@/components/portfolio/ZxStar";
 import { ChatDrawer } from "@/components/modals/ChatDrawer";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/components/ui/Toast";
-import { Info, User, ShieldCheck } from "lucide-react";
+import { User, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { io, Socket } from "socket.io-client";
 import { PushNotificationPrompt } from "@/components/PushNotificationPrompt";
@@ -33,7 +32,6 @@ export default function FeedPage() {
   const [selectedPostIdForGift, setSelectedPostIdForGift] = useState<string | null>(null);
   const [selectedPostForDetail, setSelectedPostForDetail] = useState<PostData | null>(null);
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
-  const [isIntroModalOpen, setIsIntroModalOpen] = useState(false);
   const [resetSignal, setResetSignal] = useState(0);
 
   // Fetch Posts
@@ -248,15 +246,6 @@ export default function FeedPage() {
           )}
 
           <button
-            type="button"
-            onClick={() => setIsIntroModalOpen(true)}
-            className="glass-pill px-3 py-1.5 rounded-full text-xs font-bold text-white hover:text-[#C9AA72] transition flex items-center gap-1 shadow-lg"
-          >
-            <Info className="w-3.5 h-3.5 text-[#C9AA72]" />
-            <span className="hidden sm:inline">Giới Thiệu</span>
-          </button>
-
-          <button
             onClick={() => setIsAuthModalOpen(true)}
             className="glass-pill px-3 py-1.5 rounded-full text-xs font-bold text-white flex items-center gap-1.5 shadow-lg border hover:border-[#C9AA72] transition"
           >
@@ -323,8 +312,6 @@ export default function FeedPage() {
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
       />
-
-      <IntroModal isOpen={isIntroModalOpen} onClose={() => setIsIntroModalOpen(false)} />
 
       <ChatDrawer
         isOpen={isChatDrawerOpen}

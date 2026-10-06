@@ -136,3 +136,18 @@ DE XUAT: giu nguyen 6 "dong co" hinh thai giao dich nhu hien tai (da dung, co lo
 CHUA LAM (ngoai pham vi vong nay):
 - Xoa route /landing (hien khong con link toi nhung van ton tai) — cho CEO xac nhan.
 - Cho phep nhieu lien ket ngoai tren 1 the (hien chi 1).
+
+[17:26] [Ccode] [VONG 16 · Gop Mien phi/Thuong mai thanh 1 truc gia, xoa nut Gioi Thieu] PASS✅ — Theo phan hoi CEO: "Xoa han nut Gioi Thieu", va dieu chinh quan trong ve tu duy taxonomy: "Mien phi va Thuong mai ve ban chat giong nhau ve DOI TUONG, chi khac GIA va cach de co — vi du lop hoc mien phi co nut Mien Phi, co phi co nut Dang Ky; san pham mien phi co nut Mien Phi, thuong mai hien gia".
+
+DA LAM:
+1. Xoa han nut "Gioi Thieu" tren header (page.tsx) + xoa component IntroModal.tsx (mo coi sau khi bo nut). Doan gioi thieu (heroIntro) khong mat di — chuyen hien INLINE ngay duoi ten trong khu Hero dau trang (HeroProfile.tsx), khong can bam gi de xem.
+2. TAI CAU TRUC GOC: bo han khai niem "Nhom hoat dong: Mien phi / Thuong mai" (2 buoc chon) trong CreatePostModal.tsx va EditPostModal.tsx. Thay bang DUY NHAT 1 dropdown "Hinh thai": Noi Dung / Dong Goi / Yeu Cau-Bao Gia / Giu Cho / Thanh Vien / Donate / Dau Gia. Voi Dong Goi, Giu Cho, Thanh Vien — de trong hoac nhap 0 o truong gia/coc TU DONG la mien phi (co ghi chu huong dan ngay duoi o nhap), KHONG con phai chon nhom rieng.
+3. src/lib/cardTypeMeta.ts: them CARD_KIND_META (nhan + huong dan cho ca 7 hinh thai dung o man tao bai), ham getCtaLabel(cardType, meta) va isFreeCommerceCard(cardType, meta) — tra ve dung nhan nut theo gia THAT (vd "Nhan Mien Phi" khi package.price=0, "Mua Ngay" khi co gia; "Dang Ky Mien Phi"/"Giu Cho Ngay" cho reservation theo depositAmount; "Tham Gia Mien Phi"/"Dang Ky Thanh Vien" cho membership). Xoa FREE_ACTIVITY_META (khong con dung, cac tag cu knowledge/vblog/giveaway/club khong con la lua chon rieng — club compat tu nhien thanh "Thanh Vien" gia 0).
+4. PostDetailModal.tsx: nut hanh dong dung getCtaLabel() thay vi nhan tinh. Voi package/reservation/membership: neu MIEN PHI -> mo RequestLeadModal (leadType="free_claim", ghi Lead ben vung qua /api/leads) thay vi mo VietQRPaymentModal; neu CO GIA -> giu nguyen luong thanh toan VietQR nhu cu. Bo nhanh rieng "post.category === club" (khong con can, membership gia 0 da bao phu dung truong hop nay).
+5. PinCard.tsx: badge "Noi Dung" cho bai khong co the thuong mai (thay FREE_ACTIVITY_META cu); nut hover nhanh dung getCtaLabel() dong thay vi nhan tinh tu COMMERCE_CARD_META.
+6. types.ts: bo FreeActivityTag, PostCategory don gian con ContentCategory | 'content' | 'general' | string (giu string de tuong thich nguoc voi du lieu cu trong DB — 8 bai that van dung category cu nhu sop/training/work/... tu truoc Vong 13, hien thi fallback binh thuong qua PinCard, khong anh huong).
+7. RequestLeadModal.tsx + /api/leads: doi leadType tu "club_join" sang "free_claim" (phan anh dung ngu canh moi — khong con rieng "club" ma la "mien phi" chung cho 3 loai).
+
+VERIFIED: tsc --noEmit sach toan bo. Build + deploy container, /, /admin deu 200. Test tay qua trinh duyet: (1) header khong con nut Gioi Thieu, doan gioi thieu hien ngay duoi ten trong Hero; (2) man Tao Bai Viet chi con 1 dropdown "Hinh thai" (7 lua chon gop lam 1, khong con 2 buoc); (3) tao that 1 bai Dong Goi de trong gia -> the hien dung nut "Nhan Mien Phi" (vang) thay vi "Mua Ngay" -> bam vao mo dung form thu lead (ho ten/SDT), KHONG mo man hinh QR thanh toan -- xac nhan dung logic "gia = 0 thi doi nut, khong doi doi tuong". Da xoa sach bai test ngay sau, DB ve dung 8 bai goc.
+
+Container avastar (8107) khong bi dung. Chua deploy domain that — dang cho CEO duyet tren ban thu nghiem.

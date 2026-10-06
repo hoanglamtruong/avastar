@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const label = leadType === "club_join" ? "Yêu cầu tham gia Câu Lạc Bộ" : "Yêu cầu / Báo giá";
+    const label = leadType === "free_claim" ? "Đăng ký nhận MIỄN PHÍ" : "Yêu cầu / Báo giá";
     const notificationText = `📩 [${label}]: ${name} - SĐT: ${phone}${note ? ` - Ghi chú: ${note}` : ""}`;
 
     emitOwnerEvent("new_lead", { leadId: lead.id, postId, postCardId, leadType, notificationText });

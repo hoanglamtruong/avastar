@@ -9,14 +9,16 @@ export interface UserSession {
   phoneNumber?: string | null;
 }
 
-// Nhóm MIỄN PHÍ: nhãn hoạt động ở cấp bài viết (không giao dịch)
-export type FreeActivityTag = 'knowledge' | 'vblog' | 'giveaway' | 'club';
-
 // Nhãn phân loại nội dung dùng chung cho mọi thẻ thương mại (chỉ để hiện icon/nhãn,
-// KHÔNG quyết định form hay hành động — hình thái giao dịch (cardType) mới quyết định)
+// KHÔNG quyết định form hay hành động — hình thái giao dịch (cardType) mới quyết định.
+// Miễn phí hay thương mại giờ chỉ khác NHAU VỀ GIÁ (0 = miễn phí) trên cùng 1 hình
+// thái, không phải 2 nhóm đối tượng khác nhau — xem cardTypeMeta.ts getCtaLabel().
 export type ContentCategory = 'physical' | 'digital' | 'service' | 'knowledge';
 
-export type PostCategory = FreeActivityTag | ContentCategory | 'general';
+// 'content' = bài chia sẻ thường, không có thẻ nghiệp vụ. Các giá trị legacy
+// (knowledge/vblog/giveaway/club/diary/work/...) vẫn hiển thị được qua fallback,
+// chỉ không còn chọn được khi tạo bài mới.
+export type PostCategory = ContentCategory | 'content' | 'general' | string;
 
 // Hình thái giao dịch — quyết định form tạo + hành động của khách xem
 export type CardType =

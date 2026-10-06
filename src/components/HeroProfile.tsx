@@ -23,6 +23,7 @@ export function HeroProfile({ isOwner }: HeroProfileProps) {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [fullName, setFullName] = useState("ZANGX");
   const [slides, setSlides] = useState<HeroSlide[]>([]);
+  const [intro, setIntro] = useState("");
   const [activeSlide, setActiveSlide] = useState(0);
   const [editOpen, setEditOpen] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -34,6 +35,7 @@ export function HeroProfile({ isOwner }: HeroProfileProps) {
         setAvatarUrl(d.avatarUrl);
         setFullName(d.fullName || "ZANGX");
         setSlides(d.slides || []);
+        setIntro(d.intro || "");
       })
       .catch(() => {});
   };
@@ -75,6 +77,7 @@ export function HeroProfile({ isOwner }: HeroProfileProps) {
           )}
         </div>
         <h1 className="zx-serif mt-3 text-xl sm:text-2xl font-extrabold text-[#F4F0E8]">{fullName}</h1>
+        {intro && <p className="mt-2 max-w-xl text-xs sm:text-sm text-[#AEBCC5] leading-relaxed">{intro}</p>}
       </div>
 
       {slides.length > 0 && (
