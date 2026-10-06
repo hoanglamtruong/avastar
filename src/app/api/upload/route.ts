@@ -12,19 +12,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Chưa chọn tệp ảnh để tải lên" }, { status: 400 });
     }
 
-    // Kiểm tra định dạng hợp lệ
-    const validTypes = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/svg+xml"];
-    if (!validTypes.includes(file.type)) {
+    // Kiểm tra định dạng hợp lệ — ảnh hoặc video (slide đầu trang cần cả 2)
+    const validImageTypes = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/svg+xml"];
+    const validVideoTypes = ["video/mp4", "video/webm", "video/quicktime", "video/ogg"];
+    const isVideo = validVideoTypes.includes(file.type);
+    if (!isVideo && !validImageTypes.includes(file.type)) {
       return NextResponse.json(
-        { error: "Định dạng không hợp lệ. Chỉ chấp nhận JPG, PNG, WEBP, GIF, SVG." },
+        { error: "Định dạng không hợp lệ. Chỉ chấp nhận JPG, PNG, WEBP, GIF, SVG, MP4, WEBM, MOV." },
         { status: 400 }
       );
     }
 
-    // Giới hạn 15MB
-    if (file.size > 15 * 1024 * 1024) {
+    // Giới hạn: ảnh 15MB, video 40MB (dung lượng server có hạn)
+    const maxSize = isVideo ? 40 * 1024 * 1024 : 15 * 1024 * 1024;
+    if (file.size > maxSize) {
       return NextResponse.json(
-        { error: "Kích thước ảnh vượt quá 15MB." },
+        { error: isVideo ? "Kích thước video vượt quá 40MB." : "Kích thước ảnh vượt quá 15MB." },
         { status: 400 }
       );
     }

@@ -25,6 +25,7 @@ interface MediaPickerProps {
   label?: string;
   placeholder?: string;
   required?: boolean;
+  accept?: string;
 }
 
 export function MediaPicker({
@@ -33,6 +34,7 @@ export function MediaPicker({
   label = "URL Hình ảnh / Media:",
   placeholder = "https://... hoặc chọn từ kho lưu trữ",
   required = false,
+  accept = "image/*",
 }: MediaPickerProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
@@ -132,7 +134,7 @@ export function MediaPicker({
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept={accept}
             onChange={handleFileChange}
             className="hidden"
           />

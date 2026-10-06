@@ -81,7 +81,7 @@ export function HeroProfile({ isOwner }: HeroProfileProps) {
       </div>
 
       {slides.length > 0 && (
-        <div className="relative mt-5 rounded-2xl overflow-hidden border border-[#C9AA72]/25 bg-black/40 aspect-[16/7] max-h-[220px] sm:max-h-[260px]">
+        <div className="relative mt-5 rounded-2xl overflow-hidden border border-[#C9AA72]/25 bg-black/40 w-full aspect-[16/9] sm:aspect-[21/9] sm:max-h-[340px]">
           {current.mediaType === "video" ? (
             <video src={current.mediaUrl} className="w-full h-full object-cover" autoPlay muted loop playsInline />
           ) : (

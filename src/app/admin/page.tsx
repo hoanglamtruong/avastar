@@ -8,7 +8,6 @@ import { formatCurrency } from "@/lib/utils";
 import { PostData } from "@/lib/types";
 import { CARD_KIND_META } from "@/lib/cardTypeMeta";
 import { EditPostModal } from "@/components/modals/EditPostModal";
-import { MediaPicker } from "@/components/ui/MediaPicker";
 import { ZxLogoLockup } from "@/components/portfolio/ZxStar";
 import {
   ShieldCheck,
@@ -27,9 +26,6 @@ import {
   Gavel,
   Gift,
   LayoutDashboard,
-  User as UserIcon,
-  CreditCard,
-  Save,
 } from "lucide-react";
 
 interface AdminStats {
@@ -75,7 +71,7 @@ export default function AdminPage() {
   const { showToast } = useToast();
 
   // Navigation tab
-  const [activeTab, setActiveTab] = useState<"dashboard" | "posts" | "profile">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "posts">("dashboard");
 
   // Data states
   const [posts, setPosts] = useState<PostData[]>([]);
@@ -89,16 +85,6 @@ export default function AdminPage() {
   // Modals state
   const [editingPost, setEditingPost] = useState<PostData | null>(null);
 
-  // Admin Profile & Bank state
-  const [adminFullName, setAdminFullName] = useState("");
-  const [adminAvatarUrl, setAdminAvatarUrl] = useState("");
-  const [adminPhone, setAdminPhone] = useState("");
-  const [bankId, setBankId] = useState("MB");
-  const [bankName, setBankName] = useState("MBBank (Ngân Hàng Quân Đội)");
-  const [accountNo, setAccountNo] = useState("0901234567");
-  const [accountName, setAccountName] = useState("TRUONG HOANG LAM");
-  const [isSavingProfile, setIsSavingProfile] = useState(false);
-
   // Login Form State
   const [emailInput, setEmailInput] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
@@ -111,10 +97,9 @@ export default function AdminPage() {
     if (!isOwner) return;
     setIsLoadingData(true);
     try {
-      const [overviewRes, postsRes, profileRes] = await Promise.all([
+      const [overviewRes, postsRes] = await Promise.all([
         fetch("/api/admin/overview"),
         fetch("/api/posts"),
-        fetch("/api/admin/profile"),
       ]);
 
       if (overviewRes.ok) {
@@ -124,20 +109,6 @@ export default function AdminPage() {
       if (postsRes.ok) {
         const pData = await postsRes.json();
         setPosts(pData.posts || []);
-      }
-      if (profileRes.ok) {
-        const profData = await profileRes.json();
-        if (profData.profile) {
-          setAdminFullName(profData.profile.fullName || "");
-          setAdminAvatarUrl(profData.profile.avatarUrl || "");
-          setAdminPhone(profData.profile.phoneNumber || "");
-        }
-        if (profData.bankInfo) {
-          setBankId(profData.bankInfo.bankId || "MB");
-          setBankName(profData.bankInfo.bankName || "MBBank");
-          setAccountNo(profData.bankInfo.accountNo || "0901234567");
-          setAccountName(profData.bankInfo.accountName || "TRUONG HOANG LAM");
-        }
       }
     } catch {
       showToast("Không thể tải thông tin quản trị", "error");
@@ -214,41 +185,6 @@ export default function AdminPage() {
       }
     } catch {
       showToast("Lỗi kết nối khi xóa bài viết", "error");
-    }
-  };
-
-  // Save Admin Profile & Bank settings
-  const handleSaveProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSavingProfile(true);
-    try {
-      const res = await fetch("/api/admin/profile", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fullName: adminFullName.trim(),
-          avatarUrl: adminAvatarUrl.trim(),
-          phoneNumber: adminPhone.trim(),
-          bankInfo: {
-            bankId: bankId.trim(),
-            bankName: bankName.trim(),
-            accountNo: accountNo.trim(),
-            accountName: accountName.trim().toUpperCase(),
-          },
-        }),
-      });
-
-      if (res.ok) {
-        showToast("Đã cập nhật thông tin Admin và cấu hình VietQR thành công!", "success");
-        loadAllData();
-      } else {
-        const err = await res.json();
-        showToast(err.error || "Không thể lưu hồ sơ", "error");
-      }
-    } catch {
-      showToast("Lỗi kết nối khi lưu hồ sơ", "error");
-    } finally {
-      setIsSavingProfile(false);
     }
   };
 
@@ -378,7 +314,7 @@ export default function AdminPage() {
         <div className="flex items-center gap-3 self-end sm:self-auto">
           <div className="flex items-center gap-2">
             <img
-              src={adminAvatarUrl || user?.avatarUrl || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100"}
+              src={user?.avatarUrl || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100"}
               alt=""
               className="w-8 h-8 rounded-full object-cover border border-[#C9AA72]/50 shadow"
               onError={(e) => {
@@ -386,7 +322,7 @@ export default function AdminPage() {
               }}
             />
             <div className="text-left hidden md:block">
-              <p className="text-xs font-black text-white">{adminFullName || user?.fullName}</p>
+              <p className="text-xs font-black text-white">{user?.fullName}</p>
               <p className="text-[10px] text-[#C9AA72] font-mono">{user?.role?.toUpperCase()}</p>
             </div>
           </div>
@@ -438,19 +374,6 @@ export default function AdminPage() {
             >
               <Layers className="w-4 h-4" />
               <span>Tác Phẩm & Ảnh ({posts.length})</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab("profile")}
-              className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition ${
-                activeTab === "profile"
-                  ? "bg-[#C9AA72] text-[#07111F] shadow-lg"
-                  : "bg-white/5 text-[#AEBCC5] hover:text-white"
-              }`}
-            >
-              <UserIcon className="w-4 h-4" />
-              <span>Hồ Sơ & VietQR</span>
             </button>
           </div>
 
@@ -821,172 +744,6 @@ export default function AdminPage() {
           </section>
         )}
 
-        {/* TAB: HỒ SƠ ADMIN & CÀI ĐẶT VIETQR */}
-        {activeTab === "profile" && (
-          <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Form Edit */}
-            <form
-              onSubmit={handleSaveProfile}
-              className="lg:col-span-2 rounded-3xl bg-[#102A43]/40 border border-[#C9AA72]/30 p-6 sm:p-7 backdrop-blur-xl shadow-xl space-y-6 text-xs"
-            >
-              <div>
-                <h3 className="text-base font-extrabold text-white flex items-center gap-2">
-                  <UserIcon className="w-5 h-5 text-[#C9AA72]" />
-                  <span>Thông Tin Cá Nhân & Chủ Xưởng</span>
-                </h3>
-                <p className="text-[#AEBCC5] text-xs mt-0.5">
-                  Cập nhật họ tên, ảnh đại diện và số điện thoại liên hệ
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block font-bold text-[#AEBCC5] mb-1">Họ và tên:</label>
-                  <input
-                    type="text"
-                    value={adminFullName}
-                    onChange={(e) => setAdminFullName(e.target.value)}
-                    placeholder="Trương Hoàng Lam"
-                    className="w-full px-3 py-2 rounded-xl bg-[#07111F] border border-white/15 text-white focus:outline-none focus:border-[#C9AA72]"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-bold text-[#AEBCC5] mb-1">Số điện thoại:</label>
-                  <input
-                    type="text"
-                    value={adminPhone}
-                    onChange={(e) => setAdminPhone(e.target.value)}
-                    placeholder="0901234567"
-                    className="w-full px-3 py-2 rounded-xl bg-[#07111F] border border-white/15 text-white focus:outline-none focus:border-[#C9AA72]"
-                  />
-                </div>
-              </div>
-
-              <MediaPicker
-                label="Ảnh Đại Diện (Avatar):"
-                value={adminAvatarUrl}
-                onChange={(url) => setAdminAvatarUrl(url)}
-                placeholder="https://... hoặc tải từ máy / chọn từ kho lưu trữ"
-              />
-
-              {/* Bank VietQR Settings */}
-              <div className="pt-4 border-t border-white/10 space-y-4">
-                <div>
-                  <h3 className="text-base font-extrabold text-white flex items-center gap-2">
-                    <CreditCard className="w-5 h-5 text-[#A8F238]" />
-                    <span>Cấu Hình Nhận Ủng Hộ VietQR 24/7</span>
-                  </h3>
-                  <p className="text-[#AEBCC5] text-xs mt-0.5">
-                    Thông tin tài khoản thụ hưởng sẽ hiển thị tự động trên hộp thoại Donate
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block font-bold text-[#AEBCC5] mb-1">Mã Ngân Hàng (BIN / Code):</label>
-                    <input
-                      type="text"
-                      value={bankId}
-                      onChange={(e) => setBankId(e.target.value)}
-                      placeholder="MB, VCB, TCB..."
-                      className="w-full px-3 py-2 rounded-xl bg-[#07111F] border border-white/15 text-white uppercase focus:outline-none focus:border-[#C9AA72]"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block font-bold text-[#AEBCC5] mb-1">Tên Ngân Hàng:</label>
-                    <input
-                      type="text"
-                      value={bankName}
-                      onChange={(e) => setBankName(e.target.value)}
-                      placeholder="MBBank (Ngân Hàng Quân Đội)"
-                      className="w-full px-3 py-2 rounded-xl bg-[#07111F] border border-white/15 text-white focus:outline-none focus:border-[#C9AA72]"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block font-bold text-[#AEBCC5] mb-1">Số Tài Khoản:</label>
-                    <input
-                      type="text"
-                      value={accountNo}
-                      onChange={(e) => setAccountNo(e.target.value)}
-                      placeholder="0901234567"
-                      className="w-full px-3 py-2 rounded-xl bg-[#07111F] border border-white/15 text-white font-mono tracking-wider focus:outline-none focus:border-[#C9AA72]"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block font-bold text-[#AEBCC5] mb-1">Tên Chủ Tài Khoản:</label>
-                    <input
-                      type="text"
-                      value={accountName}
-                      onChange={(e) => setAccountName(e.target.value)}
-                      placeholder="TRUONG HOANG LAM"
-                      className="w-full px-3 py-2 rounded-xl bg-[#07111F] border border-white/15 text-white uppercase font-bold tracking-wider focus:outline-none focus:border-[#C9AA72]"
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-2 flex justify-end">
-                <button
-                  type="submit"
-                  disabled={isSavingProfile}
-                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#C9AA72] to-[#8B6F3F] text-[#07111F] font-black text-sm flex items-center gap-2 shadow-lg hover:opacity-95 transition transform active:scale-95"
-                >
-                  <Save className="w-4 h-4" />
-                  <span>{isSavingProfile ? "Đang lưu cấu hình..." : "Lưu Thông Tin & Cấu Hình"}</span>
-                </button>
-              </div>
-            </form>
-
-            {/* Live Preview Card */}
-            <div className="rounded-3xl bg-[#102A43]/30 border border-white/10 p-6 flex flex-col items-center justify-between text-center space-y-4">
-              <div className="space-y-3 w-full flex flex-col items-center">
-                <div className="w-20 h-20 rounded-full border-2 border-[#C9AA72] overflow-hidden shadow-xl">
-                  <img
-                    src={adminAvatarUrl || user?.avatarUrl || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200"}
-                    alt=""
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200";
-                    }}
-                  />
-                </div>
-                <div>
-                  <h4 className="font-black text-white text-base">{adminFullName || user?.fullName}</h4>
-                  <p className="text-xs text-[#C9AA72]">{adminPhone || "Chưa có SĐT"}</p>
-                </div>
-              </div>
-
-              {/* Live VietQR Preview */}
-              <div className="p-3 rounded-2xl bg-[#07111F] border border-[#C9AA72]/30 w-full flex flex-col items-center">
-                <p className="text-[10px] font-bold text-[#A8F238] uppercase tracking-wider mb-2">
-                  Xem Trước Mã VietQR Tự Động
-                </p>
-                <div className="p-2 rounded-xl bg-white shadow-md inline-block">
-                  <img
-                    src={`https://img.vietqr.io/image/${bankId}-${accountNo}-compact2.png?amount=100000&addInfo=ZANGX%20TEST&accountName=${encodeURIComponent(accountName)}`}
-                    alt="VietQR Preview"
-                    className="w-36 h-36 object-contain"
-                  />
-                </div>
-                <div className="mt-2 text-[10px] text-[#AEBCC5]">
-                  <p className="font-bold text-white">{bankName}</p>
-                  <p className="font-mono text-[#C9AA72]">{accountNo} · {accountName}</p>
-                </div>
-              </div>
-            </div>
-          </section>
-        )}
       </div>
 
       {/* EDIT POST MODAL */}
