@@ -3,10 +3,12 @@
 import React, { useState, useEffect } from "react";
 import { X, Plus, Trash2, Save } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
-import { PostData, CardType } from "@/lib/types";
-import { CARD_KIND_META, isCommerceCardType } from "@/lib/cardTypeMeta";
+import { PostData } from "@/lib/types";
+import { isCommerceCardType } from "@/lib/cardTypeMeta";
 import { MediaPicker } from "@/components/ui/MediaPicker";
 import { CategoryPicker, CategoryOption } from "@/components/ui/CategoryPicker";
+import { ActionButtonFields } from "@/components/modals/ActionButtonFields";
+import { ActionDraft, MAX_ACTIONS, newActionDraft, buildCardFromAction, actionDraftFromCard } from "@/lib/actionDraft";
 
 interface EditPostModalProps {
   post: PostData | null;
@@ -15,16 +17,11 @@ interface EditPostModalProps {
   onUpdated: () => void;
 }
 
-type CommerceType = "package" | "request" | "reservation" | "membership" | "donate" | "auction";
-type CardKind = "content" | CommerceType;
-
 interface MediaDraft {
   cardType: "image" | "video" | "doc";
   mediaUrl: string;
   docContent: string;
 }
-
-const CARD_KINDS: CardKind[] = ["content", "package", "request", "reservation", "membership", "donate", "auction"];
 
 function emptyMedia(): MediaDraft {
   return { cardType: "image", mediaUrl: "", docContent: "" };
@@ -33,7 +30,6 @@ function emptyMedia(): MediaDraft {
 export function EditPostModal({ post, isOpen, onClose, onUpdated }: EditPostModalProps) {
   const { showToast } = useToast();
 
-  const [cardKind, setCardKind] = useState<CardKind>("content");
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
 
@@ -47,41 +43,7 @@ export function EditPostModal({ post, isOpen, onClose, onUpdated }: EditPostModa
 
   const [caption, setCaption] = useState("");
   const [media, setMedia] = useState<MediaDraft[]>([emptyMedia()]);
-
-  const [productName, setProductName] = useState("");
-  const [price, setPrice] = useState("");
-  const [originalPrice, setOriginalPrice] = useState("");
-  const [stock, setStock] = useState("");
-  const [features, setFeatures] = useState("");
-
-  const [reqTitle, setReqTitle] = useState("");
-  const [scopeDescription, setScopeDescription] = useState("");
-  const [estimatedRange, setEstimatedRange] = useState("");
-
-  const [resTitle, setResTitle] = useState("");
-  const [dateTime, setDateTime] = useState("");
-  const [location, setLocation] = useState("");
-  const [slotsTotal, setSlotsTotal] = useState("");
-  const [slotsTaken, setSlotsTaken] = useState("");
-  const [depositAmount, setDepositAmount] = useState("");
-
-  const [planName, setPlanName] = useState("");
-  const [planPrice, setPlanPrice] = useState("");
-  const [billingPeriod, setBillingPeriod] = useState<"month" | "year" | "lifetime">("month");
-  const [benefits, setBenefits] = useState("");
-
-  const [goalMessage, setGoalMessage] = useState("");
-
-  const [extLinkEnabled, setExtLinkEnabled] = useState(false);
-  const [extLinkLabel, setExtLinkLabel] = useState("");
-  const [extLinkUrl, setExtLinkUrl] = useState("");
-  const [qrEnabled, setQrEnabled] = useState(false);
-
-  const [itemName, setItemName] = useState("");
-  const [startingPrice, setStartingPrice] = useState("");
-  const [minIncrement, setMinIncrement] = useState("");
-  const [endsAt, setEndsAt] = useState("");
-
+  const [actions, setActions] = useState<ActionDraft[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -100,48 +62,8 @@ export function EditPostModal({ post, isOpen, onClose, onUpdated }: EditPostModa
         : [emptyMedia()]
     );
 
-    const commerceCard = (post.cards || []).find((c) => isCommerceCardType(c.cardType));
-    if (commerceCard) {
-      const t = commerceCard.cardType as CommerceType;
-      setCardKind(t);
-      const meta = commerceCard.cardMetadata || {};
-      if (t === "package") {
-        setProductName(meta.productName || "");
-        setPrice(String(meta.price || ""));
-        setOriginalPrice(meta.originalPrice ? String(meta.originalPrice) : "");
-        setStock(meta.stock !== undefined ? String(meta.stock) : "");
-        setFeatures((meta.features || []).join("\n"));
-      } else if (t === "request") {
-        setReqTitle(meta.title || "");
-        setScopeDescription(meta.scopeDescription || "");
-        setEstimatedRange(meta.estimatedRange || "");
-      } else if (t === "reservation") {
-        setResTitle(meta.title || "");
-        setDateTime(meta.dateTime ? meta.dateTime.slice(0, 16) : "");
-        setLocation(meta.location || "");
-        setSlotsTotal(meta.slotsTotal !== undefined ? String(meta.slotsTotal) : "");
-        setSlotsTaken(meta.slotsTaken !== undefined ? String(meta.slotsTaken) : "0");
-        setDepositAmount(meta.depositAmount !== undefined ? String(meta.depositAmount) : "");
-      } else if (t === "membership") {
-        setPlanName(meta.planName || "");
-        setPlanPrice(String(meta.price || ""));
-        setBillingPeriod(meta.billingPeriod || "month");
-        setBenefits((meta.benefits || []).join("\n"));
-      } else if (t === "donate") {
-        setGoalMessage(meta.goalMessage || "");
-      } else if (t === "auction") {
-        setItemName(meta.itemName || "");
-        setStartingPrice(String(meta.startingPrice || ""));
-        setMinIncrement(String(meta.minIncrement || ""));
-        setEndsAt(meta.endsAt ? meta.endsAt.slice(0, 16) : "");
-      }
-      setExtLinkEnabled(!!meta.externalLink);
-      setExtLinkLabel(meta.externalLink?.label || "");
-      setExtLinkUrl(meta.externalLink?.url || "");
-      setQrEnabled(!!meta.qrEnabled);
-    } else {
-      setCardKind("content");
-    }
+    const commerceCards = (post.cards || []).filter((c) => isCommerceCardType(c.cardType));
+    setActions(commerceCards.slice(0, MAX_ACTIONS).map((c) => actionDraftFromCard(c)));
   }, [post]);
 
   if (!isOpen || !post) return null;
@@ -153,110 +75,16 @@ export function EditPostModal({ post, isOpen, onClose, onUpdated }: EditPostModa
   const removeMedia = (idx: number) =>
     setMedia((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== idx) : prev));
 
-  const toNum = (v: string) => Math.max(0, parseInt(v.replace(/\D/g, "") || "0", 10));
-  const toList = (v: string) =>
-    v
-      .split("\n")
-      .map((s) => s.trim())
-      .filter(Boolean);
-
-  const buildExtras = () => ({
-    externalLink: extLinkEnabled && extLinkUrl.trim() ? { label: extLinkLabel.trim() || "Xem thêm", url: extLinkUrl.trim() } : undefined,
-    qrEnabled: qrEnabled || undefined,
-  });
-
-  const buildCommerceCard = (): { cardType: CardType; cardMetadata: any } | null => {
-    const built = buildCommerceCardBase();
-    if (!built) return null;
-    return { ...built, cardMetadata: { ...built.cardMetadata, ...buildExtras() } };
-  };
-
-  const buildCommerceCardBase = (): { cardType: CardType; cardMetadata: any } | null => {
-    switch (cardKind as CommerceType) {
-      case "package":
-        if (!productName.trim()) {
-          showToast("Nhập tên sản phẩm", "error");
-          return null;
-        }
-        return {
-          cardType: "package",
-          cardMetadata: {
-            productName: productName.trim(),
-            price: toNum(price),
-            originalPrice: originalPrice ? toNum(originalPrice) : undefined,
-            stock: stock ? toNum(stock) : undefined,
-            features: toList(features),
-            contentCategory: selectedCategory,
-          },
-        };
-      case "request":
-        if (!reqTitle.trim()) {
-          showToast("Nhập tiêu đề yêu cầu", "error");
-          return null;
-        }
-        return {
-          cardType: "request",
-          cardMetadata: {
-            title: reqTitle.trim(),
-            scopeDescription: scopeDescription.trim(),
-            estimatedRange: estimatedRange.trim() || undefined,
-            contentCategory: selectedCategory,
-          },
-        };
-      case "reservation":
-        if (!resTitle.trim()) {
-          showToast("Nhập tên sự kiện/suất giữ chỗ", "error");
-          return null;
-        }
-        return {
-          cardType: "reservation",
-          cardMetadata: {
-            title: resTitle.trim(),
-            dateTime: dateTime || undefined,
-            location: location.trim() || undefined,
-            slotsTotal: slotsTotal ? toNum(slotsTotal) : undefined,
-            slotsTaken: slotsTaken ? toNum(slotsTaken) : 0,
-            depositAmount: depositAmount ? toNum(depositAmount) : 0,
-            contentCategory: selectedCategory,
-          },
-        };
-      case "membership":
-        if (!planName.trim()) {
-          showToast("Nhập tên gói thành viên", "error");
-          return null;
-        }
-        return {
-          cardType: "membership",
-          cardMetadata: {
-            planName: planName.trim(),
-            price: toNum(planPrice),
-            billingPeriod,
-            benefits: toList(benefits),
-            contentCategory: selectedCategory,
-          },
-        };
-      case "donate":
-        return {
-          cardType: "donate",
-          cardMetadata: { goalMessage: goalMessage.trim() || undefined },
-        };
-      case "auction":
-        if (!itemName.trim() || !endsAt) {
-          showToast("Nhập tên vật phẩm và thời gian kết thúc đấu giá", "error");
-          return null;
-        }
-        return {
-          cardType: "auction",
-          cardMetadata: {
-            itemName: itemName.trim(),
-            startingPrice: toNum(startingPrice),
-            minIncrement: toNum(minIncrement) || 10000,
-            endsAt: new Date(endsAt).toISOString(),
-            contentCategory: selectedCategory,
-          },
-        };
+  const addAction = () => {
+    if (actions.length >= MAX_ACTIONS) {
+      showToast(`Tối đa ${MAX_ACTIONS} nút hành động trên 1 bài viết`, "error");
+      return;
     }
+    setActions((prev) => [...prev, newActionDraft()]);
   };
+  const updateAction = (id: string, patch: Partial<ActionDraft>) =>
+    setActions((prev) => prev.map((a) => (a.id === id ? { ...a, ...patch } : a)));
+  const removeAction = (id: string) => setActions((prev) => prev.filter((a) => a.id !== id));
 
   const handleSubmit = async () => {
     const mediaCards = media
@@ -268,17 +96,19 @@ export function EditPostModal({ post, isOpen, onClose, onUpdated }: EditPostModa
         cardMetadata: {},
       }));
 
-    let cards: any[] = mediaCards;
     const category: string = selectedCategory || "Chưa phân loại";
 
-    if (cardKind !== "content") {
-      const commerceCard = buildCommerceCard();
-      if (!commerceCard) return;
-      cards = [...mediaCards, commerceCard];
+    const commerceCards: any[] = [];
+    for (const action of actions) {
+      const built = buildCardFromAction(action, selectedCategory, showToast);
+      if (!built) return;
+      commerceCards.push(built);
     }
 
+    const cards = [...mediaCards, ...commerceCards];
+
     if (cards.length === 0) {
-      showToast("Cần ít nhất 1 ảnh/video/tài liệu, hoặc điền đủ thông tin thẻ", "error");
+      showToast("Cần ít nhất 1 ảnh/video/tài liệu, hoặc 1 nút hành động", "error");
       return;
     }
 
@@ -307,7 +137,6 @@ export function EditPostModal({ post, isOpen, onClose, onUpdated }: EditPostModa
   const inputCls =
     "w-full px-3 py-2 rounded-xl bg-[#07111F] border border-[#F4F0E8]/20 text-sm text-white placeholder:text-[#F4F0E8]/40 focus:outline-none focus:border-[#C9AA72]";
   const labelCls = "block text-xs font-semibold text-[#F4F0E8]/80 mb-1.5";
-  const hintCls = "text-[11px] text-[#A8F238]/90 mt-1";
 
   return (
     <div className="fixed inset-0 z-[1000] bg-[#030810] backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -321,18 +150,6 @@ export function EditPostModal({ post, isOpen, onClose, onUpdated }: EditPostModa
 
         <div className="flex-1 overflow-y-auto custom-slim-scroll py-3 space-y-4">
           <div>
-            <label className={labelCls}>Nút Hành Động</label>
-            <select value={cardKind} onChange={(e) => setCardKind(e.target.value as CardKind)} className={inputCls}>
-              {CARD_KINDS.map((k) => (
-                <option key={k} value={k}>
-                  {CARD_KIND_META[k].label}
-                </option>
-              ))}
-            </select>
-            <p className="text-[11px] text-[#F4F0E8]/50 mt-1">{CARD_KIND_META[cardKind].hint}</p>
-          </div>
-
-          <div>
             <label className={labelCls}>Danh mục</label>
             <CategoryPicker
               categories={categories}
@@ -342,164 +159,32 @@ export function EditPostModal({ post, isOpen, onClose, onUpdated }: EditPostModa
             />
           </div>
 
-          {cardKind === "package" && (
-            <div className="space-y-2 p-3 rounded-xl bg-[#102A43]/60 border border-[#F4F0E8]/15">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <div>
-                <label className={labelCls}>Tên sản phẩm *</label>
-                <input value={productName} onChange={(e) => setProductName(e.target.value)} className={inputCls} />
+                <label className="text-xs font-semibold text-[#F4F0E8]/80">Nút hành động (tối đa {MAX_ACTIONS})</label>
+                <p className="text-[11px] text-[#F4F0E8]/50">Không thêm nút nào = bài chia sẻ nội dung thường, không bán gì.</p>
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className={labelCls}>Giá bán (đ)</label>
-                  <input value={price} onChange={(e) => setPrice(e.target.value)} className={inputCls} inputMode="numeric" />
-                </div>
-                <div>
-                  <label className={labelCls}>Giá gốc (đ)</label>
-                  <input value={originalPrice} onChange={(e) => setOriginalPrice(e.target.value)} className={inputCls} inputMode="numeric" />
-                </div>
-              </div>
-              <p className={hintCls}>Để trống hoặc nhập 0 = sản phẩm miễn phí.</p>
-              <div>
-                <label className={labelCls}>Tồn kho</label>
-                <input value={stock} onChange={(e) => setStock(e.target.value)} className={inputCls} inputMode="numeric" />
-              </div>
-              <div>
-                <label className={labelCls}>Tính năng (mỗi dòng 1 ý)</label>
-                <textarea value={features} onChange={(e) => setFeatures(e.target.value)} rows={3} className={inputCls} />
-              </div>
+              <button
+                type="button"
+                onClick={addAction}
+                disabled={actions.length >= MAX_ACTIONS}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#C9AA72]/20 text-[#C9AA72] border border-[#C9AA72]/30 hover:bg-[#C9AA72]/30 transition disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+              >
+                <Plus className="w-3.5 h-3.5" /> Thêm nút
+              </button>
             </div>
-          )}
 
-          {cardKind === "request" && (
-            <div className="space-y-2 p-3 rounded-xl bg-[#102A43]/60 border border-[#F4F0E8]/15">
-              <div>
-                <label className={labelCls}>Tiêu đề yêu cầu *</label>
-                <input value={reqTitle} onChange={(e) => setReqTitle(e.target.value)} className={inputCls} />
-              </div>
-              <div>
-                <label className={labelCls}>Mô tả phạm vi công việc</label>
-                <textarea value={scopeDescription} onChange={(e) => setScopeDescription(e.target.value)} rows={3} className={inputCls} />
-              </div>
-              <div>
-                <label className={labelCls}>Khoảng giá tham khảo</label>
-                <input value={estimatedRange} onChange={(e) => setEstimatedRange(e.target.value)} className={inputCls} />
-              </div>
-            </div>
-          )}
-
-          {cardKind === "reservation" && (
-            <div className="space-y-2 p-3 rounded-xl bg-[#102A43]/60 border border-[#F4F0E8]/15">
-              <div>
-                <label className={labelCls}>Tên sự kiện / suất giữ chỗ *</label>
-                <input value={resTitle} onChange={(e) => setResTitle(e.target.value)} className={inputCls} />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className={labelCls}>Thời điểm</label>
-                  <input type="datetime-local" value={dateTime} onChange={(e) => setDateTime(e.target.value)} className={inputCls} />
-                </div>
-                <div>
-                  <label className={labelCls}>Địa điểm</label>
-                  <input value={location} onChange={(e) => setLocation(e.target.value)} className={inputCls} />
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                <div>
-                  <label className={labelCls}>Tổng số suất</label>
-                  <input value={slotsTotal} onChange={(e) => setSlotsTotal(e.target.value)} className={inputCls} inputMode="numeric" />
-                </div>
-                <div>
-                  <label className={labelCls}>Đã giữ</label>
-                  <input value={slotsTaken} onChange={(e) => setSlotsTaken(e.target.value)} className={inputCls} inputMode="numeric" />
-                </div>
-                <div>
-                  <label className={labelCls}>Cọc (đ)</label>
-                  <input value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} className={inputCls} inputMode="numeric" />
-                </div>
-              </div>
-              <p className={hintCls}>Để trống hoặc nhập 0 = giữ chỗ miễn phí.</p>
-            </div>
-          )}
-
-          {cardKind === "membership" && (
-            <div className="space-y-2 p-3 rounded-xl bg-[#102A43]/60 border border-[#F4F0E8]/15">
-              <div>
-                <label className={labelCls}>Tên gói *</label>
-                <input value={planName} onChange={(e) => setPlanName(e.target.value)} className={inputCls} />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className={labelCls}>Giá (đ)</label>
-                  <input value={planPrice} onChange={(e) => setPlanPrice(e.target.value)} className={inputCls} inputMode="numeric" />
-                </div>
-                <div>
-                  <label className={labelCls}>Kỳ hạn</label>
-                  <select value={billingPeriod} onChange={(e) => setBillingPeriod(e.target.value as any)} className={inputCls}>
-                    <option value="month">Theo tháng</option>
-                    <option value="year">Theo năm</option>
-                    <option value="lifetime">Trọn đời</option>
-                  </select>
-                </div>
-              </div>
-              <p className={hintCls}>Để trống hoặc nhập 0 = thành viên miễn phí.</p>
-              <div>
-                <label className={labelCls}>Quyền lợi (mỗi dòng 1 ý)</label>
-                <textarea value={benefits} onChange={(e) => setBenefits(e.target.value)} rows={3} className={inputCls} />
-              </div>
-            </div>
-          )}
-
-          {cardKind === "donate" && (
-            <div className="space-y-2 p-3 rounded-xl bg-[#102A43]/60 border border-[#F4F0E8]/15">
-              <div>
-                <label className={labelCls}>Lời nhắn mục tiêu ủng hộ</label>
-                <textarea value={goalMessage} onChange={(e) => setGoalMessage(e.target.value)} rows={2} className={inputCls} />
-              </div>
-            </div>
-          )}
-
-          {cardKind === "auction" && (
-            <div className="space-y-2 p-3 rounded-xl bg-[#102A43]/60 border border-[#F4F0E8]/15">
-              <div>
-                <label className={labelCls}>Tên vật phẩm đấu giá *</label>
-                <input value={itemName} onChange={(e) => setItemName(e.target.value)} className={inputCls} />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className={labelCls}>Giá khởi điểm (đ)</label>
-                  <input value={startingPrice} onChange={(e) => setStartingPrice(e.target.value)} className={inputCls} inputMode="numeric" />
-                </div>
-                <div>
-                  <label className={labelCls}>Bước giá tối thiểu (đ)</label>
-                  <input value={minIncrement} onChange={(e) => setMinIncrement(e.target.value)} className={inputCls} inputMode="numeric" />
-                </div>
-              </div>
-              <div>
-                <label className={labelCls}>Thời điểm kết thúc *</label>
-                <input type="datetime-local" value={endsAt} onChange={(e) => setEndsAt(e.target.value)} className={inputCls} />
-              </div>
-              <p className="text-[11px] text-amber-400">Lưu ý: sửa lại giá khởi điểm/thời gian sau khi đã có người đặt giá có thể gây nhầm lẫn.</p>
-            </div>
-          )}
-
-          {cardKind !== "content" && (
-            <div className="space-y-2.5 p-3 rounded-xl bg-[#102A43]/40 border border-[#F4F0E8]/10">
-              <label className="flex items-center gap-2 text-xs font-semibold text-[#F4F0E8]/80 cursor-pointer">
-                <input type="checkbox" checked={extLinkEnabled} onChange={(e) => setExtLinkEnabled(e.target.checked)} className="w-4 h-4 accent-[#C9AA72]" />
-                Thêm nút liên kết ra ngoài (Shopee, Facebook, Zalo...)
-              </label>
-              {extLinkEnabled && (
-                <div className="grid grid-cols-2 gap-2 pl-6">
-                  <input value={extLinkLabel} onChange={(e) => setExtLinkLabel(e.target.value)} className={inputCls} placeholder="Nhãn nút: Mua trên Shopee" />
-                  <input value={extLinkUrl} onChange={(e) => setExtLinkUrl(e.target.value)} className={inputCls} placeholder="https://..." />
-                </div>
-              )}
-              <label className="flex items-center gap-2 text-xs font-semibold text-[#F4F0E8]/80 cursor-pointer">
-                <input type="checkbox" checked={qrEnabled} onChange={(e) => setQrEnabled(e.target.checked)} className="w-4 h-4 accent-[#C9AA72]" />
-                Tạo mã QR dẫn thẳng về thẻ này
-              </label>
-            </div>
-          )}
+            {actions.map((action, idx) => (
+              <ActionButtonFields
+                key={action.id}
+                action={action}
+                index={idx}
+                onChange={(patch) => updateAction(action.id, patch)}
+                onRemove={() => removeAction(action.id)}
+              />
+            ))}
+          </div>
 
           <div>
             <label className={labelCls}>Caption</label>

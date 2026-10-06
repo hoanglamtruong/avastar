@@ -12,11 +12,13 @@ import {
   Layers,
   ArrowRight,
   ExternalLink,
+  Link2,
   QrCode,
 } from "lucide-react";
 import { ZxStar } from "@/components/portfolio/ZxStar";
 import { formatCurrency } from "@/lib/utils";
 import { COMMERCE_CARD_META, getCtaLabel, isFreeCommerceCard } from "@/lib/cardTypeMeta";
+import { useToast } from "@/components/ui/Toast";
 import { VietQRPaymentModal } from "@/components/modals/VietQRPaymentModal";
 import { RequestLeadModal } from "@/components/modals/RequestLeadModal";
 import { AuctionBidModal } from "@/components/modals/AuctionBidModal";
@@ -36,11 +38,12 @@ export function PostDetailModal({
   onOpenGift,
   onSharePost,
 }: PostDetailModalProps) {
+  const { showToast } = useToast();
   const [activeCardIndex, setActiveCardIndex] = useState(0);
   const [payModalOpen, setPayModalOpen] = useState(false);
   const [leadModalOpen, setLeadModalOpen] = useState(false);
   const [auctionModalOpen, setAuctionModalOpen] = useState(false);
-  const [showCardQr, setShowCardQr] = useState(false);
+  const [isShareMenuOpen, setIsShareMenuOpen] = useState(false);
 
   useEffect(() => {
     setActiveCardIndex(0);
@@ -72,6 +75,27 @@ export function PostDetailModal({
   const isDoc = currentCard?.cardType === "doc";
   const commerceMeta = COMMERCE_CARD_META[currentCard?.cardType];
   const meta = currentCard?.cardMetadata || {};
+
+  const handleDownloadQr = async () => {
+    setIsShareMenuOpen(false);
+    try {
+      const link = `${window.location.origin}${window.location.pathname}?post=${post.id}`;
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(link)}`;
+      const res = await fetch(qrUrl);
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = objectUrl;
+      a.download = `qr-${post.id}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(objectUrl);
+      showToast("Đã tải mã QR về máy!", "success");
+    } catch {
+      showToast("Không thể tải mã QR", "error");
+    }
+  };
 
   const handlePackageOrConfirm = async (contact: { name: string; phone: string }) => {
     await fetch("/api/orders", {
@@ -114,11 +138,15 @@ export function PostDetailModal({
             {meta.stock !== undefined && <p className="text-[#F4F0E8]/70">Còn {meta.stock} suất</p>}
           </>
         )}
-        {currentCard.cardType === "request" && (
+        {(currentCard.cardType === "request" || currentCard.cardType === "apply") && (
           <>
             <p className="text-white font-bold text-sm">{meta.title}</p>
             <p className="text-[#F4F0E8]/80">{meta.scopeDescription}</p>
-            {meta.estimatedRange && <p className="text-[#C9AA72]">Khoảng giá tham khảo: {meta.estimatedRange}</p>}
+            {meta.estimatedRange && (
+              <p className="text-[#C9AA72]">
+                {currentCard.cardType === "apply" ? "Mức lương tham khảo" : "Khoảng giá tham khảo"}: {meta.estimatedRange}
+              </p>
+            )}
           </>
         )}
         {currentCard.cardType === "reservation" && (
@@ -156,12 +184,30 @@ export function PostDetailModal({
             <p className="text-[#F4F0E8]/80">Kết thúc: {meta.endsAt ? new Date(meta.endsAt).toLocaleString("vi-VN") : ""}</p>
           </>
         )}
+        {currentCard.cardType === "claim" && (
+          <>
+            <p className="text-white font-bold text-sm">{meta.itemName}</p>
+            {meta.description && <p className="text-[#F4F0E8]/80">{meta.description}</p>}
+            {meta.stock !== undefined && <p className="text-[#F4F0E8]/70">Còn {meta.stock} suất</p>}
+          </>
+        )}
       </div>
     );
   };
 
   const isPricedCommerce = currentCard && ["package", "reservation", "membership"].includes(currentCard.cardType);
   const isFree = isPricedCommerce ? isFreeCommerceCard(currentCard.cardType, meta) : false;
+  // Nút nào mở form thu lead (name/phone) thay vì thanh toán VietQR hay flow riêng:
+  // request/apply luôn qua lead "request"; claim luôn qua lead "free_claim"; còn
+  // package/reservation/membership chỉ qua lead khi giá = 0 (free_claim).
+  const leadFlow: "request" | "free_claim" | null =
+    currentCard?.cardType === "request" || currentCard?.cardType === "apply"
+      ? "request"
+      : currentCard?.cardType === "claim"
+      ? "free_claim"
+      : isPricedCommerce && isFree
+      ? "free_claim"
+      : null;
 
   const renderActionButton = () => {
     if (!currentCard || !commerceMeta) return null;
@@ -169,13 +215,12 @@ export function PostDetailModal({
     const handleClick = () => {
       if (currentCard.cardType === "donate") {
         onOpenGift(post.id);
-      } else if (isPricedCommerce) {
-        if (isFree) setLeadModalOpen(true);
-        else setPayModalOpen(true);
-      } else if (currentCard.cardType === "request") {
-        setLeadModalOpen(true);
       } else if (currentCard.cardType === "auction") {
         setAuctionModalOpen(true);
+      } else if (leadFlow) {
+        setLeadModalOpen(true);
+      } else if (isPricedCommerce) {
+        setPayModalOpen(true);
       }
     };
     return (
@@ -193,17 +238,30 @@ export function PostDetailModal({
 
   const payAmount = currentCard?.cardType === "package" ? meta.price || 0 : currentCard?.cardType === "reservation" ? meta.depositAmount || 0 : meta.price || 0;
   const payTitle =
-    currentCard?.cardType === "package" ? "Mua Ngay" : currentCard?.cardType === "reservation" ? "Giữ Chỗ" : "Đăng Ký Thành Viên";
+    currentCard?.cardType === "package" ? "Mua Ngay" : currentCard?.cardType === "reservation" ? "Đăng Ký" : "Tham Gia Thành Viên";
   const payItemLabel = meta.productName || meta.title || meta.planName || "";
 
-  // Tiêu đề cho form thu lead khi là trường hợp "miễn phí" (package/reservation/
-  // membership giá 0) — khác với "request" (yêu cầu/báo giá vốn không có giá)
-  const freeLeadTitle =
-    currentCard?.cardType === "package"
+  // Tiêu đề form thu lead — khác nhau theo đúng ngữ cảnh nút đã bấm
+  const leadTitle =
+    currentCard?.cardType === "apply"
+      ? `Ứng Tuyển: ${meta.title || ""}`
+      : currentCard?.cardType === "request"
+      ? meta.title || "Gửi Yêu Cầu / Báo Giá"
+      : currentCard?.cardType === "claim"
+      ? `Nhận Miễn Phí: ${meta.itemName || ""}`
+      : currentCard?.cardType === "package"
       ? `Nhận Miễn Phí: ${meta.productName || ""}`
       : currentCard?.cardType === "reservation"
       ? `Đăng Ký Miễn Phí: ${meta.title || ""}`
       : `Tham Gia Miễn Phí: ${meta.planName || ""}`;
+  const leadSubtitle =
+    currentCard?.cardType === "apply"
+      ? "Để lại thông tin, ZANGX sẽ liên hệ trao đổi hồ sơ ứng tuyển của bạn."
+      : currentCard?.cardType === "request"
+      ? meta.scopeDescription
+      : currentCard?.cardType === "claim"
+      ? meta.description || "Để lại thông tin, ZANGX sẽ liên hệ gửi quà/ưu đãi cho bạn."
+      : "Để lại thông tin, ZANGX sẽ liên hệ xác nhận miễn phí cho bạn.";
 
   return (
     <div
@@ -322,15 +380,45 @@ export function PostDetailModal({
                 <Eye className="w-4 h-4 text-[#C9AA72]" />
                 <span className="font-bold">{post._count?.views || 1} lượt xem</span>
               </span>
-              <button
-                type="button"
-                onClick={() => onSharePost(post)}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#102A43] hover:bg-[#C9AA72]/20 text-[#F4F0E8] hover:text-[#C9AA72] border border-white/15 transition font-bold"
-                title="Sao chép liên kết chia sẻ"
-              >
-                <Share2 className="w-3.5 h-3.5" />
-                <span>Chia sẻ</span>
-              </button>
+
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsShareMenuOpen((v) => !v)}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#102A43] hover:bg-[#C9AA72]/20 text-[#F4F0E8] hover:text-[#C9AA72] border border-white/15 transition font-bold"
+                  title="Chia sẻ bài viết"
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                  <span>Chia sẻ</span>
+                </button>
+
+                {isShareMenuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setIsShareMenuOpen(false)} />
+                    <div className="absolute right-0 bottom-9 z-50 w-44 rounded-xl bg-[#07111F] border border-[#C9AA72]/30 shadow-2xl overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsShareMenuOpen(false);
+                          onSharePost(post);
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-semibold text-[#F4F0E8] hover:bg-[#C9AA72]/15 transition-colors"
+                      >
+                        <Link2 className="w-3.5 h-3.5 text-[#C9AA72]" />
+                        <span>Chia Sẻ Liên Kết</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleDownloadQr}
+                        className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-semibold text-[#F4F0E8] hover:bg-[#C9AA72]/15 transition-colors border-t border-white/10"
+                      >
+                        <QrCode className="w-3.5 h-3.5 text-[#A8F238]" />
+                        <span>Tải Mã QR</span>
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
 
             {renderActionButton()}
@@ -346,56 +434,19 @@ export function PostDetailModal({
                 <span>{meta.externalLink.label}</span>
               </a>
             )}
-
-            {meta.qrEnabled && currentCard && (
-              <div>
-                <button
-                  type="button"
-                  onClick={() => setShowCardQr((v) => !v)}
-                  className="w-full py-2 rounded-2xl bg-transparent border border-white/10 text-[#AEBCC5] hover:text-[#C9AA72] hover:border-[#C9AA72]/40 font-bold text-xs flex items-center justify-center gap-2 transition"
-                >
-                  <QrCode className="w-3.5 h-3.5" />
-                  <span>{showCardQr ? "Ẩn mã QR" : "Xem mã QR cho thẻ này"}</span>
-                </button>
-                {showCardQr && (
-                  <div className="flex flex-col items-center gap-1.5 p-3 mt-2 rounded-2xl bg-white">
-                    <img
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
-                        `${typeof window !== "undefined" ? window.location.origin : ""}/?post=${post.id}`
-                      )}`}
-                      alt="Mã QR tới bài viết này"
-                      className="w-32 h-32"
-                    />
-                    <p className="text-[10px] text-[#07111F]/70 text-center">Quét để mở đúng bài viết này</p>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
         </div>
       </div>
 
-      {currentCard?.cardType === "request" && (
+      {leadFlow && currentCard && (
         <RequestLeadModal
           isOpen={leadModalOpen}
           onClose={() => setLeadModalOpen(false)}
-          title={meta.title || "Gửi Yêu Cầu / Báo Giá"}
-          subtitle={meta.scopeDescription}
+          title={leadTitle}
+          subtitle={leadSubtitle}
           postId={post.id}
           postCardId={currentCard.id}
-          leadType="request"
-        />
-      )}
-
-      {isPricedCommerce && isFree && currentCard && (
-        <RequestLeadModal
-          isOpen={leadModalOpen}
-          onClose={() => setLeadModalOpen(false)}
-          title={freeLeadTitle}
-          subtitle="Để lại thông tin, ZANGX sẽ liên hệ xác nhận miễn phí cho bạn."
-          postId={post.id}
-          postCardId={currentCard.id}
-          leadType="free_claim"
+          leadType={leadFlow}
         />
       )}
 

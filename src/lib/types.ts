@@ -25,18 +25,20 @@ export type CardType =
   | 'image'
   | 'video'
   | 'doc'
-  | 'package'      // Đóng gói: giá cố định, mua ngay
-  | 'request'      // Yêu cầu / báo giá: không giá cố định
-  | 'reservation'  // Giữ chỗ: số suất có hạn, có thể đặt cọc
-  | 'membership'   // Đăng ký thành viên: gói theo kỳ hạn
-  | 'donate'       // Ủng hộ qua VietQR (dùng chung cấu hình ngân hàng ở admin)
-  | 'auction';     // Đấu giá realtime
+  | 'package'      // Mua Ngay: giá cố định
+  | 'request'      // Tư Vấn / Báo Giá: không giá cố định
+  | 'reservation'  // Đăng Ký: số suất có hạn, có thể đặt cọc
+  | 'membership'   // Tham Gia Thành Viên: gói theo kỳ hạn
+  | 'donate'       // Ủng Hộ: khách TỰ NGUYỆN cho qua VietQR
+  | 'auction'      // Đấu Giá realtime
+  | 'claim'        // Thu Nạp: khách NHẬN một thứ miễn phí (ngược hướng với donate)
+  | 'apply';       // Ứng Tuyển: dành cho bài tuyển dụng
 
 // Trường mở rộng dùng chung cho mọi loại thẻ thương mại: nút liên kết ra
-// ngoài (vd Shopee, Facebook, Zalo OA...) và mã QR dẫn thẳng về thẻ này.
+// ngoài (vd Shopee, Facebook, Zalo OA...). Mã QR không còn là tùy chọn bật/tắt
+// riêng ở đây nữa — mọi bài đều có thể tải QR qua nút Chia Sẻ (dùng chung).
 export interface CommerceCardExtras {
   externalLink?: { label: string; url: string };
-  qrEnabled?: boolean;
 }
 
 export interface PackageCardMeta extends CommerceCardExtras {
@@ -82,6 +84,20 @@ export interface AuctionCardMeta extends CommerceCardExtras {
   startingPrice: number;
   minIncrement: number;
   endsAt: string;
+  contentCategory: string;
+}
+
+export interface ClaimCardMeta extends CommerceCardExtras {
+  itemName: string;
+  stock?: number;
+  description?: string;
+  contentCategory: string;
+}
+
+export interface ApplyCardMeta extends CommerceCardExtras {
+  title: string;
+  scopeDescription: string;
+  estimatedRange?: string;
   contentCategory: string;
 }
 
