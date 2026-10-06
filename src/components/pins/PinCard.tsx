@@ -3,6 +3,7 @@
 import React, { useState, useRef } from "react";
 import { PostData } from "@/lib/types";
 import { COMMERCE_CARD_META, findCommerceCard, getCtaLabel } from "@/lib/cardTypeMeta";
+import { useToast } from "@/components/ui/Toast";
 import {
   Heart,
   Share2,
@@ -11,6 +12,9 @@ import {
   Video,
   FileText,
   Sparkles,
+  Trash2,
+  Link2,
+  QrCode,
 } from "lucide-react";
 
 interface PinCardProps {
@@ -19,6 +23,8 @@ interface PinCardProps {
   onOpenDetail: (post: PostData) => void;
   onOpenGift: (postId: string) => void;
   onShare: (post: PostData) => void;
+  onDelete: (postId: string) => void;
+  isOwner: boolean;
 }
 
 export function PinCard({
@@ -27,9 +33,36 @@ export function PinCard({
   onOpenDetail,
   onOpenGift,
   onShare,
+  onDelete,
+  isOwner,
 }: PinCardProps) {
+  const { showToast } = useToast();
   const [isHovered, setIsHovered] = useState(false);
+  const [isShareMenuOpen, setIsShareMenuOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  // Tải mã QR dẫn thẳng tới bài này về máy — lựa chọn thứ 2 trong menu Chia Sẻ
+  const handleDownloadQr = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsShareMenuOpen(false);
+    try {
+      const link = `${window.location.origin}${window.location.pathname}?post=${post.id}`;
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(link)}`;
+      const res = await fetch(qrUrl);
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = objectUrl;
+      a.download = `qr-${post.id}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(objectUrl);
+      showToast("Đã tải mã QR về máy!", "success");
+    } catch {
+      showToast("Không thể tải mã QR", "error");
+    }
+  };
 
   const firstCard = post.cards?.[0];
   const isVideo = firstCard?.cardType === "video";
@@ -161,18 +194,62 @@ export function PinCard({
             </div>
 
             {/* Bottom action row */}
-            <div className="flex justify-end pointer-events-auto">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onShare(post);
-                }}
-                className="w-8 h-8 rounded-full bg-[#07111F]/85 hover:bg-[#C9AA72] text-[#F4F0E8] hover:text-[#07111F] border border-white/20 hover:border-[#C9AA72] flex items-center justify-center shadow-lg transition-colors"
-                title="Chia sẻ liên kết Pin"
-              >
-                <Share2 className="w-3.5 h-3.5" />
-              </button>
+            <div className="flex justify-end items-center gap-2 pointer-events-auto">
+              {isOwner && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(post.id);
+                  }}
+                  className="w-8 h-8 rounded-full bg-[#07111F]/85 hover:bg-red-500 text-[#F4F0E8] hover:text-white border border-white/20 hover:border-red-500 flex items-center justify-center shadow-lg transition-colors"
+                  title="Xóa bài viết"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              )}
+
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsShareMenuOpen((prev) => !prev);
+                  }}
+                  className="w-8 h-8 rounded-full bg-[#07111F]/85 hover:bg-[#C9AA72] text-[#F4F0E8] hover:text-[#07111F] border border-white/20 hover:border-[#C9AA72] flex items-center justify-center shadow-lg transition-colors"
+                  title="Chia sẻ liên kết Pin"
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                </button>
+
+                {isShareMenuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setIsShareMenuOpen(false); }} />
+                    <div className="absolute right-0 bottom-10 z-50 w-44 rounded-xl bg-[#07111F] border border-[#C9AA72]/30 shadow-2xl overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsShareMenuOpen(false);
+                          onShare(post);
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-semibold text-[#F4F0E8] hover:bg-[#C9AA72]/15 transition-colors"
+                      >
+                        <Link2 className="w-3.5 h-3.5 text-[#C9AA72]" />
+                        <span>Chia Sẻ Liên Kết</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleDownloadQr}
+                        className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-semibold text-[#F4F0E8] hover:bg-[#C9AA72]/15 transition-colors border-t border-white/10"
+                      >
+                        <QrCode className="w-3.5 h-3.5 text-[#A8F238]" />
+                        <span>Tải Mã QR</span>
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>

@@ -11,6 +11,7 @@ interface ShowroomPinterestProps {
   onOpenPostDetail: (post: PostData) => void;
   onOpenGift: (postId: string) => void;
   onSharePost: (post: PostData) => void;
+  onDeletePost: (postId: string) => void;
   filterSheetOpen: boolean;
   onCloseFilterSheet: () => void;
   resetSignal: number;
@@ -22,6 +23,7 @@ export function ShowroomPinterest({
   onOpenPostDetail,
   onOpenGift,
   onSharePost,
+  onDeletePost,
   filterSheetOpen,
   onCloseFilterSheet,
   resetSignal,
@@ -210,6 +212,8 @@ export function ShowroomPinterest({
               onOpenDetail={onOpenPostDetail}
               onOpenGift={onOpenGift}
               onShare={onSharePost}
+              onDelete={onDeletePost}
+              isOwner={isOwner}
             />
           ))}
 

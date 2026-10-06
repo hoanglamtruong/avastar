@@ -173,6 +173,23 @@ export default function FeedPage() {
     }
   };
 
+  // Xóa bài demo/test ngay trên lưới Hub (Owner) — không cần qua trang Quản Trị
+  const handleDeletePost = async (postId: string) => {
+    if (!window.confirm("Bạn có chắc muốn xóa bài viết này không? Không thể hoàn tác.")) return;
+    try {
+      const res = await fetch(`/api/posts/${postId}`, { method: "DELETE" });
+      if (res.ok) {
+        showToast("Đã xóa bài viết thành công!", "success");
+        setPosts((prev) => prev.filter((p) => p.id !== postId));
+      } else {
+        const err = await res.json();
+        showToast(err.error || "Không thể xóa bài viết", "error");
+      }
+    } catch {
+      showToast("Lỗi kết nối khi xóa bài viết", "error");
+    }
+  };
+
   const handleGiftSent = useCallback((giftValue: number) => {
     setPosts((prev) =>
       prev.map((p) =>
@@ -211,6 +228,7 @@ export default function FeedPage() {
           setIsGiftModalOpen(true);
         }}
         onSharePost={handleSharePost}
+        onDeletePost={handleDeletePost}
         filterSheetOpen={isFilterSheetOpen}
         onCloseFilterSheet={() => setIsFilterSheetOpen(false)}
         resetSignal={resetSignal}
