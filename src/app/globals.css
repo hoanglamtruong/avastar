@@ -1,65 +1,196 @@
 @import "tailwindcss";
 
-@layer base {
-  :root {
-    --primary: #102A43;
-    --accent-blue: #C9AA72;
-    --soft-lavender: #F4F0E8;
-    --accent-orange: #8B6F3F;
-    --accent-gold: #C9AA72;
-    --dark-bg: #07111F;
-    --dark-card: rgba(16, 42, 67, 0.75);
-  }
+/* ==========================================================================
+   ZANGX — THE DIGITAL ATELIER · DESIGN SYSTEM & BRAND TOKENS
+   Version: 2.4 | Brand Color Palette & Typography Specification
+   ========================================================================== */
 
-  body {
-    background-color: var(--dark-bg);
-    color: var(--soft-lavender);
-    font-family: "Manrope", system-ui, -apple-system, sans-serif;
-    overflow-x: hidden;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-  }
+:root {
+  /* 1. Official Brand Color Palette */
+  --zangx-cosmic-navy: #07111F;   /* Nền chính - Sang trọng, Chiều sâu */
+  --zangx-deep-blue: #102A43;     /* Phụ - Ổn định, Chuyên nghiệp */
+  --zangx-ivory: #F4F0E8;         /* Nền sáng - Tinh tế, Hiện đại */
+  --zangx-champagne: #C9AA72;     /* Nhấn cao cấp - Ấm áp, Giá trị */
+  --zangx-champagne-light: #F2DFB8;
+  --zangx-champagne-dark: #9A7B44;
+  --zangx-mist: #AEBCC5;          /* Phụ trợ - Cân bằng, Trung tính */
+  --zangx-mist-dark: #526575;     /* Mist tương phản cao cho nền sáng */
+  --zangx-green: #A8F238;         /* Điểm nhấn - Tăng trưởng, Công nghệ */
+  --zangx-green-dark: #3F7502;    /* Green tương phản cao cho nền sáng */
+
+  /* 2. Official Typography System */
+  --font-primary: "Manrope", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-editorial: "Playfair Display", Georgia, "Times New Roman", serif;
+
+  /* 3. Semantic Theme Variables — Default Dark (Cosmic Navy Canvas) */
+  --bg-canvas: #07111F;
+  --surface-card: rgba(16, 42, 67, 0.65);
+  --surface-card-solid: #102A43;
+  --surface-elevated: #102A43;
+  --text-primary: #F4F0E8;
+  --text-secondary: #AEBCC5;
+  --text-muted: rgba(174, 188, 197, 0.6);
+  --accent-spark: #C9AA72;
+  --accent-gold: #C9AA72;
+  --accent-active: #A8F238;
+  --accent-green: #A8F238;
+  --border-subtle: rgba(244, 240, 232, 0.12);
+  --border-gold: rgba(201, 170, 114, 0.35);
+  --glass-bg: rgba(16, 42, 67, 0.65);
+  --glass-border: rgba(244, 240, 232, 0.15);
+  --glow-gold: rgba(201, 170, 114, 0.15);
+  --glow-green: rgba(168, 242, 56, 0.1);
+  --dock-bg: rgba(7, 17, 31, 0.85);
+
+  /* Legacy aliases for backward compatibility */
+  --primary: #102A43;
+  --accent-blue: #C9AA72;
+  --soft-lavender: #F4F0E8;
+  --dark-bg: #07111F;
+  --dark-card: rgba(16, 42, 67, 0.75);
 }
 
-/* Glassmorphism Classes */
+/* ==========================================================================
+   THEME SÁNG — LIGHT THEME (IVORY CANVAS)
+   ========================================================================== */
+[data-theme="light"], .light {
+  --bg-canvas: #F4F0E8;
+  --surface-card: rgba(255, 255, 255, 0.90);
+  --surface-card-solid: #FFFFFF;
+  --surface-elevated: #FFFFFF;
+  --text-primary: #07111F;
+  --text-secondary: #526575;
+  --text-muted: rgba(7, 17, 31, 0.55);
+  --accent-spark: #9A7B44;
+  --accent-gold: #9A7B44;
+  --accent-active: #3F7502;
+  --accent-green: #3F7502;
+  --border-subtle: rgba(7, 17, 31, 0.12);
+  --border-gold: rgba(154, 123, 68, 0.4);
+  --glass-bg: rgba(255, 255, 255, 0.88);
+  --glass-border: rgba(7, 17, 31, 0.12);
+  --glow-gold: rgba(201, 170, 114, 0.35);
+  --glow-green: rgba(168, 242, 56, 0.25);
+  --dock-bg: rgba(244, 240, 232, 0.92);
+
+  /* Legacy aliases */
+  --primary: #F4F0E8;
+  --soft-lavender: #07111F;
+  --dark-bg: #F4F0E8;
+  --dark-card: rgba(255, 255, 255, 0.9);
+}
+
+/* Base Body Styles */
+body {
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
+  font-family: var(--font-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Typography Utility Classes */
+.font-manrope, .font-primary, .zx-sans {
+  font-family: var(--font-primary);
+}
+
+.font-playfair, .font-editorial, .font-serif-brand, .zx-serif {
+  font-family: var(--font-editorial);
+}
+
+/* Glassmorphism Styles */
 .glass-panel {
-  background: rgba(16, 42, 67, 0.75);
+  background: var(--surface-card);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(244, 240, 232, 0.15);
-  box-shadow: 0 12px 32px 0 rgba(0, 0, 0, 0.37);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 12px 32px 0 rgba(0, 0, 0, 0.15);
   border-radius: 20px;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .glass-pill {
-  background: rgba(16, 42, 67, 0.65);
+  background: var(--glass-bg);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(244, 240, 232, 0.2);
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 .glass-gold-glow {
-  box-shadow: 0 0 25px rgba(201, 170, 114, 0.35);
+  box-shadow: 0 0 25px var(--glow-gold);
 }
 
 .glass-blue-glow {
-  box-shadow: 0 0 25px rgba(201, 170, 114, 0.35);
+  box-shadow: 0 0 25px var(--glow-gold);
 }
 
-/* Custom Slim Scrollbars for Box Doc */
+/* Light Mode Overrides for Hardcoded Palette Classes */
+[data-theme="light"] {
+  .bg-\[\#07111F\] {
+    background-color: #F4F0E8 !important;
+  }
+  .bg-\[\#07111F\]\/80,
+  .bg-\[\#07111F\]\/85,
+  .bg-\[\#07111F\]\/90 {
+    background-color: rgba(244, 240, 232, 0.9) !important;
+    color: #07111F !important;
+  }
+  .bg-\[\#102A43\],
+  .bg-\[\#102A43\]\/30,
+  .bg-\[\#102A43\]\/40,
+  .bg-\[\#102A43\]\/50,
+  .bg-\[\#102A43\]\/60,
+  .bg-\[\#102A43\]\/70,
+  .bg-\[\#102A43\]\/80,
+  .bg-\[\#102A43\]\/90 {
+    background-color: rgba(255, 255, 255, 0.92) !important;
+    border-color: rgba(7, 17, 31, 0.12) !important;
+    box-shadow: 0 8px 24px rgba(7, 17, 31, 0.06) !important;
+  }
+  .text-\[\#F4F0E8\] {
+    color: #07111F !important;
+  }
+  .text-\[\#AEBCC5\] {
+    color: #526575 !important;
+  }
+  .border-white\/10,
+  .border-white\/15,
+  .border-white\/20,
+  .border-white\/30 {
+    border-color: rgba(7, 17, 31, 0.12) !important;
+  }
+  .glass-pill {
+    background: rgba(255, 255, 255, 0.88) !important;
+    border-color: rgba(7, 17, 31, 0.12) !important;
+    color: #07111F !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+  }
+  input, textarea, select {
+    color: #07111F !important;
+  }
+  /* Atelier Dock in Light mode */
+  .fixed.bottom-6 nav, .fixed.bottom-6 .glass-pill {
+    background: rgba(255, 255, 255, 0.94) !important;
+    border-color: rgba(154, 123, 68, 0.35) !important;
+    box-shadow: 0 16px 40px rgba(7, 17, 31, 0.12) !important;
+  }
+}
+
+/* Custom Slim Scrollbars */
 .custom-slim-scroll::-webkit-scrollbar {
   width: 4px;
 }
 .custom-slim-scroll::-webkit-scrollbar-track {
-  background: rgba(7, 17, 31, 0.4);
+  background: rgba(7, 17, 31, 0.2);
   border-radius: 4px;
 }
 .custom-slim-scroll::-webkit-scrollbar-thumb {
-  background: rgba(201, 170, 114, 0.5);
+  background: var(--accent-gold);
   border-radius: 4px;
-}
-.custom-slim-scroll::-webkit-scrollbar-thumb:hover {
-  background: #C9AA72;
 }
 
 /* Hide scrollbar utility */
@@ -69,17 +200,6 @@
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
-}
-
-/* Snap Scroll Physics */
-.snap-y-mandatory {
-  scroll-snap-type: y mandatory;
-}
-.snap-start {
-  scroll-snap-align: start;
-}
-.snap-always {
-  scroll-snap-stop: always;
 }
 
 /* Animations */
@@ -99,8 +219,4 @@
 
 .animate-pulse-gold {
   animation: pulseGold 2s infinite ease-in-out;
-}
-
-.font-serif-brand {
-  font-family: "Playfair Display", Georgia, "Times New Roman", serif;
 }

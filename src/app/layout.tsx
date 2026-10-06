@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
+import { ThemeProvider } from "@/context/ThemeContext";
 import { ToastProvider } from "@/components/ui/Toast";
 import { CreatePostFab } from "@/components/CreatePostFab";
 
@@ -41,17 +42,19 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Playfair+Display:wght@500;600;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&display=swap"
           rel="stylesheet"
         />
       </head>
       <body className="bg-[#07111F] text-[#F4F0E8] antialiased min-h-[100dvh]">
-        <AuthProvider>
-          <ToastProvider>
-            {children}
-            <CreatePostFab />
-          </ToastProvider>
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <ToastProvider>
+              {children}
+              <CreatePostFab />
+            </ToastProvider>
+          </AuthProvider>
+        </ThemeProvider>
         <script
           dangerouslySetInnerHTML={{
             __html: `

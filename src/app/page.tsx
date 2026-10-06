@@ -8,6 +8,7 @@ import { ViewAnalyticsModal } from "@/components/modals/ViewAnalyticsModal";
 import { AuthModal } from "@/components/modals/AuthModal";
 import { AtelierDock } from "@/components/AtelierDock";
 import { ShowroomPinterest } from "@/components/ShowroomPinterest";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { ZxLogoLockup } from "@/components/portfolio/ZxStar";
 import { ChatDrawer } from "@/components/modals/ChatDrawer";
 import { useAuth } from "@/context/AuthContext";
@@ -252,6 +253,7 @@ export default function FeedPage() {
 
         {/* Action Controls & Profile */}
         <div className="pointer-events-auto flex items-center gap-2">
+          <ThemeToggle />
           {isOwner && (
             <Link
               href="/admin"

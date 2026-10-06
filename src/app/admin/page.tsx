@@ -8,6 +8,7 @@ import { formatCurrency } from "@/lib/utils";
 import { PostData } from "@/lib/types";
 import { CARD_KIND_META } from "@/lib/cardTypeMeta";
 import { EditPostModal } from "@/components/modals/EditPostModal";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { ZxLogoLockup } from "@/components/portfolio/ZxStar";
 import {
   ShieldCheck,
@@ -327,6 +328,7 @@ export default function AdminPage() {
             </div>
           </div>
 
+          <ThemeToggle />
           <Link
             href="/"
             className="px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-xs font-bold text-[#AEBCC5] hover:text-white border border-white/10 transition flex items-center gap-1"
