@@ -330,3 +330,27 @@ Google TU CHOI dia chi IP Tailscale thuan (100.117.42.100) lam Authorized JavaSc
 VERIFIED (gioi han do dac thu OAuth popup can thao tac nguoi that): mo "Tao Bai Viet Moi" -> bam "Google Ảnh" -> xac nhan qua console log trinh duyet dung URL duoc tao chinh xac (client_id/scope/origin dung) -> popup bi CHINH TRINH DUYET SANDBOX cua Ccode chan (chinh sach an toan: popup chi mo duoc tu thao tac nguoi that, khong phai tu cong cu tu dong) — day la gioi han cua moi truong test tu dong, KHONG phai loi code. CEO can tu bam thu that trong trinh duyet that (khong qua Ccode) de hoan tat kiem tra toan luong, hoac doi den khi len production.
 
 Container avastar (8107) khong bi dung. Chua deploy domain that.
+
+[06:44] [Ccode] [VONG 26 · DEPLOY PRODUCTION zangx.io.vn (Vong 13 -> 25) + sua loi Google Anh + sua loi PWA ket giao dien cu] PASS✅ — CEO ra lenh ro "Cho phep deploy len zangx.io.vn" (Human Node deploy, sau khi CEO tu test ban duyet).
+
+TRUOC DEPLOY — sua 1 loi Google Anh CEO phat hien khi tu test qua HTTPS Tailscale:
+- Dang nhap Google da qua (sau khi them scope photospicker vao Data Access + chuyen ban duyet sang https://zang.tailcdea95.ts.net qua `tailscale serve`, tailnet-only, sau khi CEO chay `sudo tailscale set --operator=zang`), nhung bao "Khong tao duoc phien chon anh Google". Nguyen nhan: code gui maxItemCount o cap ngoai cung, API yeu cau nam trong pickingConfig.maxItemCount -> 400. Da sua + them ma loi/noi dung loi API vao thong bao de lan sau chan doan duoc ngay.
+- Ghi chu: may laptop CEO dung Cloudflare WARP lam DNS (127.0.2.2/.3) nen khong tu phan giai duoc ten *.ts.net — huong dan CEO them 1 dong /etc/hosts (hoac Local Domain Fallback trong WARP).
+
+DEPLOY:
+1. Phat hien production KHONG CO volume uploads (file upload nam trong container, mat khi rebuild) va media upload luc duyet (avatar, slide...) chi nam o thu muc review -> tren production bi 404 vi DB dung chung. Tao thu muc dung chung /mnt/data/ssd/avastar-uploads (copy 8.7MB tu review, khong xoa ban goc), mount cho CA 2 container (review + production) — khop voi viec 2 ben da dung chung 1 DB.
+2. docker-compose.yml (co track git): them volume uploads + build arg NEXT_PUBLIC_GOOGLE_CLIENT_ID (doc tu .env gitignored). Demo login VAN TAT o production (da kiem tra trong bundle: NEXT_PUBLIC_ALLOW_DEMO_LOGIN=false; /api/auth/switch tra 403).
+3. Tag image cu avastar-app:rollback-c03e960 de co the quay lai ngay neu can (khong ton them dung luong).
+4. /home/zang/avastar (main, sach) fast-forward tu nhanh review (c03e960 -> da7c7fd, khong merge conflict). .env production co san: CHI THEM 1 dong GOOGLE_CLIENT_ID, khong dong cham cac dong cu.
+5. Build + swap container avastar (8107). DB dung chung nen bang categories/12 danh muc da co san, khong can db push lai.
+
+PHAT HIEN THEM KHI KIEM TRA SAU DEPLOY — loi that cua production:
+- Trinh duyet van hien GIAO DIEN CU du server tra HTML moi (Cloudflare khong cache: cf-cache-status DYNAMIC). Nguyen nhan: public/sw.js (PWA) phuc vu MOI request GET theo kieu cache-first, ke ca HTML trang chu, va ten cache khong doi qua cac ban -> khach da tung vao se LUON thay ban cu, tre 1 phien ban sau moi lan deploy. Da sua: trang HTML (navigate) -> network-first, chi dung cache khi offline; file tinh co hash giu cache-first; doi ten cache v2 -> v3 de tu xoa cache cu cua khach hien tai. Build + deploy lai production.
+
+VERIFIED tren https://zangx.io.vn: /, /admin, /api/categories, /api/hero, /api/posts deu 200; avatar /uploads/... (truoc 404) nay 200; /sw.js da la v3; /api/auth/switch 403. Mo bang trinh duyet: sau 1 lan tai lai, giao dien MOI hien dung (hero avatar + gioi thieu, badge danh muc that, dock 3 nut Loc/Home/Dang nhap, nut Sang/Toi), anh the tai du (4/4).
+
+CON LAI / CAN CEO:
+- Test nut "Google Anh" tren https://zangx.io.vn (popup dang nhap Google can CEO bam that, Ccode khong tu bam duoc).
+- Telegram thong bao van chua co BOT TOKEN/CHAT ID (tu Vong 17).
+- Commit chua day len remote nao (GitHub auth tren Dell van hong; repo production co remote "gitea" noi bo — chua push, cho CEO quyet).
+- O dia / dang 92% (8.8G trong) — da don build cache, phan con lai do du lieu khac tren may, Ccode khong tu xoa.
