@@ -33,7 +33,8 @@ export async function POST(
     const token = await signToken(sessionUser);
     cookieStore.set("avastar_token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: false,
+      sameSite: "lax",
       maxAge: 30 * 24 * 60 * 60,
       path: "/",
     });
@@ -61,7 +62,8 @@ export async function POST(
       const token = await signToken(sessionUser);
       cookieStore.set("avastar_token", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: false,
+      sameSite: "lax",
         maxAge: 30 * 24 * 60 * 60,
         path: "/",
       });
@@ -92,7 +94,8 @@ export async function POST(
     const token = await signToken(sessionUser);
     cookieStore.set("avastar_token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: false,
+      sameSite: "lax",
       maxAge: 30 * 24 * 60 * 60,
       path: "/",
     });
@@ -118,7 +121,8 @@ export async function POST(
       const token = await signToken(sessionUser);
       cookieStore.set("avastar_token", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: false,
+      sameSite: "lax",
         maxAge: 30 * 24 * 60 * 60,
         path: "/",
       });

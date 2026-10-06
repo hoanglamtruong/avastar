@@ -371,6 +371,9 @@ export default function AdminPage() {
               src={adminAvatarUrl || user?.avatarUrl || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100"}
               alt=""
               className="w-8 h-8 rounded-full object-cover border border-[#C9AA72]/50 shadow"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100";
+              }}
             />
             <div className="text-left hidden md:block">
               <p className="text-xs font-black text-white">{adminFullName || user?.fullName}</p>
@@ -1004,6 +1007,9 @@ export default function AdminPage() {
                     src={adminAvatarUrl || user?.avatarUrl || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200"}
                     alt=""
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200";
+                    }}
                   />
                 </div>
                 <div>
