@@ -5,11 +5,13 @@ import {
   Upload,
   FolderOpen,
   Image as ImageIcon,
+  Images,
   Loader2,
   X,
   Check,
   RefreshCw,
 } from "lucide-react";
+import { pickFromGooglePhotos } from "@/lib/googlePhotosPicker";
 
 interface MediaItem {
   url: string;
@@ -37,6 +39,7 @@ export function MediaPicker({
   accept = "image/*",
 }: MediaPickerProps) {
   const [isUploading, setIsUploading] = useState(false);
+  const [isPickingFromGoogle, setIsPickingFromGoogle] = useState(false);
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const [libraryItems, setLibraryItems] = useState<MediaItem[]>([]);
   const [isLoadingLibrary, setIsLoadingLibrary] = useState(false);
@@ -61,6 +64,47 @@ export function MediaPicker({
   const handleOpenLibrary = () => {
     setIsLibraryOpen(true);
     fetchLibrary();
+  };
+
+  const MIME_EXT: Record<string, string> = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "image/gif": "gif",
+    "video/mp4": "mp4",
+    "video/webm": "webm",
+    "video/quicktime": "mov",
+  };
+
+  const handlePickFromGooglePhotos = async () => {
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      alert("Chưa cấu hình Google Ảnh (thiếu Client ID) — liên hệ kỹ thuật để bật tính năng này.");
+      return;
+    }
+    setIsPickingFromGoogle(true);
+    try {
+      const picked = await pickFromGooglePhotos(clientId);
+      if (!picked) {
+        setIsPickingFromGoogle(false);
+        return;
+      }
+      const ext = MIME_EXT[picked.mimeType] || (picked.isVideo ? "mp4" : "jpg");
+      const file = new File([picked.blob], `google-photos-${Date.now()}.${ext}`, { type: picked.mimeType });
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        onChange(data.url);
+      } else {
+        alert(data.error || "Lỗi khi tải ảnh từ Google Ảnh");
+      }
+    } catch (err: any) {
+      alert("Không thể chọn ảnh từ Google Ảnh: " + (err?.message || "Lỗi không xác định"));
+    } finally {
+      setIsPickingFromGoogle(false);
+    }
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -161,6 +205,21 @@ export function MediaPicker({
           >
             <FolderOpen className="w-3.5 h-3.5" />
             <span>Kho lưu trữ</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handlePickFromGooglePhotos}
+            disabled={isPickingFromGoogle}
+            className="px-3 py-2 rounded-xl bg-[#102A43] hover:bg-[#102A43]/80 border border-white/20 text-[#F4F0E8] text-xs font-bold flex items-center gap-1.5 transition active:scale-95 disabled:opacity-50 shadow-md"
+            title="Chọn ảnh/video từ Google Ảnh"
+          >
+            {isPickingFromGoogle ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-[#C9AA72]" />
+            ) : (
+              <Images className="w-3.5 h-3.5 text-[#C9AA72]" />
+            )}
+            <span>{isPickingFromGoogle ? "Đang chọn..." : "Google Ảnh"}</span>
           </button>
         </div>
       </div>
