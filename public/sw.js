@@ -1,4 +1,4 @@
-const CACHE_NAME = "avastar-pwa-v2";
+const CACHE_NAME = "avastar-pwa-v3";
 const STATIC_ASSETS = [
   "/",
   "/landing",
@@ -36,6 +36,23 @@ self.addEventListener("fetch", (event) => {
   // Do not cache API requests or socket.io
   const url = new URL(event.request.url);
   if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/socket.io/")) {
+    return;
+  }
+
+  // Trang HTML: luôn lấy bản mới từ mạng, chỉ dùng cache khi offline —
+  // tránh khách cũ bị kẹt ở giao diện cũ sau mỗi lần deploy.
+  if (event.request.mode === "navigate") {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response && response.status === 200 && response.type === "basic") {
+            const cacheCopy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, cacheCopy));
+          }
+          return response;
+        })
+        .catch(() => caches.match(event.request).then((cached) => cached || caches.match("/")))
+    );
     return;
   }
 
