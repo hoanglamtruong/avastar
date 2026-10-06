@@ -87,7 +87,7 @@ export function PinCard({
 
   const catInfo = commerceCard
     ? { label: COMMERCE_CARD_META[commerceCard.cardType]?.label || post.category, color: COMMERCE_CARD_META[commerceCard.cardType]?.color || "text-[#C9AA72] border-[#C9AA72]/30" }
-    : { label: "Nội Dung", color: "text-[#F4F0E8] border-white/20" };
+    : { label: post.category || "Nội Dung", color: "text-[#F4F0E8] border-white/20" };
 
   return (
     <article

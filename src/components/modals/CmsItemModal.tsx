@@ -159,7 +159,7 @@ export function CmsItemModal({ isOpen, onClose, section, item, onSaved }: CmsIte
 
   return (
     <div
-      className="fixed inset-0 z-[1050] bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-float-up"
+      className="fixed inset-0 z-[1050] bg-[#030810] backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-float-up"
       onClick={onClose}
     >
       <div

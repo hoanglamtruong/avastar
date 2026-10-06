@@ -207,7 +207,7 @@ export function PostDetailModal({
 
   return (
     <div
-      className="fixed inset-0 z-[990] bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-float-up"
+      className="fixed inset-0 z-[990] bg-[#030810] backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-float-up"
       onClick={onClose}
     >
       <div

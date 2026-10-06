@@ -131,7 +131,7 @@ export function GiftModal({ isOpen, onClose, postId, onGiftSent }: GiftModalProp
 
   return (
     <div
-      className="fixed inset-0 z-[1000] bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 animate-float-up"
+      className="fixed inset-0 z-[1000] bg-[#030810] backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 animate-float-up"
       onClick={onClose}
     >
       <div

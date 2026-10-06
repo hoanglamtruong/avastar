@@ -310,7 +310,7 @@ export function EditPostModal({ post, isOpen, onClose, onUpdated }: EditPostModa
   const hintCls = "text-[11px] text-[#A8F238]/90 mt-1";
 
   return (
-    <div className="fixed inset-0 z-[1000] bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div className="fixed inset-0 z-[1000] bg-[#030810] backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div className="w-full max-w-lg h-[90vh] sm:h-auto sm:max-h-[88vh] rounded-t-[28px] sm:rounded-[28px] glass-panel border border-[#C9AA72]/30 p-5 flex flex-col shadow-2xl bg-[#07111F]/98 overflow-hidden">
         <div className="flex items-center justify-between pb-3 border-b border-[#F4F0E8]/15 shrink-0">
           <h3 className="text-sm font-extrabold text-white">Sửa Bài Viết</h3>

@@ -200,7 +200,7 @@ export function HeroEditModal({ isOpen, onClose, onSaved }: HeroEditModalProps) 
   const labelCls = "block text-xs font-semibold text-[#F4F0E8]/80 mb-1.5";
 
   return (
-    <div className="fixed inset-0 z-[1000] bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-[1000] bg-[#030810] backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={onClose}>
       <div
         className="w-full max-w-lg max-h-[88vh] rounded-t-[28px] sm:rounded-[28px] glass-panel border border-[#C9AA72]/30 p-5 flex flex-col shadow-2xl bg-[#07111F]/98 overflow-hidden"
         onClick={(e) => e.stopPropagation()}

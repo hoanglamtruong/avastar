@@ -101,7 +101,7 @@ export function AuctionBidModal({ isOpen, onClose, postCardId, meta }: AuctionBi
   };
 
   return (
-    <div className="fixed inset-0 z-[1000] bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 animate-float-up" onClick={onClose}>
+    <div className="fixed inset-0 z-[1000] bg-[#030810] backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 animate-float-up" onClick={onClose}>
       <div
         className="w-full max-w-md max-h-[90vh] rounded-t-[28px] sm:rounded-[28px] bg-[#07111F]/98 border border-[#E879F9]/40 p-5 shadow-2xl relative overflow-y-auto custom-slim-scroll flex flex-col gap-4 text-white"
         onClick={(e) => e.stopPropagation()}

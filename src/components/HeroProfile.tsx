@@ -57,7 +57,7 @@ export function HeroProfile({ isOwner }: HeroProfileProps) {
   const current = slides[activeSlide];
 
   return (
-    <section className="relative z-10 max-w-3xl mx-auto pt-6 pb-6 px-2">
+    <section className="relative max-w-3xl mx-auto pt-6 pb-6 px-2">
       <div className="flex flex-col items-center text-center">
         <div className="relative">
           <img

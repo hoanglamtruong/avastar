@@ -110,7 +110,7 @@ export function ShowroomPinterest({
       </section>
 
       {filterSheetOpen && (
-        <div className="fixed inset-0 z-[1000] bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={onCloseFilterSheet}>
+        <div className="fixed inset-0 z-[1000] bg-[#030810] backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={onCloseFilterSheet}>
           <div
             className="w-full sm:max-w-lg max-h-[80vh] rounded-t-[24px] sm:rounded-[24px] bg-[#07111F]/98 border border-[#C9AA72]/30 p-5 shadow-2xl overflow-y-auto custom-slim-scroll"
             onClick={(e) => e.stopPropagation()}
