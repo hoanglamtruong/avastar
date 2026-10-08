@@ -33,7 +33,8 @@ export type CardType =
   | 'auction'      // Đấu Giá realtime
   | 'claim'        // Thu Nạp: khách NHẬN một thứ miễn phí (ngược hướng với donate)
   | 'apply'        // Ứng Tuyển: dành cho bài tuyển dụng
-  | 'link';        // Liên Kết Ngoài: nút riêng mở 1 trang bên ngoài (Shopee, Facebook, Zalo...)
+  | 'link'         // Liên Kết Ngoài: nút riêng mở 1 trang bên ngoài (Shopee, Facebook, Zalo...)
+  | 'download';    // Tải Về: nút riêng tải 1 file (tài liệu/ứng dụng) đã upload sẵn
 
 export interface PackageCardMeta {
   productName: string;
@@ -96,6 +97,11 @@ export interface ApplyCardMeta {
 }
 
 export interface LinkCardMeta {
+  label: string;
+  url: string;
+}
+
+export interface DownloadCardMeta {
   label: string;
   url: string;
 }

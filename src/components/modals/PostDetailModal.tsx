@@ -114,7 +114,7 @@ export function PostDetailModal({
   };
 
   const renderCommerceSummary = () => {
-    if (!commerceMeta || currentCard.cardType === "donate" || currentCard.cardType === "link") return null;
+    if (!commerceMeta || currentCard.cardType === "donate" || currentCard.cardType === "link" || currentCard.cardType === "download") return null;
     const Icon = commerceMeta.icon;
     return (
       <div className="p-3 rounded-2xl bg-[#102A43]/60 border border-[#F4F0E8]/10 space-y-1.5 text-xs">
@@ -219,6 +219,13 @@ export function PostDetailModal({
         setAuctionModalOpen(true);
       } else if (currentCard.cardType === "link") {
         window.open(meta.url, "_blank", "noopener,noreferrer");
+      } else if (currentCard.cardType === "download") {
+        const a = document.createElement("a");
+        a.href = meta.url;
+        a.download = "";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
       } else if (leadFlow) {
         setLeadModalOpen(true);
       } else if (isPricedCommerce) {

@@ -4,8 +4,9 @@ import React from "react";
 import { Trash2 } from "lucide-react";
 import { ActionDraft, ActionKind } from "@/lib/actionDraft";
 import { CARD_KIND_META } from "@/lib/cardTypeMeta";
+import { MediaPicker } from "@/components/ui/MediaPicker";
 
-const ACTION_KIND_ORDER: ActionKind[] = ["package", "request", "reservation", "membership", "apply", "claim", "donate", "auction", "link"];
+const ACTION_KIND_ORDER: ActionKind[] = ["package", "request", "reservation", "membership", "apply", "claim", "donate", "auction", "link", "download"];
 
 interface ActionButtonFieldsProps {
   action: ActionDraft;
@@ -216,6 +217,22 @@ export function ActionButtonFields({ action, index, onChange, onRemove }: Action
             <label className={labelCls}>Đường dẫn *</label>
             <input value={action.linkUrl} onChange={(e) => onChange({ linkUrl: e.target.value })} className={inputCls} placeholder="https://..." />
           </div>
+        </>
+      )}
+
+      {action.kind === "download" && (
+        <>
+          <div>
+            <label className={labelCls}>Nhãn nút</label>
+            <input value={action.linkLabel} onChange={(e) => onChange({ linkLabel: e.target.value })} className={inputCls} placeholder="Tải Về" />
+          </div>
+          <MediaPicker
+            label="File để khách tải về *"
+            value={action.linkUrl}
+            onChange={(url) => onChange({ linkUrl: url })}
+            placeholder="Tải file lên — PDF, ZIP, APK, DOC, XLS, PPT... (tối đa 30MB)"
+            accept=".pdf,.zip,.apk,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.rar,.7z,.exe,.dmg"
+          />
         </>
       )}
     </div>

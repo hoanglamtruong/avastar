@@ -5,7 +5,7 @@ import { CardType } from "@/lib/types";
 // thay vì chọn 1 "hình thái" duy nhất cho cả bài như trước. "Liên Kết Ngoài"
 // (link) là 1 lựa chọn NGANG HÀNG trong cùng danh sách này — không còn là
 // checkbox gắn thêm vào mỗi nút khác như trước.
-export type ActionKind = "package" | "request" | "reservation" | "membership" | "donate" | "auction" | "claim" | "apply" | "link";
+export type ActionKind = "package" | "request" | "reservation" | "membership" | "donate" | "auction" | "claim" | "apply" | "link" | "download";
 
 export const MAX_ACTIONS = 3;
 
@@ -118,6 +118,7 @@ export function actionDraftFromCard(card: { cardType: CardType; cardMetadata?: a
       draft.scopeDescription = meta.description || "";
       break;
     case "link":
+    case "download":
       draft.linkLabel = meta.label || "";
       draft.linkUrl = meta.url || "";
       break;
@@ -260,6 +261,19 @@ export function buildCardFromAction(
         cardType: "link",
         cardMetadata: {
           label: action.linkLabel.trim() || "Xem thêm",
+          url: action.linkUrl.trim(),
+        },
+      };
+    }
+    case "download": {
+      if (!action.linkUrl.trim()) {
+        showToast("Tải lên file cho nút Tải Về", "error");
+        return null;
+      }
+      return {
+        cardType: "download",
+        cardMetadata: {
+          label: action.linkLabel.trim() || "Tải Về",
           url: action.linkUrl.trim(),
         },
       };
