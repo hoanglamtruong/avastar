@@ -12,7 +12,7 @@ services:
       NODE_ENV: production
       PORT: 3000
     volumes:
-      - /mnt/data/ssd/avastar-uploads:/app/public/uploads
+      - /home/zang/avastar-uploads:/app/public/uploads
     ports:
       - "8107:3000"
     networks:
