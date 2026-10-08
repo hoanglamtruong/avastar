@@ -84,11 +84,11 @@ export function HeroProfile({ isOwner }: HeroProfileProps) {
             src={avatarUrl || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200"}
             alt={fullName}
             className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-2 border-[#C9AA72] shadow-[0_0_30px_rgba(201,170,114,0.3)] select-none"
-            onMouseDown={startLongPress}
-            onMouseUp={cancelLongPress}
-            onMouseLeave={cancelLongPress}
-            onTouchStart={startLongPress}
-            onTouchEnd={cancelLongPress}
+            style={{ touchAction: "manipulation", WebkitTouchCallout: "none" }}
+            onPointerDown={startLongPress}
+            onPointerUp={cancelLongPress}
+            onPointerLeave={cancelLongPress}
+            onPointerCancel={cancelLongPress}
             onContextMenu={(e) => e.preventDefault()}
           />
           {isOwner && (

@@ -174,6 +174,10 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••"
+                autoComplete={isRegister ? "new-password" : "current-password"}
+                autoCapitalize="off"
+                autoCorrect="off"
+                spellCheck={false}
                 className="w-full px-3 py-1.5 pr-9 rounded-xl bg-[#07111F] border border-[#F4F0E8]/20 text-xs text-white focus:outline-none focus:border-[#C9AA72]"
               />
               <button

@@ -65,7 +65,11 @@ export function OwnerLoginModal({ isOpen, onClose }: OwnerLoginModalProps) {
           <p className="text-[10px] text-[#F4F0E8]/60">Khu vực riêng — chỉ Owner</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-3" autoComplete="on">
+          {/* Input email ẩn để trình duyệt mobile ghép đúng mật khẩu đã lưu cho
+              CHÍNH tài khoản Owner — tránh tự gợi ý/điền nhầm mật khẩu của tài
+              khoản khác khi form chỉ có mỗi 1 ô password. */}
+          <input type="email" value={OWNER_EMAIL} readOnly autoComplete="username" className="hidden" tabIndex={-1} aria-hidden="true" />
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
@@ -74,6 +78,11 @@ export function OwnerLoginModal({ isOpen, onClose }: OwnerLoginModalProps) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Mật khẩu"
+              name="owner-password"
+              autoComplete="current-password"
+              autoCapitalize="off"
+              autoCorrect="off"
+              spellCheck={false}
               className="w-full px-3 py-2 pr-9 rounded-xl bg-[#102A43]/60 border border-[#F4F0E8]/20 text-sm text-white text-center tracking-widest focus:outline-none focus:border-[#C9AA72]"
             />
             <button
