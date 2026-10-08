@@ -12,22 +12,41 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Chưa chọn tệp ảnh để tải lên" }, { status: 400 });
     }
 
-    // Kiểm tra định dạng hợp lệ — ảnh hoặc video (slide đầu trang cần cả 2)
+    // Kiểm tra định dạng hợp lệ — ảnh, video, hoặc tài liệu/ứng dụng để khách tải về
+    // (nút "Tải Xuống" trên thẻ Tài liệu/Ứng dụng)
     const validImageTypes = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/svg+xml"];
     const validVideoTypes = ["video/mp4", "video/webm", "video/quicktime", "video/ogg"];
+    const validDocTypes = [
+      "application/pdf",
+      "application/zip",
+      "application/x-zip-compressed",
+      "application/vnd.android.package-archive", // .apk
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "application/vnd.ms-powerpoint",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "application/x-rar-compressed",
+      "application/vnd.rar",
+      "application/x-7z-compressed",
+      "text/plain",
+      "application/octet-stream", // fallback MIME trình duyệt hay gán cho .apk/.exe/.dmg
+    ];
     const isVideo = validVideoTypes.includes(file.type);
-    if (!isVideo && !validImageTypes.includes(file.type)) {
+    const isDoc = validDocTypes.includes(file.type);
+    if (!isVideo && !isDoc && !validImageTypes.includes(file.type)) {
       return NextResponse.json(
-        { error: "Định dạng không hợp lệ. Chỉ chấp nhận JPG, PNG, WEBP, GIF, SVG, MP4, WEBM, MOV." },
+        { error: "Định dạng không hợp lệ. Chấp nhận ảnh (JPG/PNG/WEBP/GIF/SVG), video (MP4/WEBM/MOV), hoặc tài liệu/ứng dụng (PDF/ZIP/APK/DOC/XLS/PPT...)." },
         { status: 400 }
       );
     }
 
-    // Giới hạn: ảnh 15MB, video 40MB (dung lượng server có hạn)
-    const maxSize = isVideo ? 40 * 1024 * 1024 : 15 * 1024 * 1024;
+    // Giới hạn: ảnh 15MB, video 40MB, tài liệu/ứng dụng 30MB (dung lượng server có hạn)
+    const maxSize = isVideo ? 40 * 1024 * 1024 : isDoc ? 30 * 1024 * 1024 : 15 * 1024 * 1024;
     if (file.size > maxSize) {
       return NextResponse.json(
-        { error: isVideo ? "Kích thước video vượt quá 40MB." : "Kích thước ảnh vượt quá 15MB." },
+        { error: isVideo ? "Kích thước video vượt quá 40MB." : isDoc ? "Kích thước file vượt quá 30MB." : "Kích thước ảnh vượt quá 15MB." },
         { status: 400 }
       );
     }

@@ -212,7 +212,7 @@ export function EditPostModal({ post, isOpen, onClose, onUpdated }: EditPostModa
                   >
                     <option value="image">Ảnh</option>
                     <option value="video">Video</option>
-                    <option value="doc">Tài liệu</option>
+                    <option value="doc">Tài liệu / Ứng dụng</option>
                   </select>
                   {media.length > 1 && (
                     <button type="button" onClick={() => removeMedia(idx)} className="p-1.5 rounded-lg text-red-400 hover:bg-red-400/10 transition">
@@ -221,7 +221,22 @@ export function EditPostModal({ post, isOpen, onClose, onUpdated }: EditPostModa
                   )}
                 </div>
                 {m.cardType === "doc" ? (
-                  <textarea value={m.docContent} onChange={(e) => updateMedia(idx, { docContent: e.target.value })} rows={3} className={inputCls + " font-mono"} />
+                  <>
+                    <MediaPicker
+                      label="File tài liệu / ứng dụng (khách sẽ bấm Tải Xuống):"
+                      value={m.mediaUrl}
+                      onChange={(url) => updateMedia(idx, { mediaUrl: url })}
+                      placeholder="Tải file lên — PDF, ZIP, APK, DOC, XLS, PPT... (tối đa 30MB)"
+                      accept=".pdf,.zip,.apk,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.rar,.7z,.exe,.dmg"
+                    />
+                    <textarea
+                      value={m.docContent}
+                      onChange={(e) => updateMedia(idx, { docContent: e.target.value })}
+                      rows={3}
+                      placeholder="Mô tả ngắn về tài liệu/ứng dụng (không bắt buộc)..."
+                      className={inputCls}
+                    />
+                  </>
                 ) : (
                   <MediaPicker label="Hình ảnh / Video:" value={m.mediaUrl} onChange={(url) => updateMedia(idx, { mediaUrl: url })} placeholder="URL hoặc tải lên..." />
                 )}

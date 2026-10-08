@@ -13,6 +13,7 @@ import {
   ArrowRight,
   Link2,
   QrCode,
+  Download,
 } from "lucide-react";
 import { ZxStar } from "@/components/portfolio/ZxStar";
 import { formatCurrency } from "@/lib/utils";
@@ -290,6 +291,14 @@ export function PostDetailModal({
                 <FileText className="w-12 h-12 text-[#C9AA72] mb-4" />
                 <h4 className="text-xl font-bold text-white mb-2">{post.caption}</h4>
                 <p className="text-sm text-[#AEBCC5] leading-relaxed whitespace-pre-line">{currentCard.docContent || "Tài liệu kỹ thuật số ZANGX"}</p>
+                <a
+                  href={currentCard.mediaUrl}
+                  download
+                  className="mt-4 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#C9AA72] to-[#8B6F3F] text-[#07111F] font-black text-sm shadow-lg hover:opacity-95 active:scale-95 transition"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Tải Xuống</span>
+                </a>
               </div>
             ) : (
               <img src={currentCard.mediaUrl} alt={post.caption || "Tác phẩm ZANGX"} className="w-full h-full max-h-[70vh] object-contain select-none" />
