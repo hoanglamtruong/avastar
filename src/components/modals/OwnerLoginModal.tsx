@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, ShieldCheck } from "lucide-react";
+import { X, ShieldCheck, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/components/ui/Toast";
 
@@ -21,6 +21,7 @@ export function OwnerLoginModal({ isOpen, onClose }: OwnerLoginModalProps) {
   const { login } = useAuth();
   const { showToast } = useToast();
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   if (!isOpen) return null;
@@ -65,15 +66,25 @@ export function OwnerLoginModal({ isOpen, onClose }: OwnerLoginModalProps) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">
-          <input
-            type="password"
-            autoFocus
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Mật khẩu"
-            className="w-full px-3 py-2 rounded-xl bg-[#102A43]/60 border border-[#F4F0E8]/20 text-sm text-white text-center tracking-widest focus:outline-none focus:border-[#C9AA72]"
-          />
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              autoFocus
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Mật khẩu"
+              className="w-full px-3 py-2 pr-9 rounded-xl bg-[#102A43]/60 border border-[#F4F0E8]/20 text-sm text-white text-center tracking-widest focus:outline-none focus:border-[#C9AA72]"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              tabIndex={-1}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#F4F0E8]/50 hover:text-[#C9AA72] transition"
+            >
+              {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+            </button>
+          </div>
           <button
             type="submit"
             disabled={isLoading}

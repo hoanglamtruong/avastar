@@ -20,6 +20,8 @@ import {
   RefreshCw,
   Layers,
   Lock,
+  Eye,
+  EyeOff,
   ShoppingCart,
   Inbox,
   Gavel,
@@ -88,6 +90,7 @@ export default function AdminPage() {
   const [emailInput, setEmailInput] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [showPasswordInput, setShowPasswordInput] = useState(false);
 
   const isOwner = user?.role === "owner" || user?.role === "admin";
 
@@ -223,13 +226,23 @@ export default function AdminPage() {
             </div>
             <div>
               <label className="block text-xs font-semibold text-[#AEBCC5] mb-1">Mật khẩu:</label>
-              <input
-                type="password"
-                value={passwordInput}
-                onChange={(e) => setPasswordInput(e.target.value)}
-                placeholder="••••••"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-[#07111F] border border-white/15 text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-[#C9AA72]"
-              />
+              <div className="relative">
+                <input
+                  type={showPasswordInput ? "text" : "password"}
+                  value={passwordInput}
+                  onChange={(e) => setPasswordInput(e.target.value)}
+                  placeholder="••••••"
+                  className="w-full px-3.5 py-2.5 pr-10 rounded-xl bg-[#07111F] border border-white/15 text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-[#C9AA72]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPasswordInput((v) => !v)}
+                  tabIndex={-1}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-[#C9AA72] transition"
+                >
+                  {showPasswordInput ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             <button
