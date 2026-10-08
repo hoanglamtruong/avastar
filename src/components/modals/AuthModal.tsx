@@ -11,7 +11,7 @@ interface AuthModalProps {
 }
 
 export function AuthModal({ isOpen, onClose }: AuthModalProps) {
-  const { login, register, switchUser } = useAuth();
+  const { login, register } = useAuth();
   const { showToast } = useToast();
   const [isRegister, setIsRegister] = useState(false);
   const [fullName, setFullName] = useState("");
@@ -48,44 +48,47 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
   if (!isOpen) return null;
 
+  const resetForm = () => {
+    setFullName("");
+    setEmail("");
+    setPhone("");
+    setPassword("");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     if (isRegister) {
-      if (!fullName || !email) {
-        showToast("Vui lòng nhập họ tên và email", "error");
+      if (!fullName || !email || !password) {
+        showToast("Vui lòng nhập đầy đủ họ tên, email và mật khẩu", "error");
         setIsLoading(false);
         return;
       }
-      const success = await register(fullName, email, password || "123456", phone);
+      const success = await register(fullName, email, password, phone);
       if (success) {
         showToast("Đăng ký thành viên VIP thành công!", "success");
+        resetForm();
         onClose();
       } else {
-        showToast("Lỗi khi đăng ký", "error");
+        showToast("Lỗi khi đăng ký — email có thể đã được dùng", "error");
       }
     } else {
-      if (!email) {
-        showToast("Vui lòng nhập email", "error");
+      if (!email || !password) {
+        showToast("Vui lòng nhập email và mật khẩu", "error");
         setIsLoading(false);
         return;
       }
-      const success = await login(email, password || "123456");
+      const success = await login(email, password);
       if (success) {
         showToast("Đăng nhập thành công!", "success");
+        resetForm();
         onClose();
       } else {
         showToast("Email hoặc mật khẩu không đúng", "error");
       }
     }
     setIsLoading(false);
-  };
-
-  const handleQuickSwitch = async (role: "owner" | "member" | "guest") => {
-    await switchUser(role);
-    showToast(`Đã chuyển sang vai trò: ${role.toUpperCase()}`, "info");
-    onClose();
   };
 
   return (
@@ -118,33 +121,6 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           <p className="text-[10px] text-[#F4F0E8]/70">
             Tương tác 1-1, gửi quà tặng VIP và mở khóa Box Doc độc quyền.
           </p>
-        </div>
-
-        {/* Quick Demo Switcher */}
-        <div className="p-2 rounded-xl bg-[#102A43]/60 border border-[#F4F0E8]/10 space-y-1.5">
-          <p className="text-[9px] uppercase font-bold tracking-wider text-[#F4F0E8]/60 text-center">
-            🚀 Chuyển đổi nhanh vai trò:
-          </p>
-          <div className="grid grid-cols-3 gap-1">
-            <button
-              onClick={() => handleQuickSwitch("owner")}
-              className="py-1.5 px-1 rounded-lg text-[10px] font-bold bg-[#C9AA72]/20 text-[#C9AA72] border border-[#C9AA72]/40 hover:bg-[#C9AA72]/30 transition"
-            >
-              👑 Owner
-            </button>
-            <button
-              onClick={() => handleQuickSwitch("member")}
-              className="py-1.5 px-1 rounded-lg text-[10px] font-bold bg-[#C9AA72]/20 text-[#C9AA72] border border-[#C9AA72]/40 hover:bg-[#C9AA72]/30 transition"
-            >
-              🌟 Member
-            </button>
-            <button
-              onClick={() => handleQuickSwitch("guest")}
-              className="py-1.5 px-1 rounded-lg text-[10px] font-bold bg-white/10 text-white/80 border border-white/20 hover:bg-white/20 transition"
-            >
-              👤 Guest
-            </button>
-          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-2 text-xs">
@@ -188,9 +164,11 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           )}
 
           <div>
-            <label className="block text-[#F4F0E8]/80 font-semibold mb-0.5 text-[11px]">Mật khẩu (mặc định: 123456)</label>
+            <label className="block text-[#F4F0E8]/80 font-semibold mb-0.5 text-[11px]">Mật khẩu *</label>
             <input
               type="password"
+              required
+              minLength={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••"

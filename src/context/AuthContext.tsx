@@ -6,10 +6,9 @@ import { UserSession } from "@/lib/types";
 interface AuthContextType {
   user: UserSession | null;
   isLoading: boolean;
-  login: (email: string, password?: string) => Promise<boolean>;
-  register: (fullName: string, email: string, password?: string, phone?: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<boolean>;
+  register: (fullName: string, email: string, password: string, phone?: string) => Promise<boolean>;
   logout: () => Promise<void>;
-  switchUser: (role: "owner" | "member" | "guest") => Promise<void>;
   refreshUser: () => Promise<void>;
 }
 
@@ -39,7 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     refreshUser();
   }, [refreshUser]);
 
-  const login = async (email: string, password = "password123") => {
+  const login = async (email: string, password: string) => {
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
@@ -57,7 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const register = async (fullName: string, email: string, password = "password123", phone?: string) => {
+  const register = async (fullName: string, email: string, password: string, phone?: string) => {
     try {
       const res = await fetch("/api/auth/register", {
         method: "POST",
@@ -80,20 +79,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   };
 
-  const switchUser = async (role: "owner" | "member" | "guest") => {
-    const res = await fetch("/api/auth/switch", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ role }),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setUser(data.user);
-    }
-  };
-
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, register, logout, switchUser, refreshUser }}>
+    <AuthContext.Provider value={{ user, isLoading, login, register, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

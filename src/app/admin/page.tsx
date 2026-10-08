@@ -20,8 +20,6 @@ import {
   RefreshCw,
   Layers,
   Lock,
-  UserCheck,
-  Sparkles,
   ShoppingCart,
   Inbox,
   Gavel,
@@ -68,7 +66,7 @@ const LEAD_STATUS_LABEL: Record<string, string> = {
 };
 
 export default function AdminPage() {
-  const { user, isLoading: isAuthLoading, login, switchUser, logout } = useAuth();
+  const { user, isLoading: isAuthLoading, login, logout } = useAuth();
   const { showToast } = useToast();
 
   // Navigation tab
@@ -141,28 +139,15 @@ export default function AdminPage() {
     return Math.max(1, ...rows.map((r) => r.count));
   }, [overview]);
 
-  // Handle Quick Login as Owner
-  const handleQuickLoginAsOwner = async () => {
-    setIsLoggingIn(true);
-    try {
-      await switchUser("owner");
-      showToast("Đã kích hoạt phiên làm việc quyền OWNER thành công!", "success");
-    } catch {
-      showToast("Lỗi khi chuyển vai trò", "error");
-    } finally {
-      setIsLoggingIn(false);
-    }
-  };
-
   // Handle Normal Login Form
   const handleLoginForm = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!emailInput) {
-      showToast("Vui lòng nhập email quản trị", "error");
+    if (!emailInput || !passwordInput) {
+      showToast("Vui lòng nhập email và mật khẩu quản trị", "error");
       return;
     }
     setIsLoggingIn(true);
-    const success = await login(emailInput, passwordInput || "123456");
+    const success = await login(emailInput, passwordInput);
     setIsLoggingIn(false);
     if (success) {
       showToast("Đăng nhập quản trị thành công!", "success");
@@ -218,28 +203,6 @@ export default function AdminPage() {
               Khu vực bảo mật dành riêng cho Quản trị viên & Trưởng xưởng số
             </p>
           </div>
-
-          {/* Quick 1-Click Login for Owner — CHỈ bật khi build với NEXT_PUBLIC_ALLOW_DEMO_LOGIN=true (review/nội bộ). Ẩn mặc định trên bản deploy thật. */}
-          {process.env.NEXT_PUBLIC_ALLOW_DEMO_LOGIN === "true" && (
-            <div className="p-4 rounded-2xl bg-[#07111F]/80 border border-[#C9AA72]/30 space-y-2.5">
-              <div className="flex items-center gap-2 text-xs font-bold text-[#C9AA72]">
-                <Sparkles className="w-4 h-4 text-[#A8F238]" />
-                <span>Chế độ Demo / Truy cập nhanh:</span>
-              </div>
-              <button
-                type="button"
-                onClick={handleQuickLoginAsOwner}
-                disabled={isLoggingIn}
-                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#C9AA72] to-[#8B6F3F] text-[#07111F] font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg hover:opacity-95 active:scale-95 transition transform"
-              >
-                <UserCheck className="w-4 h-4" />
-                <span>{isLoggingIn ? "Đang xử lý..." : "👑 Đăng Nhập Nhanh Vai Trò OWNER"}</span>
-              </button>
-              <p className="text-[10px] text-center text-[#AEBCC5]">
-                Tự động đăng nhập tài khoản Trưởng xưởng (zang@zeebee.vn)
-              </p>
-            </div>
-          )}
 
           <div className="flex items-center gap-3">
             <div className="h-[1px] flex-1 bg-white/10" />

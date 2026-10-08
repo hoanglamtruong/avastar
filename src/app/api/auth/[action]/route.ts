@@ -12,12 +12,15 @@ export async function POST(
 
   if (action === "login") {
     const { email, password } = await request.json();
+    if (!email || !password) {
+      return NextResponse.json({ error: "Vui lòng nhập email và mật khẩu" }, { status: 400 });
+    }
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
       return NextResponse.json({ error: "Email không tồn tại" }, { status: 401 });
     }
-    const isValid = await comparePassword(password || "123456", user.passwordHash);
-    if (!isValid && password !== "123456") {
+    const isValid = await comparePassword(password, user.passwordHash);
+    if (!isValid) {
       return NextResponse.json({ error: "Mật khẩu không chính xác" }, { status: 401 });
     }
 
@@ -44,8 +47,8 @@ export async function POST(
 
   if (action === "register") {
     const { fullName, email, password, phoneNumber } = await request.json();
-    if (!fullName || !email) {
-      return NextResponse.json({ error: "Vui lòng nhập đầy đủ họ tên và email" }, { status: 400 });
+    if (!fullName || !email || !password) {
+      return NextResponse.json({ error: "Vui lòng nhập đầy đủ họ tên, email và mật khẩu" }, { status: 400 });
     }
 
     let existing = await prisma.user.findUnique({ where: { email } });
@@ -70,7 +73,7 @@ export async function POST(
       return NextResponse.json({ user: sessionUser });
     }
 
-    const passwordHash = await hashPassword(password || "123456");
+    const passwordHash = await hashPassword(password);
     const newUser = await prisma.user.create({
       data: {
         email,
@@ -101,39 +104,6 @@ export async function POST(
     });
 
     return NextResponse.json({ user: sessionUser });
-  }
-
-  if (action === "switch") {
-    // Chuyển vai trò không mật khẩu — CHỈ cho phép khi build với
-    // NEXT_PUBLIC_ALLOW_DEMO_LOGIN=true (review/nội bộ). Chặn ở tầng API,
-    // không chỉ ẩn nút UI, vì endpoint này tự nó là lối vào không cần xác thực.
-    if (process.env.NEXT_PUBLIC_ALLOW_DEMO_LOGIN !== "true") {
-      return NextResponse.json({ error: "Chức năng demo đã tắt trên bản deploy này" }, { status: 403 });
-    }
-    const { role } = await request.json();
-    let targetUser = await prisma.user.findFirst({ where: { role } });
-    if (!targetUser) {
-      targetUser = await prisma.user.findFirst();
-    }
-    if (targetUser) {
-      const sessionUser = {
-        id: targetUser.id,
-        email: targetUser.email,
-        fullName: targetUser.fullName,
-        role: targetUser.role as any,
-        avatarUrl: targetUser.avatarUrl,
-        phoneNumber: targetUser.phoneNumber,
-      };
-      const token = await signToken(sessionUser);
-      cookieStore.set("avastar_token", token, {
-        httpOnly: true,
-        secure: false,
-      sameSite: "lax",
-        maxAge: 30 * 24 * 60 * 60,
-        path: "/",
-      });
-      return NextResponse.json({ user: sessionUser });
-    }
   }
 
   if (action === "logout") {

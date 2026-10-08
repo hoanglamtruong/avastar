@@ -3,6 +3,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Settings, ChevronLeft, ChevronRight } from "lucide-react";
 import { HeroEditModal } from "@/components/modals/HeroEditModal";
+import { OwnerLoginModal } from "@/components/modals/OwnerLoginModal";
+
+const LONG_PRESS_MS = 600;
 
 interface HeroSlide {
   id: string;
@@ -26,7 +29,24 @@ export function HeroProfile({ isOwner }: HeroProfileProps) {
   const [intro, setIntro] = useState("");
   const [activeSlide, setActiveSlide] = useState(0);
   const [editOpen, setEditOpen] = useState(false);
+  const [ownerLoginOpen, setOwnerLoginOpen] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressFired = useRef(false);
+
+  // Owner đăng nhập bằng cách nhấn giữ avatar — không có nút công khai nào
+  // khác, chỉ ai biết thao tác này (và đúng mật khẩu) mới vào được.
+  const startLongPress = () => {
+    if (isOwner) return; // đã là Owner thì không cần
+    longPressFired.current = false;
+    longPressTimer.current = setTimeout(() => {
+      longPressFired.current = true;
+      setOwnerLoginOpen(true);
+    }, LONG_PRESS_MS);
+  };
+  const cancelLongPress = () => {
+    if (longPressTimer.current) clearTimeout(longPressTimer.current);
+  };
 
   const load = () => {
     fetch("/api/hero")
@@ -63,7 +83,13 @@ export function HeroProfile({ isOwner }: HeroProfileProps) {
           <img
             src={avatarUrl || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200"}
             alt={fullName}
-            className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-2 border-[#C9AA72] shadow-[0_0_30px_rgba(201,170,114,0.3)]"
+            className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-2 border-[#C9AA72] shadow-[0_0_30px_rgba(201,170,114,0.3)] select-none"
+            onMouseDown={startLongPress}
+            onMouseUp={cancelLongPress}
+            onMouseLeave={cancelLongPress}
+            onTouchStart={startLongPress}
+            onTouchEnd={cancelLongPress}
+            onContextMenu={(e) => e.preventDefault()}
           />
           {isOwner && (
             <button
@@ -119,6 +145,8 @@ export function HeroProfile({ isOwner }: HeroProfileProps) {
           setEditOpen(false);
         }}
       />
+
+      <OwnerLoginModal isOpen={ownerLoginOpen} onClose={() => setOwnerLoginOpen(false)} />
     </section>
   );
 }
